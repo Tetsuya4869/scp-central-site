@@ -3,20 +3,28 @@ import { getBranch } from '../data/branches.js'
 const JP_DOMAIN = 'http://scp-jp.wikidot.com'
 
 /**
+ * Zero-pad a number to at least 3 digits (e.g. 1 → "001", 18 → "018", 1000 → "1000").
+ */
+function padNum(number) {
+  return String(number).padStart(3, '0')
+}
+
+/**
  * Generate the slug for an article (shared between original and JP-translated URLs).
  */
 function getSlug(branchCode, number) {
   const lc = branchCode.toLowerCase()
   const branch = getBranch(branchCode)
-  if (!branch) return `scp-${number}`
+  const n = padNum(number)
+  if (!branch) return `scp-${n}`
 
   switch (branch.urlPattern) {
-    case 'en':       return `scp-${number}`
-    case 'prefix-cn': return `scp-cn-${number}`
-    case 'prefix-pl': return `scp-pl-${number}`
-    case 'prefix-zh': return `scp-zh-${number}`
+    case 'en':        return `scp-${n}`
+    case 'prefix-cn': return `scp-cn-${n}`
+    case 'prefix-pl': return `scp-pl-${n}`
+    case 'prefix-zh': return `scp-zh-${n}`
     case 'suffix':
-    default:         return `scp-${number}-${lc}`
+    default:          return `scp-${n}-${lc}`
   }
 }
 
