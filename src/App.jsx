@@ -8,9 +8,11 @@ import ArticleList from './components/ArticleList.jsx'
 export default function App() {
   const { toggle, markAll, isChecked, countChecked, totalChecked } = useChecklist()
   const [selected, setSelected] = useState({ branchCode: null, seriesId: null })
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const handleSelect = useCallback((sel) => {
     setSelected(sel)
+    setSidebarOpen(false)
   }, [])
 
   const currentBranch = selected.branchCode
@@ -21,7 +23,6 @@ export default function App() {
     ? currentBranch.series.find(s => s.id === selected.seriesId)
     : null
 
-  // Total articles across all branches (for header stats)
   const grandTotal = useMemo(
     () => BRANCHES.reduce((sum, b) =>
       sum + b.series.reduce((s2, sr) => {
@@ -32,32 +33,39 @@ export default function App() {
     []
   )
 
+  const pct = grandTotal > 0 ? Math.round((totalChecked / grandTotal) * 100) : 0
+
   return (
     <div className="app">
       <header className="app-header">
-        <h1>SCP Foundation · 全支部読破チェックリスト</h1>
-        <span className="header-stamp">DOCUMENT CLASS: READING LOG</span>
+        <button
+          className="hamburger"
+          onClick={() => setSidebarOpen(v => !v)}
+          aria-label="メニュー"
+        >
+          <span /><span /><span />
+        </button>
+
+        <h1>SCP · 読破チェックリスト</h1>
+
         <div className="header-stats">
-          <span>
-            総読了: <span className="header-stat-val">{totalChecked.toLocaleString()}</span>
-          </span>
-          <span>
-            / <span className="header-stat-val">{grandTotal.toLocaleString()}</span> 件
-          </span>
-          <span>
-            達成率:{' '}
-            <span className="header-stat-val">
-              {grandTotal > 0 ? Math.round((totalChecked / grandTotal) * 100) : 0}%
-            </span>
-          </span>
+          <span className="header-stat-val">{totalChecked.toLocaleString()}</span>
+          <span className="header-stat-sep">/</span>
+          <span className="header-stat-val">{grandTotal.toLocaleString()}</span>
+          <span className="header-stat-pct">({pct}%)</span>
         </div>
       </header>
 
       <div className="body-wrap">
+        {sidebarOpen && (
+          <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
+        )}
+
         <Sidebar
           selected={selected}
           onSelect={handleSelect}
           countChecked={countChecked}
+          isOpen={sidebarOpen}
         />
 
         <main className="main-content">
@@ -69,9 +77,14 @@ export default function App() {
               isChecked={isChecked}
               toggle={toggle}
               markAll={markAll}
+              onOpenSidebar={() => setSidebarOpen(true)}
             />
           ) : (
-            <Welcome onSelect={handleSelect} countChecked={countChecked} totalChecked={totalChecked} />
+            <Welcome
+              onSelect={handleSelect}
+              countChecked={countChecked}
+              onOpenSidebar={() => setSidebarOpen(true)}
+            />
           )}
         </main>
       </div>
@@ -79,15 +92,15 @@ export default function App() {
   )
 }
 
-function Welcome({ onSelect, countChecked, totalChecked }) {
+function Welcome({ onSelect, countChecked, onOpenSidebar }) {
   return (
     <div className="welcome">
       <div className="welcome-logo">📋</div>
       <div className="welcome-title">SCP全支部 読破チェックリスト</div>
       <div className="welcome-sub">
         16支部・約24,000件以上の原作SCP記事を網羅。<br />
-        左のサイドバーから支部・シリーズを選択してください。<br />
-        チェック状態はブラウザのローカルストレージに自動保存されます。
+        支部・シリーズを選択してチェックを記録できます。<br />
+        <span className="welcome-hint" onClick={onOpenSidebar}>≡ メニューから支部を選択</span>
       </div>
 
       <div className="welcome-grid">

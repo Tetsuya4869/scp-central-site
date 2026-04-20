@@ -3,9 +3,9 @@ import { generateSeriesArticles } from '../utils/urlGenerator.js'
 
 const PAGE_SIZE = 100
 
-export default function ArticleList({ branch, series, isChecked, toggle, markAll }) {
+export default function ArticleList({ branch, series, isChecked, toggle, markAll, onOpenSidebar }) {
   const [page, setPage] = useState(1)
-  const [filter, setFilter] = useState('all') // 'all' | 'read' | 'unread'
+  const [filter, setFilter] = useState('all')
 
   const allArticles = useMemo(
     () => generateSeriesArticles(branch.code, series.min, series.max),
@@ -36,55 +36,52 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
     setPage(1)
   }
 
-  function handleMarkAll(value) {
-    markAll(allIds, value)
-  }
-
   const hubUrl = branch.domain + series.hub
 
   return (
     <>
       <div className="content-toolbar">
-        <div>
+        <div className="toolbar-row toolbar-row-top">
+          <button className="toolbar-back" onClick={onOpenSidebar} aria-label="支部選択">≡</button>
           <span className="toolbar-title">{series.label}</span>
           <span className="toolbar-sub"> · {branch.nativeName}</span>
-          <a
-            className="toolbar-hub-link"
-            href={hubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a className="toolbar-hub-link" href={hubUrl} target="_blank" rel="noopener noreferrer">
             [ハブ↗]
           </a>
-        </div>
-
-        <div className="toolbar-spacer" />
-
-        <div className="series-progress">
-          <div className="progress-bar-wrap">
-            <div
-              className="progress-bar-fill"
-              style={{ width: `${pct}%`, background: branch.accent }}
-            />
+          <div className="toolbar-spacer" />
+          <div className="series-progress">
+            <div className="progress-bar-wrap">
+              <div
+                className="progress-bar-fill"
+                style={{ width: `${pct}%`, background: branch.accent }}
+              />
+            </div>
+            <span className="progress-text">{readCount}</span>
+            <span className="progress-denom">/{allArticles.length} ({pct}%)</span>
           </div>
-          <span className="progress-text">{readCount}</span>
-          <span style={{ color: 'var(--text-3)' }}>/ {allArticles.length} ({pct}%)</span>
         </div>
 
-        <div className="filter-tabs">
-          {['all', 'read', 'unread'].map(f => (
-            <button
-              key={f}
-              className={`filter-tab${filter === f ? ' active' : ''}`}
-              onClick={() => handleFilter(f)}
-            >
-              {f === 'all' ? '全て' : f === 'read' ? '読了' : '未読'}
-            </button>
-          ))}
+        <div className="toolbar-row toolbar-row-bottom">
+          <div className="filter-tabs">
+            {[
+              { key: 'all',    label: '全て' },
+              { key: 'read',   label: '読了' },
+              { key: 'unread', label: '未読' },
+            ].map(({ key, label }) => (
+              <button
+                key={key}
+                className={`filter-tab${filter === key ? ' active' : ''}`}
+                onClick={() => handleFilter(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="mark-btns">
+            <button className="mark-btn" onClick={() => markAll(allIds, true)}>全選択</button>
+            <button className="mark-btn" onClick={() => markAll(allIds, false)}>全解除</button>
+          </div>
         </div>
-
-        <button className="mark-btn" onClick={() => handleMarkAll(true)}>全選択</button>
-        <button className="mark-btn" onClick={() => handleMarkAll(false)}>全解除</button>
       </div>
 
       <div className="article-list-wrap">
@@ -93,8 +90,8 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
             <tr>
               <th className="article-td col-check">✓</th>
               <th className="article-td col-num">No.</th>
-              <th className="article-td col-badges">ステータス</th>
-              <th className="article-td col-link">リンク</th>
+              <th className="article-td col-badges">状態</th>
+              <th className="article-td col-link">↗</th>
             </tr>
           </thead>
           <tbody>
@@ -108,7 +105,7 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
             ))}
             {paginated.length === 0 && (
               <tr>
-                <td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: 'var(--text-3)' }}>
+                <td colSpan={4} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-3)' }}>
                   {filter === 'read' ? '読了記事なし' : '未読記事なし'}
                 </td>
               </tr>
@@ -118,12 +115,7 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
       </div>
 
       {totalPages > 1 && (
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          total={filtered.length}
-          onPage={setPage}
-        />
+        <Pagination page={page} totalPages={totalPages} total={filtered.length} onPage={setPage} />
       )}
     </>
   )
@@ -150,12 +142,12 @@ function ArticleRow({ article, read, onToggle }) {
         <span className="scp-designation">{article.designation}</span>
       </td>
       <td className="article-td col-badges">
-        {article.predicted && (
-          <span className="badge badge-predicted">予測URL</span>
-        )}
-        {read && !article.predicted && (
-          <span className="badge badge-read">読了</span>
-        )}
+        {article.predicted
+          ? <span className="badge badge-predicted">予測</span>
+          : read
+            ? <span className="badge badge-read">読了</span>
+            : null
+        }
       </td>
       <td className="article-td col-link">
         <a
@@ -163,7 +155,7 @@ function ArticleRow({ article, read, onToggle }) {
           target="_blank"
           rel="noopener noreferrer"
           className="article-link"
-          title={article.url}
+          title={`JP: ${article.url}`}
         >
           ↗
         </a>
@@ -177,18 +169,14 @@ function Pagination({ page, totalPages, total, onPage }) {
 
   return (
     <div className="pagination">
-      <button
-        className="page-btn"
-        disabled={page <= 1}
-        onClick={() => onPage(page - 1)}
-      >
-        ◀ 前
+      <button className="page-btn" disabled={page <= 1} onClick={() => onPage(page - 1)}>
+        ◀
       </button>
 
       <div className="page-nums">
         {pages.map((p, i) =>
           p === '…' ? (
-            <span key={`ellipsis-${i}`} style={{ padding: '2px 4px', color: 'var(--text-3)' }}>…</span>
+            <span key={`e-${i}`} className="page-ellipsis">…</span>
           ) : (
             <button
               key={p}
@@ -201,17 +189,11 @@ function Pagination({ page, totalPages, total, onPage }) {
         )}
       </div>
 
-      <button
-        className="page-btn"
-        disabled={page >= totalPages}
-        onClick={() => onPage(page + 1)}
-      >
-        次 ▶
+      <button className="page-btn" disabled={page >= totalPages} onClick={() => onPage(page + 1)}>
+        ▶
       </button>
 
-      <span className="page-info">
-        全 <span>{total}</span> 件
-      </span>
+      <span className="page-info">全 <span>{total}</span> 件</span>
     </div>
   )
 }

@@ -2,11 +2,11 @@ import { useMemo } from 'react'
 import { BRANCHES } from '../data/branches.js'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
 
-export default function Sidebar({ selected, onSelect, countChecked }) {
+export default function Sidebar({ selected, onSelect, countChecked, isOpen }) {
   const { branchCode, seriesId } = selected
 
   return (
-    <nav className="sidebar">
+    <nav className={`sidebar${isOpen ? ' sidebar-open' : ''}`}>
       <div className="sidebar-title">全支部一覧 · ALL BRANCHES</div>
       {BRANCHES.map(branch => (
         <BranchItem
@@ -38,6 +38,7 @@ function BranchItem({ branch, isOpen, activeSeriesId, onSelect, countChecked }) 
     if (!isOpen) {
       onSelect({ branchCode: branch.code, seriesId: branch.series[0]?.id ?? null })
     } else {
+      // collapse without closing sidebar
       onSelect({ branchCode: null, seriesId: null })
     }
   }
@@ -53,7 +54,7 @@ function BranchItem({ branch, isOpen, activeSeriesId, onSelect, countChecked }) 
           <span className="branch-name">{branch.nativeName}</span>
           <span className="branch-lang">{branch.language}</span>
         </span>
-        <span style={{ fontSize: 10, color: 'var(--text-3)' }}>{isOpen ? '▲' : '▼'}</span>
+        <span className="branch-chevron">{isOpen ? '▲' : '▼'}</span>
       </div>
 
       <div className="branch-progress-bar">
