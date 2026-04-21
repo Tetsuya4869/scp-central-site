@@ -4,10 +4,12 @@ import { generateSeriesArticles } from './utils/urlGenerator.js'
 import { useChecklist } from './hooks/useChecklist.js'
 import Sidebar from './components/Sidebar.jsx'
 import ArticleList from './components/ArticleList.jsx'
+import HubPage from './components/HubPage.jsx'
 
 export default function App() {
   const { toggle, markAll, isChecked, countChecked, totalChecked } = useChecklist()
-  const [selected, setSelected] = useState({ branchCode: null, seriesId: null })
+  // view: null | 'series' | 'hubs'
+  const [selected, setSelected] = useState({ branchCode: null, view: null, seriesId: null })
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const handleSelect = useCallback((sel) => {
@@ -19,7 +21,7 @@ export default function App() {
     ? BRANCHES.find(b => b.code === selected.branchCode)
     : null
 
-  const currentSeries = currentBranch && selected.seriesId != null
+  const currentSeries = currentBranch && selected.view === 'series' && selected.seriesId != null
     ? currentBranch.series.find(s => s.id === selected.seriesId)
     : null
 
@@ -34,6 +36,38 @@ export default function App() {
   )
 
   const pct = grandTotal > 0 ? Math.round((totalChecked / grandTotal) * 100) : 0
+
+  function renderMain() {
+    if (currentBranch && selected.view === 'hubs') {
+      return (
+        <HubPage
+          key={`${selected.branchCode}-hubs`}
+          branch={currentBranch}
+          onOpenSidebar={() => setSidebarOpen(true)}
+        />
+      )
+    }
+    if (currentBranch && currentSeries) {
+      return (
+        <ArticleList
+          key={`${selected.branchCode}-${selected.seriesId}`}
+          branch={currentBranch}
+          series={currentSeries}
+          isChecked={isChecked}
+          toggle={toggle}
+          markAll={markAll}
+          onOpenSidebar={() => setSidebarOpen(true)}
+        />
+      )
+    }
+    return (
+      <Welcome
+        onSelect={handleSelect}
+        countChecked={countChecked}
+        onOpenSidebar={() => setSidebarOpen(true)}
+      />
+    )
+  }
 
   return (
     <div className="app">
@@ -69,23 +103,7 @@ export default function App() {
         />
 
         <main className="main-content">
-          {currentBranch && currentSeries ? (
-            <ArticleList
-              key={`${selected.branchCode}-${selected.seriesId}`}
-              branch={currentBranch}
-              series={currentSeries}
-              isChecked={isChecked}
-              toggle={toggle}
-              markAll={markAll}
-              onOpenSidebar={() => setSidebarOpen(true)}
-            />
-          ) : (
-            <Welcome
-              onSelect={handleSelect}
-              countChecked={countChecked}
-              onOpenSidebar={() => setSidebarOpen(true)}
-            />
-          )}
+          {renderMain()}
         </main>
       </div>
     </div>
@@ -98,8 +116,8 @@ function Welcome({ onSelect, countChecked, onOpenSidebar }) {
       <div className="welcome-logo">📋</div>
       <div className="welcome-title">SCP全支部 読破チェックリスト</div>
       <div className="welcome-sub">
-        16支部・約24,000件以上の原作SCP記事を網羅。<br />
-        支部・シリーズを選択してチェックを記録できます。<br />
+        16支部・SCP記事・依談・ハブを網羅。<br />
+        支部を選んでSCP番号一覧またはハブページへ。<br />
         <span className="welcome-hint" onClick={onOpenSidebar}>≡ メニューから支部を選択</span>
       </div>
 
@@ -116,16 +134,13 @@ function Welcome({ onSelect, countChecked, onOpenSidebar }) {
             <button
               key={branch.code}
               className="welcome-branch-card"
-              onClick={() => onSelect({ branchCode: branch.code, seriesId: branch.series[0]?.id ?? null })}
+              onClick={() => onSelect({ branchCode: branch.code, view: 'series', seriesId: branch.series[0]?.id ?? null })}
             >
               <div className="wc-code">{branch.code}</div>
               <div className="wc-name">{branch.nativeName}</div>
               <div className="wc-stats">{branch.language} · {done}/{total} ({pct}%)</div>
               <div className="wc-progress">
-                <div
-                  className="wc-progress-fill"
-                  style={{ width: `${pct}%`, background: branch.accent }}
-                />
+                <div className="wc-progress-fill" style={{ width: `${pct}%`, background: branch.accent }} />
               </div>
             </button>
           )

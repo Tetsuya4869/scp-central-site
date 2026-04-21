@@ -3,7 +3,7 @@ import { BRANCHES } from '../data/branches.js'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
 
 export default function Sidebar({ selected, onSelect, countChecked, isOpen }) {
-  const { branchCode, seriesId } = selected
+  const { branchCode, view, seriesId } = selected
 
   return (
     <nav className={`sidebar${isOpen ? ' sidebar-open' : ''}`}>
@@ -14,6 +14,7 @@ export default function Sidebar({ selected, onSelect, countChecked, isOpen }) {
           branch={branch}
           isOpen={branchCode === branch.code}
           activeSeriesId={branchCode === branch.code ? seriesId : null}
+          activeView={branchCode === branch.code ? view : null}
           onSelect={onSelect}
           countChecked={countChecked}
         />
@@ -22,7 +23,7 @@ export default function Sidebar({ selected, onSelect, countChecked, isOpen }) {
   )
 }
 
-function BranchItem({ branch, isOpen, activeSeriesId, onSelect, countChecked }) {
+function BranchItem({ branch, isOpen, activeSeriesId, activeView, onSelect, countChecked }) {
   const allIds = useMemo(
     () => branch.series.flatMap(s =>
       generateSeriesArticles(branch.code, s.min, s.max).map(a => a.id)
@@ -36,10 +37,9 @@ function BranchItem({ branch, isOpen, activeSeriesId, onSelect, countChecked }) 
 
   function handleClick() {
     if (!isOpen) {
-      onSelect({ branchCode: branch.code, seriesId: branch.series[0]?.id ?? null })
+      onSelect({ branchCode: branch.code, view: 'series', seriesId: branch.series[0]?.id ?? null })
     } else {
-      // collapse without closing sidebar
-      onSelect({ branchCode: null, seriesId: null })
+      onSelect({ branchCode: null, view: null, seriesId: null })
     }
   }
 
@@ -67,34 +67,28 @@ function BranchItem({ branch, isOpen, activeSeriesId, onSelect, countChecked }) 
 
       {isOpen && (
         <div className="series-list">
+          {/* Hub navigation button */}
+          {branch.hubs.length > 0 && (
+            <div
+              className={`series-item hub-nav-item${activeView === 'hubs' ? ' active' : ''}`}
+              onClick={() => onSelect({ branchCode: branch.code, view: 'hubs', seriesId: null })}
+            >
+              <span className="series-label">📂 ハブ・特殊ページ</span>
+              <span className="series-count">{branch.hubs.reduce((s, c) => s + c.items.length, 0)}</span>
+            </div>
+          )}
+
+          {/* Series list */}
           {branch.series.map(s => (
             <div
               key={s.id}
-              className={`series-item${activeSeriesId === s.id ? ' active' : ''}`}
-              onClick={() => onSelect({ branchCode: branch.code, seriesId: s.id })}
+              className={`series-item${activeView === 'series' && activeSeriesId === s.id ? ' active' : ''}`}
+              onClick={() => onSelect({ branchCode: branch.code, view: 'series', seriesId: s.id })}
             >
               <span className="series-label">{s.label}</span>
               <SeriesCount branch={branch} series={s} countChecked={countChecked} />
             </div>
           ))}
-
-          {branch.special.length > 0 && (
-            <div className="special-section">
-              <div className="special-title">特殊ページ</div>
-              {branch.special.map(sp => (
-                <a
-                  key={sp.id}
-                  href={sp.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="special-item"
-                >
-                  <span className="special-icon">↗</span>
-                  {sp.label}
-                </a>
-              ))}
-            </div>
-          )}
         </div>
       )}
     </div>

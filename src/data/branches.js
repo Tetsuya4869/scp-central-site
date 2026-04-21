@@ -6,7 +6,16 @@
  *   'prefix-cn' -> /scp-cn-{n}
  *   'prefix-pl' -> /scp-pl-{n}
  *   'prefix-zh' -> /scp-zh-{n}
+ *
+ * hubs[].jpSlug: slug on scp-jp.wikidot.com
+ *   null  = no JP translation exists; link goes to branch's own domain
+ *   string = scp-jp.wikidot.com/{jpSlug}
  */
+
+const JP = 'http://scp-jp.wikidot.com'
+
+function jp(slug) { return `${JP}/${slug}` }
+
 export const BRANCHES = [
   {
     code: 'EN',
@@ -30,16 +39,35 @@ export const BRANCHES = [
       { id: 9,  label: 'Series IX',   min: 8000, max: 8999, hub: '/scp-series-9' },
       { id: 10, label: 'Series X',    min: 9000, max: 9999, hub: '/scp-series-10' },
     ],
-    special: [
-      { id: 'joke',      label: 'Joke SCPs',           url: 'http://scp-wiki.wikidot.com/joke-scps' },
-      { id: 'ex',        label: 'Explained SCPs',       url: 'http://scp-wiki.wikidot.com/scp-ex' },
-      { id: '001',       label: '001 Proposals',        url: 'http://scp-wiki.wikidot.com/scp-001' },
-      { id: 'anomalous', label: 'Anomalous Items Log',  url: 'http://scp-wiki.wikidot.com/log-of-anomalous-items' },
-      { id: 'locations', label: 'Unexplained Locations',url: 'http://scp-wiki.wikidot.com/log-of-unexplained-locations' },
-      { id: 'events',    label: 'Extranormal Events',   url: 'http://scp-wiki.wikidot.com/log-of-extranormal-events' },
-      { id: 'tales',     label: 'Foundation Tales',     url: 'http://scp-wiki.wikidot.com/foundation-tales' },
+    hubs: [
+      { cat: 'Tales・物語',
+        items: [
+          { id: 'tales',        label: '財団Tales（EN→JP翻訳）', url: jp('foundation-tales') },
+          { id: 'series-arch',  label: 'シリーズアーカイブ',       url: jp('series-archive') },
+        ]},
+      { cat: '特殊SCP',
+        items: [
+          { id: '001',          label: '001 Proposals',           url: jp('scp-001') },
+          { id: 'joke',         label: 'Joke SCPs',               url: jp('joke-scps') },
+          { id: 'ex',           label: 'Explained SCPs',          url: jp('scp-ex') },
+        ]},
+      { cat: 'ログ・記録',
+        items: [
+          { id: 'anomalous',    label: '異常物品記録',              url: jp('log-of-anomalous-items') },
+          { id: 'locations',    label: '未解明領域記録',             url: jp('log-of-unexplained-locations') },
+          { id: 'events',       label: '超常現象記録',              url: jp('log-of-extranormal-events') },
+        ]},
+      { cat: 'GoI・カノン',
+        items: [
+          { id: 'canon',        label: 'カノンハブ',                url: jp('canon-hub') },
+          { id: 'goi-formats',  label: 'GoIフォーマット',           url: jp('goi-formats') },
+          { id: 'goi',          label: '要注意団体',                url: jp('groups-of-interest') },
+          { id: 'mtf',          label: 'モバイル・タスクフォース',    url: jp('task-forces') },
+          { id: 'sites',        label: '収容施設一覧',              url: jp('secure-facilities-locations') },
+        ]},
     ],
   },
+
   {
     code: 'JP',
     name: 'SCP財団',
@@ -57,17 +85,42 @@ export const BRANCHES = [
       { id: 4, label: 'JP Series IV',  min: 3000, max: 3999, hub: '/scp-series-jp-4' },
       { id: 5, label: 'JP Series V',   min: 4000, max: 4999, hub: '/scp-series-jp-5' },
     ],
-    special: [
-      { id: 'joke',      label: 'ジョークSCP',            url: 'http://scp-jp.wikidot.com/joke-scps-jp' },
-      { id: 'ex',        label: 'Explained SCP-JP',       url: 'http://scp-jp.wikidot.com/scp-jp-ex' },
-      { id: '001',       label: '001-JP提言',              url: 'http://scp-jp.wikidot.com/scp-001-jp' },
-      { id: 'anomalous', label: '異常物品記録-JP',          url: 'http://scp-jp.wikidot.com/log-of-anomalous-items-jp' },
-      { id: 'locations', label: '未解明領域記録-JP',        url: 'http://scp-jp.wikidot.com/log-of-unexplained-locations-jp' },
-      { id: 'events',    label: '超常現象記録-JP',          url: 'http://scp-jp.wikidot.com/log-of-extranormal-events-jp' },
-      { id: 'tales',     label: '財団Tales-JP',            url: 'http://scp-jp.wikidot.com/foundation-tales-jp' },
-      { id: 'hall',      label: '殿堂入りコレクション',      url: 'http://scp-jp.wikidot.com/hall-of-fame-jp' },
+    hubs: [
+      { cat: 'Tales・物語',
+        items: [
+          { id: 'tales',       label: '財団Tales-JP',       url: jp('foundation-tales-jp') },
+        ]},
+      { cat: '特殊SCP',
+        items: [
+          { id: '001',         label: '001-JP提言',          url: jp('scp-001-jp') },
+          { id: 'joke',        label: 'ジョークSCP-JP',       url: jp('joke-scps-jp') },
+          { id: 'ex',          label: 'Explained SCP-JP',   url: jp('scp-jp-ex') },
+          { id: 'hall',        label: '殿堂入りコレクション',  url: jp('hall-of-fame-jp') },
+        ]},
+      { cat: 'ログ・記録',
+        items: [
+          { id: 'anomalous',   label: '異常物品記録-JP',      url: jp('log-of-anomalous-items-jp') },
+          { id: 'locations',   label: '未解明領域記録-JP',     url: jp('log-of-unexplained-locations-jp') },
+          { id: 'events',      label: '超常現象記録-JP',      url: jp('log-of-extranormal-events-jp') },
+        ]},
+      { cat: 'GoI・カノン',
+        items: [
+          { id: 'canon',       label: 'カノンハブ-JP',        url: jp('canon-hub-jp') },
+          { id: 'series-hub',  label: '連作ハブ-JP',          url: jp('series-hub-jp') },
+          { id: 'goi-format',  label: 'GoIフォーマット-JP',   url: jp('goi-format-jp') },
+          { id: 'goi',         label: '要注意団体-JP',        url: jp('groups-of-interest-jp') },
+          { id: 'mtf',         label: '機動部隊-JP',          url: jp('task-forces-jp') },
+          { id: 'sites',       label: '収容施設一覧-JP',       url: jp('secure-facilities-locations-jp') },
+        ]},
+      { cat: '翻訳（EN→JP）',
+        items: [
+          { id: 'en-tales',    label: 'EN Tales翻訳',        url: jp('foundation-tales') },
+          { id: 'en-canon',    label: 'ENカノン翻訳',         url: jp('canon-hub') },
+          { id: 'en-001',      label: 'EN 001提言翻訳',      url: jp('scp-001') },
+        ]},
     ],
   },
+
   {
     code: 'CN',
     name: 'SCP基金会',
@@ -85,11 +138,19 @@ export const BRANCHES = [
       { id: 4, label: 'CN Series IV',  min: 3000, max: 3999, hub: '/scp-series-cn-4' },
       { id: 5, label: 'CN Series V',   min: 4000, max: 4999, hub: '/scp-series-cn-5' },
     ],
-    special: [
-      { id: 'joke',  label: 'Joke SCPs-CN',      url: 'http://scp-wiki-cn.wikidot.com/joke-scps-cn' },
-      { id: 'tales', label: 'Foundation Tales',  url: 'http://scp-wiki-cn.wikidot.com/foundation-tales' },
+    hubs: [
+      { cat: 'Tales・物語',
+        items: [
+          { id: 'tales',       label: 'Foundation Tales（CN→JP翻訳）', url: jp('foundation-tales') },
+          { id: 'tales-list',  label: 'CN Tales一覧（JP）',           url: jp('tales-cn') },
+        ]},
+      { cat: '特殊SCP',
+        items: [
+          { id: 'joke',        label: 'Joke SCPs-CN（JP翻訳）',       url: jp('joke-scps-cn') },
+        ]},
     ],
   },
+
   {
     code: 'RU',
     name: 'SCP Фонд',
@@ -105,10 +166,14 @@ export const BRANCHES = [
       { id: 1, label: 'RU Series I',  min: 1000, max: 1999, hub: '/scp-list-ru' },
       { id: 2, label: 'RU Series II', min: 2000, max: 2999, hub: '/scp-list-ru' },
     ],
-    special: [
-      { id: 'list', label: 'SCP List RU', url: 'https://scpfoundation.net/scp-list-ru' },
+    hubs: [
+      { cat: 'Tales・物語',
+        items: [
+          { id: 'tales', label: 'RU Tales（JP翻訳）', url: jp('tales-ru') },
+        ]},
     ],
   },
+
   {
     code: 'KO',
     name: 'SCP 재단',
@@ -123,11 +188,18 @@ export const BRANCHES = [
       { id: 1, label: 'KO Series I',  min: 1,    max: 999,  hub: '/scp-series-ko' },
       { id: 2, label: 'KO Series II', min: 1000, max: 1999, hub: '/scp-series-ko-2' },
     ],
-    special: [
-      { id: 'joke',  label: 'Joke SCPs-KO',     url: 'http://scpko.wikidot.com/joke-scps-ko' },
-      { id: 'tales', label: 'Tales-KO',          url: 'http://scpko.wikidot.com/foundation-tales-ko' },
+    hubs: [
+      { cat: 'Tales・物語',
+        items: [
+          { id: 'tales', label: 'KO Tales（JP翻訳）', url: jp('tales-ko') },
+        ]},
+      { cat: '特殊SCP',
+        items: [
+          { id: 'joke',  label: 'Joke SCPs-KO（JP翻訳）', url: jp('joke-scps-ko') },
+        ]},
     ],
   },
+
   {
     code: 'ZH',
     name: 'SCP基金會',
@@ -142,11 +214,14 @@ export const BRANCHES = [
       { id: 1, label: 'ZH Series I',  min: 1,    max: 999,  hub: '/scp-series-zh' },
       { id: 2, label: 'ZH Series II', min: 1000, max: 1999, hub: '/scp-series-zh-2' },
     ],
-    special: [
-      { id: 'joke',  label: 'Joke SCPs-ZH',     url: 'http://scp-zh-tr.wikidot.com/joke-scps-zh' },
-      { id: 'tales', label: 'Tales-ZH',          url: 'http://scp-zh-tr.wikidot.com/foundation-tales-zh' },
+    hubs: [
+      { cat: 'Tales・物語',
+        items: [
+          { id: 'tales', label: 'ZH Tales（JP翻訳）', url: jp('tales-zh') },
+        ]},
     ],
   },
+
   {
     code: 'FR',
     name: 'Fondation SCP',
@@ -158,13 +233,17 @@ export const BRANCHES = [
     color: '#1a1a3a',
     accent: '#6a6ad9',
     series: [
-      { id: 1, label: 'FR Series I',  min: 1,   max: 499,  hub: '/liste-fr' },
-      { id: 2, label: 'FR Series II', min: 500,  max: 999,  hub: '/liste-fr' },
+      { id: 1, label: 'FR Series I',  min: 1,   max: 499, hub: '/liste-fr' },
+      { id: 2, label: 'FR Series II', min: 500, max: 999, hub: '/liste-fr' },
     ],
-    special: [
-      { id: 'tales', label: 'Tales-FR', url: 'http://fondationscp.wikidot.com/foundation-tales' },
+    hubs: [
+      { cat: 'Tales・物語',
+        items: [
+          { id: 'tales', label: 'FR Tales（JP翻訳）', url: jp('tales-fr') },
+        ]},
     ],
   },
+
   {
     code: 'PL',
     name: 'SCP Polska Filia',
@@ -176,13 +255,17 @@ export const BRANCHES = [
     color: '#3a1a2a',
     accent: '#d94a9a',
     series: [
-      { id: 1, label: 'PL Series I',  min: 1,   max: 499,  hub: '/lista-pl' },
-      { id: 2, label: 'PL Series II', min: 500,  max: 999,  hub: '/lista-pl' },
+      { id: 1, label: 'PL Series I',  min: 1,   max: 499, hub: '/lista-pl' },
+      { id: 2, label: 'PL Series II', min: 500, max: 999, hub: '/lista-pl' },
     ],
-    special: [
-      { id: 'list', label: 'Lista PL', url: 'http://scp-pl.wikidot.com/lista-pl' },
+    hubs: [
+      { cat: 'Tales・物語',
+        items: [
+          { id: 'tales', label: 'PL Tales（JP翻訳）', url: jp('tales-pl') },
+        ]},
     ],
   },
+
   {
     code: 'ES',
     name: 'La Fundación SCP',
@@ -194,13 +277,19 @@ export const BRANCHES = [
     color: '#3a2a1a',
     accent: '#d9844a',
     series: [
-      { id: 1, label: 'ES Series I',  min: 1,   max: 499,  hub: '/serie-scp-es' },
-      { id: 2, label: 'ES Series II', min: 500,  max: 999,  hub: '/serie-scp-es-2' },
-      { id: 3, label: 'ES Series III',min: 1000, max: 1499, hub: '/serie-scp-es-3' },
-      { id: 4, label: 'ES Series IV', min: 1500, max: 1999, hub: '/serie-scp-es-4' },
+      { id: 1, label: 'ES Series I',   min: 1,    max: 499,  hub: '/serie-scp-es' },
+      { id: 2, label: 'ES Series II',  min: 500,  max: 999,  hub: '/serie-scp-es-2' },
+      { id: 3, label: 'ES Series III', min: 1000, max: 1499, hub: '/serie-scp-es-3' },
+      { id: 4, label: 'ES Series IV',  min: 1500, max: 1999, hub: '/serie-scp-es-4' },
     ],
-    special: [],
+    hubs: [
+      { cat: 'Tales・物語',
+        items: [
+          { id: 'tales', label: 'ES Tales（JP翻訳）', url: jp('tales-es') },
+        ]},
+    ],
   },
+
   {
     code: 'TH',
     name: 'สถาบัน SCP',
@@ -212,14 +301,17 @@ export const BRANCHES = [
     color: '#2a2a1a',
     accent: '#d9d44a',
     series: [
-      { id: 1, label: 'TH Series I',  min: 1,   max: 499,  hub: '/scp-series-th' },
-      { id: 2, label: 'TH Series II', min: 500,  max: 999,  hub: '/scp-series-th' },
+      { id: 1, label: 'TH Series I',  min: 1,   max: 499, hub: '/scp-series-th' },
+      { id: 2, label: 'TH Series II', min: 500, max: 999, hub: '/scp-series-th' },
     ],
-    special: [
-      { id: 'joke',  label: 'Joke SCPs-TH', url: 'http://scp-th.wikidot.com/joke-scps-th' },
-      { id: 'tales', label: 'Tales-TH',     url: 'http://scp-th.wikidot.com/foundation-tales-th' },
+    hubs: [
+      { cat: 'Tales・物語',
+        items: [
+          { id: 'tales', label: 'TH Tales（JP翻訳）', url: jp('tales-th') },
+        ]},
     ],
   },
+
   {
     code: 'VN',
     name: 'Tổ Chức SCP',
@@ -231,14 +323,17 @@ export const BRANCHES = [
     color: '#1a3a2a',
     accent: '#4ad98a',
     series: [
-      { id: 1, label: 'VN Series I',  min: 1,   max: 499,  hub: '/scp-series-vn' },
-      { id: 2, label: 'VN Series II', min: 500,  max: 999,  hub: '/scp-series-vn-2' },
+      { id: 1, label: 'VN Series I',  min: 1,   max: 499, hub: '/scp-series-vn' },
+      { id: 2, label: 'VN Series II', min: 500, max: 999, hub: '/scp-series-vn-2' },
     ],
-    special: [
-      { id: 'joke',  label: 'Joke SCPs-VN', url: 'http://scp-vn.wikidot.com/joke-scps-vn' },
-      { id: 'tales', label: 'Tales-VN',     url: 'http://scp-vn.wikidot.com/foundation-tales-vn' },
+    hubs: [
+      { cat: 'Tales・物語',
+        items: [
+          { id: 'tales', label: 'VN Tales（JP翻訳）', url: jp('tales-vn') },
+        ]},
     ],
   },
+
   {
     code: 'DE',
     name: 'SCP auf Deutsch',
@@ -250,11 +345,17 @@ export const BRANCHES = [
     color: '#2a2a2a',
     accent: '#aaaaaa',
     series: [
-      { id: 1, label: 'DE Series I',  min: 1,   max: 499,  hub: '/scp-serie-de' },
-      { id: 2, label: 'DE Series II', min: 500,  max: 999,  hub: '/scp-serie-de' },
+      { id: 1, label: 'DE Series I',  min: 1,   max: 499, hub: '/scp-serie-de' },
+      { id: 2, label: 'DE Series II', min: 500, max: 999, hub: '/scp-serie-de' },
     ],
-    special: [],
+    hubs: [
+      { cat: 'Tales・物語',
+        items: [
+          { id: 'tales', label: 'DE Tales（JP翻訳）', url: jp('tales-de') },
+        ]},
+    ],
   },
+
   {
     code: 'IT',
     name: 'Fondazione SCP',
@@ -266,10 +367,16 @@ export const BRANCHES = [
     color: '#3a2a1a',
     accent: '#d9aa4a',
     series: [
-      { id: 1, label: 'IT Series I',  min: 1,   max: 499,  hub: '/scp-it-serie-i' },
+      { id: 1, label: 'IT Series I', min: 1, max: 499, hub: '/scp-it-serie-i' },
     ],
-    special: [],
+    hubs: [
+      { cat: 'Tales・物語',
+        items: [
+          { id: 'tales', label: 'IT Tales（JP翻訳）', url: jp('tales-it') },
+        ]},
+    ],
   },
+
   {
     code: 'PT',
     name: 'Fundação SCP',
@@ -281,11 +388,17 @@ export const BRANCHES = [
     color: '#1a3a1a',
     accent: '#4ad94a',
     series: [
-      { id: 1, label: 'PT Series I',  min: 1,   max: 249,  hub: '/series-1-pt' },
-      { id: 2, label: 'PT Series II', min: 250,  max: 499,  hub: '/series-2-pt' },
+      { id: 1, label: 'PT Series I',  min: 1,   max: 249, hub: '/series-1-pt' },
+      { id: 2, label: 'PT Series II', min: 250, max: 499, hub: '/series-2-pt' },
     ],
-    special: [],
+    hubs: [
+      { cat: 'Tales・物語',
+        items: [
+          { id: 'tales', label: 'PT Tales（JP翻訳）', url: jp('tales-pt') },
+        ]},
+    ],
   },
+
   {
     code: 'UA',
     name: 'Укр. Фонд SCP',
@@ -299,8 +412,14 @@ export const BRANCHES = [
     series: [
       { id: 1, label: 'UA Series I', min: 1, max: 499, hub: '/scp-series-ua' },
     ],
-    special: [],
+    hubs: [
+      { cat: 'Tales・物語',
+        items: [
+          { id: 'tales', label: 'UA Tales（JP翻訳）', url: jp('tales-ua') },
+        ]},
+    ],
   },
+
   {
     code: 'CS',
     name: 'SCP Nadace',
@@ -314,7 +433,12 @@ export const BRANCHES = [
     series: [
       { id: 1, label: 'CS Series I', min: 1, max: 199, hub: '/scp-series-cs' },
     ],
-    special: [],
+    hubs: [
+      { cat: 'Tales・物語',
+        items: [
+          { id: 'tales', label: 'CS Tales（JP翻訳）', url: jp('tales-cs') },
+        ]},
+    ],
   },
 ]
 
