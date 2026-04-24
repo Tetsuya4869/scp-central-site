@@ -592,15 +592,41 @@ html, body, #root {
   /* flexible */
 }
 
+.scp-num-cell {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  overflow: hidden;
+}
+
 .scp-designation {
   font-size: 13px;
   font-weight: bold;
   color: var(--text-1);
   font-family: var(--font-mono);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .article-row.is-read .scp-designation {
   color: var(--green-text);
+}
+
+.scp-title {
+  font-size: 11px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.article-row.is-read .scp-title {
+  color: var(--text-3);
+}
+
+.article-row:hover .scp-title {
+  color: var(--text-2);
 }
 
 /* Status badges */

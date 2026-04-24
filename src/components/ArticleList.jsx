@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
+import TITLES from '../data/titles.json'
 
 const PAGE_SIZE = 100
 
@@ -128,6 +129,8 @@ function ArticleRow({ article, read, onToggle }) {
     article.predicted ? 'is-predicted' : '',
   ].filter(Boolean).join(' ')
 
+  const title = TITLES[article.branchCode]?.[String(article.number)] ?? ''
+
   return (
     <tr className={rowClass}>
       <td className="article-td col-check">
@@ -139,7 +142,10 @@ function ArticleRow({ article, read, onToggle }) {
         />
       </td>
       <td className="article-td col-num">
-        <span className="scp-designation">{article.designation}</span>
+        <div className="scp-num-cell">
+          <span className="scp-designation">{article.designation}</span>
+          {title && <span className="scp-title">{title}</span>}
+        </div>
       </td>
       <td className="article-td col-badges">
         {article.predicted
