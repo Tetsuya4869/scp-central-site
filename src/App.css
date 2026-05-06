@@ -597,6 +597,15 @@ html, body, #root {
   align-items: baseline;
   gap: 8px;
   overflow: hidden;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.scp-num-cell:hover .scp-designation,
+.scp-num-cell:active .scp-designation {
+  color: var(--accent-bright);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .scp-designation {
@@ -656,32 +665,6 @@ html, body, #root {
   border: 1px solid #2a5a2a;
 }
 
-/* Link */
-.col-link {
-  width: 48px;
-  text-align: center;
-}
-
-.article-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  color: var(--text-3);
-  text-decoration: none;
-  font-size: 14px;
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
-  transition: all 0.1s;
-}
-
-.article-link:hover,
-.article-link:active {
-  color: var(--accent-bright);
-  border-color: var(--accent-dim);
-  background: var(--bg-2);
-}
 
 /* ── Pagination ── */
 
@@ -1060,10 +1043,6 @@ html, body, #root {
 
   .col-check {
     width: 40px;
-  }
-
-  .col-link {
-    width: 44px;
   }
 
   /* Pagination: hide middle page numbers, keep prev/next prominent */

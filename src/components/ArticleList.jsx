@@ -92,7 +92,6 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
               <th className="article-td col-check">✓</th>
               <th className="article-td col-num">No.</th>
               <th className="article-td col-badges">状態</th>
-              <th className="article-td col-link">↗</th>
             </tr>
           </thead>
           <tbody>
@@ -106,7 +105,7 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
             ))}
             {paginated.length === 0 && (
               <tr>
-                <td colSpan={4} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-3)' }}>
+                <td colSpan={3} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-3)' }}>
                   {filter === 'read' ? '読了記事なし' : '未読記事なし'}
                 </td>
               </tr>
@@ -142,10 +141,15 @@ function ArticleRow({ article, read, onToggle }) {
         />
       </td>
       <td className="article-td col-num">
-        <div className="scp-num-cell">
+        <a
+          className="scp-num-cell"
+          href={article.url}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <span className="scp-designation">{article.designation}</span>
           {title && <span className="scp-title">{title}</span>}
-        </div>
+        </a>
       </td>
       <td className="article-td col-badges">
         {article.predicted
@@ -154,17 +158,6 @@ function ArticleRow({ article, read, onToggle }) {
             ? <span className="badge badge-read">読了</span>
             : null
         }
-      </td>
-      <td className="article-td col-link">
-        <a
-          href={article.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="article-link"
-          title={`JP: ${article.url}`}
-        >
-          ↗
-        </a>
       </td>
     </tr>
   )
