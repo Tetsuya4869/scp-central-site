@@ -112,6 +112,11 @@ export const BRANCHES = [
           { id: 'mtf',         label: '機動部隊-JP',          url: jp('task-forces-jp') },
           { id: 'sites',       label: '収容施設一覧-JP',       url: jp('secure-facilities-locations-jp') },
         ]},
+      { cat: '連作ハブ（個別）',
+        items: [
+          { id: 'bounenkai',   label: '忘年会',               url: jp('bounenkai') },
+          { id: 'yidan-hub',   label: '依談ハブ',              url: jp('yidan-hub') },
+        ]},
       { cat: '翻訳（EN→JP）',
         items: [
           { id: 'en-tales',    label: 'EN Tales翻訳',        url: jp('foundation-tales') },
