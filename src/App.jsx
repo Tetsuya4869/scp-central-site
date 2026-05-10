@@ -28,6 +28,7 @@ export default function App() {
   const grandTotal = useMemo(
     () => BRANCHES.reduce((sum, b) =>
       sum + b.series.reduce((s2, sr) => {
+        if (sr.type === 'custom') return s2 + sr.articles.length
         const start = b.minNumber ? Math.max(sr.min, b.minNumber) : sr.min
         return s2 + (sr.max - start + 1)
       }, 0),
@@ -124,7 +125,9 @@ function Welcome({ onSelect, countChecked, onOpenSidebar }) {
       <div className="welcome-grid">
         {BRANCHES.map(branch => {
           const allIds = branch.series.flatMap(s =>
-            generateSeriesArticles(branch.code, s.min, s.max).map(a => a.id)
+            s.type === 'custom'
+              ? s.articles.map(a => a.id)
+              : generateSeriesArticles(branch.code, s.min, s.max).map(a => a.id)
           )
           const total = allIds.length
           const done = countChecked(allIds)
