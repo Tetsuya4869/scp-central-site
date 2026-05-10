@@ -26,7 +26,9 @@ export default function Sidebar({ selected, onSelect, countChecked, isOpen }) {
 function BranchItem({ branch, isOpen, activeSeriesId, activeView, onSelect, countChecked }) {
   const allIds = useMemo(
     () => branch.series.flatMap(s =>
-      generateSeriesArticles(branch.code, s.min, s.max).map(a => a.id)
+      s.type === 'custom'
+        ? s.articles.map(a => a.id)
+        : generateSeriesArticles(branch.code, s.min, s.max).map(a => a.id)
     ),
     [branch.code]
   )
@@ -97,8 +99,10 @@ function BranchItem({ branch, isOpen, activeSeriesId, activeView, onSelect, coun
 
 function SeriesCount({ branch, series, countChecked }) {
   const ids = useMemo(
-    () => generateSeriesArticles(branch.code, series.min, series.max).map(a => a.id),
-    [branch.code, series.min, series.max]
+    () => series.type === 'custom'
+      ? series.articles.map(a => a.id)
+      : generateSeriesArticles(branch.code, series.min, series.max).map(a => a.id),
+    [branch.code, series]
   )
   const done = countChecked(ids)
   return (

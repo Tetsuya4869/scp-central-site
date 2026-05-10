@@ -9,8 +9,10 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
   const [filter, setFilter] = useState('all')
 
   const allArticles = useMemo(
-    () => generateSeriesArticles(branch.code, series.min, series.max),
-    [branch.code, series.min, series.max]
+    () => series.type === 'custom'
+      ? series.articles.map(a => ({ ...a, predicted: false }))
+      : generateSeriesArticles(branch.code, series.min, series.max),
+    [branch.code, series]
   )
 
   const allIds = useMemo(() => allArticles.map(a => a.id), [allArticles])
