@@ -2,12 +2,15 @@ import { useState, useMemo, useCallback } from 'react'
 import { BRANCHES } from './data/branches.js'
 import { generateSeriesArticles } from './utils/urlGenerator.js'
 import { useChecklist } from './hooks/useChecklist.js'
+import { useFavorites } from './hooks/useFavorites.js'
 import Sidebar from './components/Sidebar.jsx'
 import ArticleList from './components/ArticleList.jsx'
 import HubPage from './components/HubPage.jsx'
+import FavoritesPage from './components/FavoritesPage.jsx'
 
 export default function App() {
   const { toggle, markAll, isChecked, countChecked, totalChecked } = useChecklist()
+  const { favorites, toggleFavorite, isFavorite } = useFavorites()
   // view: null | 'series' | 'hubs'
   const [selected, setSelected] = useState({ branchCode: null, view: null, seriesId: null })
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -39,6 +42,16 @@ export default function App() {
   const pct = grandTotal > 0 ? Math.round((totalChecked / grandTotal) * 100) : 0
 
   function renderMain() {
+    if (selected.view === 'favorites') {
+      return (
+        <FavoritesPage
+          key="favorites"
+          favorites={favorites}
+          toggleFavorite={toggleFavorite}
+          onOpenSidebar={() => setSidebarOpen(true)}
+        />
+      )
+    }
     if (currentBranch && selected.view === 'hubs') {
       return (
         <HubPage
@@ -58,6 +71,8 @@ export default function App() {
           toggle={toggle}
           markAll={markAll}
           onOpenSidebar={() => setSidebarOpen(true)}
+          isFavorite={isFavorite}
+          toggleFavorite={toggleFavorite}
         />
       )
     }
@@ -101,6 +116,7 @@ export default function App() {
           onSelect={handleSelect}
           countChecked={countChecked}
           isOpen={sidebarOpen}
+          favCount={favorites.size}
         />
 
         <main className="main-content">

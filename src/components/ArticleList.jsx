@@ -4,7 +4,7 @@ import TITLES from '../data/titles.json'
 
 const PAGE_SIZE = 100
 
-export default function ArticleList({ branch, series, isChecked, toggle, markAll, onOpenSidebar }) {
+export default function ArticleList({ branch, series, isChecked, toggle, markAll, onOpenSidebar, isFavorite, toggleFavorite }) {
   const [page, setPage] = useState(1)
   const [filter, setFilter] = useState('all')
 
@@ -94,6 +94,7 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
               <th className="article-td col-check">✓</th>
               <th className="article-td col-num">No.</th>
               <th className="article-td col-badges">状態</th>
+              <th className="article-td col-fav">★</th>
             </tr>
           </thead>
           <tbody>
@@ -103,11 +104,13 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
                 article={article}
                 read={isChecked(article.id)}
                 onToggle={() => toggle(article.id)}
+                favorited={isFavorite(article.id)}
+                onFavorite={() => toggleFavorite(article.id)}
               />
             ))}
             {paginated.length === 0 && (
               <tr>
-                <td colSpan={3} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-3)' }}>
+                <td colSpan={4} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-3)' }}>
                   {filter === 'read' ? '読了記事なし' : '未読記事なし'}
                 </td>
               </tr>
@@ -123,7 +126,7 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
   )
 }
 
-function ArticleRow({ article, read, onToggle }) {
+function ArticleRow({ article, read, onToggle, favorited, onFavorite }) {
   const rowClass = [
     'article-row',
     read ? 'is-read' : '',
@@ -160,6 +163,15 @@ function ArticleRow({ article, read, onToggle }) {
             ? <span className="badge badge-read">読了</span>
             : null
         }
+      </td>
+      <td className="article-td col-fav">
+        <button
+          className={`fav-btn${favorited ? ' is-fav' : ''}`}
+          onClick={onFavorite}
+          title={favorited ? 'お気に入り解除' : 'お気に入り追加'}
+        >
+          ★
+        </button>
       </td>
     </tr>
   )

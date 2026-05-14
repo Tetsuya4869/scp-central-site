@@ -2,11 +2,18 @@ import { useMemo } from 'react'
 import { BRANCHES } from '../data/branches.js'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
 
-export default function Sidebar({ selected, onSelect, countChecked, isOpen }) {
+export default function Sidebar({ selected, onSelect, countChecked, isOpen, favCount }) {
   const { branchCode, view, seriesId } = selected
 
   return (
     <nav className={`sidebar${isOpen ? ' sidebar-open' : ''}`}>
+      <div
+        className={`fav-nav-item${view === 'favorites' && !branchCode ? ' active' : ''}`}
+        onClick={() => onSelect({ branchCode: null, view: 'favorites', seriesId: null })}
+      >
+        <span className="fav-nav-label">⭐ お気に入り</span>
+        <span className="series-count">{favCount}</span>
+      </div>
       <div className="sidebar-title">全支部一覧 · ALL BRANCHES</div>
       {BRANCHES.map(branch => (
         <BranchItem
