@@ -1128,9 +1128,9 @@ html, body, #root {
   /* Sidebar becomes a fixed drawer */
   .sidebar {
     position: fixed;
-    top: 0;
+    top: var(--header-height);
     left: 0;
-    height: 100dvh;
+    height: calc(100dvh - var(--header-height));
     width: min(var(--sidebar-width), 85vw);
     z-index: 100;
     transform: translateX(-100%);
