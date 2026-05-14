@@ -956,6 +956,164 @@ html, body, #root {
   border-bottom: 2px solid var(--border);
 }
 
+/* ── Favorites nav in sidebar ── */
+.fav-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 2px solid var(--border);
+  transition: background 0.1s;
+  color: var(--text-2);
+}
+
+.fav-nav-item:hover {
+  background: var(--bg-2);
+}
+
+.fav-nav-item.active {
+  background: var(--bg-2);
+  color: #f5c518;
+}
+
+.fav-nav-label {
+  font-size: 13px;
+  font-weight: bold;
+}
+
+/* ── Favorite button in article row ── */
+.col-fav {
+  width: 40px;
+  text-align: center;
+}
+
+.fav-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-3);
+  padding: 4px;
+  border-radius: 3px;
+  transition: color 0.1s, transform 0.1s;
+  line-height: 1;
+}
+
+.fav-btn:hover {
+  color: #f5c518;
+  transform: scale(1.2);
+}
+
+.fav-btn.is-fav {
+  color: #f5c518;
+}
+
+/* ── Favorites page ── */
+.fav-page {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.fav-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fav-section-title {
+  font-size: 13px;
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.fav-branch-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #fff;
+  font-family: var(--font-mono);
+}
+
+.fav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fav-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  transition: background 0.1s;
+}
+
+.fav-row:hover {
+  background: var(--bg-2);
+}
+
+.fav-link {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  text-decoration: none;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.fav-designation {
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.fav-link:hover .fav-designation {
+  color: var(--accent-bright);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.fav-title {
+  font-size: 11px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.fav-remove-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #f5c518;
+  padding: 4px;
+  border-radius: 3px;
+  transition: color 0.1s, transform 0.1s;
+  flex-shrink: 0;
+}
+
+.fav-remove-btn:hover {
+  color: var(--text-3);
+  transform: scale(1.1);
+}
+
 /* ══════════════════════════════════════════
    MOBILE  (≤ 768px)
    ══════════════════════════════════════════ */
