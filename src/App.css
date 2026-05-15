@@ -35,6 +35,8 @@
 
 html, body, #root {
   height: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   background: var(--bg-0);
   color: var(--text-1);
   font-family: var(--font-mono);
@@ -1201,6 +1203,24 @@ html, body, #root {
 
   .col-check {
     width: 40px;
+  }
+
+  /* Allow SCP name/title to wrap instead of pushing table wide */
+  .scp-num-cell {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .scp-designation {
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .scp-title {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
   }
 
   /* Pagination: hide middle page numbers, keep prev/next prominent */
