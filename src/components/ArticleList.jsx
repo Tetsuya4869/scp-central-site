@@ -4,7 +4,12 @@ import TITLES from '../data/titles.json'
 
 const PAGE_SIZE = 100
 
-export default function ArticleList({ branch, series, isChecked, toggle, markAll, onOpenSidebar, isFavorite, toggleFavorite }) {
+function formatDate(date) {
+  if (!date) return null
+  return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
+}
+
+export default function ArticleList({ branch, series, isChecked, toggle, markAll, onOpenSidebar, isFavorite, toggleFavorite, getMemo, setMemo, getReadDate }) {
   const [page, setPage] = useState(1)
   const [filter, setFilter] = useState('all')
 
@@ -95,6 +100,7 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
               <th className="article-td col-num">No.</th>
               <th className="article-td col-badges">状態</th>
               <th className="article-td col-fav">★</th>
+              <th className="article-td col-memo">✎</th>
             </tr>
           </thead>
           <tbody>
@@ -106,11 +112,14 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
                 onToggle={() => toggle(article.id)}
                 favorited={isFavorite(article.id)}
                 onFavorite={() => toggleFavorite(article.id)}
+                memo={getMemo(article.id)}
+                onMemoChange={setMemo}
+                readDate={getReadDate(article.id)}
               />
             ))}
             {paginated.length === 0 && (
               <tr>
-                <td colSpan={4} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-3)' }}>
+                <td colSpan={5} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-3)' }}>
                   {filter === 'read' ? '読了記事なし' : '未読記事なし'}
                 </td>
               </tr>
@@ -126,7 +135,9 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
   )
 }
 
-function ArticleRow({ article, read, onToggle, favorited, onFavorite }) {
+function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate }) {
+  const [memoOpen, setMemoOpen] = useState(false)
+
   const rowClass = [
     'article-row',
     read ? 'is-read' : '',
@@ -134,46 +145,76 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite }) {
   ].filter(Boolean).join(' ')
 
   const title = TITLES[article.branchCode]?.[String(article.number)] ?? ''
+  const hasMemo = memo.length > 0
 
   return (
-    <tr className={rowClass}>
-      <td className="article-td col-check">
-        <input
-          type="checkbox"
-          className="scp-checkbox"
-          checked={read}
-          onChange={onToggle}
-        />
-      </td>
-      <td className="article-td col-num">
-        <a
-          className="scp-num-cell"
-          href={article.url}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <span className="scp-designation">{article.designation}</span>
-          {title && <span className="scp-title">{title}</span>}
-        </a>
-      </td>
-      <td className="article-td col-badges">
-        {article.predicted
-          ? <span className="badge badge-predicted">予測</span>
-          : read
-            ? <span className="badge badge-read">読了</span>
-            : null
-        }
-      </td>
-      <td className="article-td col-fav">
-        <button
-          className={`fav-btn${favorited ? ' is-fav' : ''}`}
-          onClick={onFavorite}
-          title={favorited ? 'お気に入り解除' : 'お気に入り追加'}
-        >
-          ★
-        </button>
-      </td>
-    </tr>
+    <>
+      <tr className={rowClass}>
+        <td className="article-td col-check">
+          <input
+            type="checkbox"
+            className="scp-checkbox"
+            checked={read}
+            onChange={onToggle}
+          />
+        </td>
+        <td className="article-td col-num">
+          <a
+            className="scp-num-cell"
+            href={article.url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span className="scp-designation">{article.designation}</span>
+            {title && <span className="scp-title">{title}</span>}
+          </a>
+        </td>
+        <td className="article-td col-badges">
+          {article.predicted
+            ? <span className="badge badge-predicted">予測</span>
+            : read
+              ? <span className="badge badge-read">読了</span>
+              : null
+          }
+        </td>
+        <td className="article-td col-fav">
+          <button
+            className={`fav-btn${favorited ? ' is-fav' : ''}`}
+            onClick={onFavorite}
+            title={favorited ? 'お気に入り解除' : 'お気に入り追加'}
+          >
+            ★
+          </button>
+        </td>
+        <td className="article-td col-memo">
+          <button
+            className={`memo-btn${hasMemo ? ' has-memo' : ''}${memoOpen ? ' is-open' : ''}`}
+            onClick={() => setMemoOpen(v => !v)}
+            title={hasMemo ? 'メモあり（クリックで編集）' : 'メモを追加'}
+          >
+            ✎
+          </button>
+        </td>
+      </tr>
+      {memoOpen && (
+        <tr className="memo-expand-row">
+          <td colSpan={5} className="memo-expand-cell">
+            <div className="memo-expand">
+              {readDate && (
+                <span className="memo-readdate">📅 {formatDate(readDate)} 読了</span>
+              )}
+              <input
+                className="memo-input"
+                type="text"
+                placeholder="メモを入力..."
+                value={memo}
+                onChange={e => onMemoChange(article.id, e.target.value)}
+              />
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
   )
 }
 

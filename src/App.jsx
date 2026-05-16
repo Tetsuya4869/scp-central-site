@@ -3,14 +3,32 @@ import { BRANCHES } from './data/branches.js'
 import { generateSeriesArticles } from './utils/urlGenerator.js'
 import { useChecklist } from './hooks/useChecklist.js'
 import { useFavorites } from './hooks/useFavorites.js'
+import { useMemos } from './hooks/useMemos.js'
+import { useReadDates } from './hooks/useReadDates.js'
 import Sidebar from './components/Sidebar.jsx'
 import ArticleList from './components/ArticleList.jsx'
 import HubPage from './components/HubPage.jsx'
 import FavoritesPage from './components/FavoritesPage.jsx'
+import SearchPage from './components/SearchPage.jsx'
 
 export default function App() {
   const { toggle, markAll, isChecked, countChecked, totalChecked } = useChecklist()
   const { favorites, toggleFavorite, isFavorite } = useFavorites()
+  const { getMemo, setMemo } = useMemos()
+  const { setReadDate, clearReadDate, getReadDate } = useReadDates()
+
+  const wrappedToggle = useCallback((id) => {
+    const willBeChecked = !isChecked(id)
+    toggle(id)
+    if (willBeChecked) setReadDate(id)
+    else clearReadDate(id)
+  }, [toggle, isChecked, setReadDate, clearReadDate])
+
+  const wrappedMarkAll = useCallback((ids, value) => {
+    markAll(ids, value)
+    if (value) ids.forEach(id => setReadDate(id))
+    else ids.forEach(id => clearReadDate(id))
+  }, [markAll, setReadDate, clearReadDate])
   // view: null | 'series' | 'hubs'
   const [selected, setSelected] = useState({ branchCode: null, view: null, seriesId: null })
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -42,6 +60,17 @@ export default function App() {
   const pct = grandTotal > 0 ? Math.round((totalChecked / grandTotal) * 100) : 0
 
   function renderMain() {
+    if (selected.view === 'search') {
+      return (
+        <SearchPage
+          key="search"
+          onNavigate={handleSelect}
+          onOpenSidebar={() => setSidebarOpen(true)}
+          isChecked={isChecked}
+          isFavorite={isFavorite}
+        />
+      )
+    }
     if (selected.view === 'favorites') {
       return (
         <FavoritesPage
@@ -68,11 +97,14 @@ export default function App() {
           branch={currentBranch}
           series={currentSeries}
           isChecked={isChecked}
-          toggle={toggle}
-          markAll={markAll}
+          toggle={wrappedToggle}
+          markAll={wrappedMarkAll}
           onOpenSidebar={() => setSidebarOpen(true)}
           isFavorite={isFavorite}
           toggleFavorite={toggleFavorite}
+          getMemo={getMemo}
+          setMemo={setMemo}
+          getReadDate={getReadDate}
         />
       )
     }
