@@ -8,6 +8,12 @@ export default function Sidebar({ selected, onSelect, countChecked, isOpen, favC
   return (
     <nav className={`sidebar${isOpen ? ' sidebar-open' : ''}`}>
       <div
+        className={`fav-nav-item${view === 'search' && !branchCode ? ' active' : ''}`}
+        onClick={() => onSelect({ branchCode: null, view: 'search', seriesId: null })}
+      >
+        <span className="fav-nav-label">🔍 全体検索</span>
+      </div>
+      <div
         className={`fav-nav-item${view === 'favorites' && !branchCode ? ' active' : ''}`}
         onClick={() => onSelect({ branchCode: null, view: 'favorites', seriesId: null })}
       >
