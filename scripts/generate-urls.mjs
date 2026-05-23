@@ -8,7 +8,7 @@ const seen = new Set()
 const urls = []
 
 function add(url) {
-  if (url && !seen.has(url)) {
+  if (url && !seen.has(url) && url.startsWith('http://scp-jp.wikidot.com/')) {
     seen.add(url)
     urls.push(url)
   }
