@@ -1331,149 +1331,15 @@ html, body, #root {
   font-size: 13px;
 }
 
-/* ── Branch Home Screen (mobile drill-down) ── */
-
-.branch-home-screen {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.bhs-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-  transition: background 0.1s;
-  min-height: 56px;
-}
-
-.bhs-row:hover,
-.bhs-row:active {
-  background: var(--bg-2);
-}
-
-.bhs-hubs-row .bhs-row-icon {
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.bhs-row-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
-.bhs-row-top {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.bhs-row-label {
-  font-size: 13px;
-  color: var(--text-1);
-}
-
-.bhs-row-count {
-  font-size: 11px;
-  color: var(--text-3);
-}
-
-.bhs-progress {
-  height: 3px;
-  background: var(--bg-3);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.bhs-progress-fill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.3s;
-}
-
-.bhs-chevron {
-  font-size: 20px;
-  color: var(--text-3);
-  flex-shrink: 0;
-  line-height: 1;
-}
-
-/* ── Bottom Tab Bar (mobile only) ── */
-
-.bottom-tabs {
-  display: none; /* shown via media query */
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: calc(56px + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
-  background: var(--bg-1);
-  border-top: 2px solid var(--accent-dim);
-  z-index: 200;
-  flex-shrink: 0;
-}
-
-.btab {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-3);
-  font-family: var(--font-mono);
-  padding: 6px 4px;
-  transition: color 0.15s;
-  min-height: 44px;
-}
-
-.btab:active {
-  background: var(--bg-2);
-}
-
-.btab.active {
-  color: var(--accent-bright);
-}
-
-.btab-icon {
-  font-size: 18px;
-  line-height: 1;
-}
-
-.btab-label {
-  font-size: 10px;
-  letter-spacing: 0.02em;
-}
-
 /* ══════════════════════════════════════════
    MOBILE  (≤ 768px)
    ══════════════════════════════════════════ */
 
 @media (max-width: 768px) {
 
-  /* Hide hamburger — bottom tabs replace sidebar nav on mobile */
+  /* Show hamburger */
   .hamburger {
-    display: none;
-  }
-
-  /* Show bottom tabs */
-  .bottom-tabs {
     display: flex;
-  }
-
-  /* Push main content up so bottom tabs don't cover it */
-  .main-content {
-    padding-bottom: calc(56px + env(safe-area-inset-bottom));
   }
 
   /* Sidebar becomes a fixed drawer */
