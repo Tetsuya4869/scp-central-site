@@ -1,9 +1,35 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { BRANCHES } from '../data/branches.js'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
+import { exportData, importData } from '../utils/dataBackup.js'
 
 export default function Sidebar({ selected, onSelect, countChecked, isOpen, favCount }) {
   const { branchCode, view, seriesId } = selected
+  const fileInputRef = useRef(null)
+
+  function handleExport() {
+    exportData()
+  }
+
+  function handleImportClick() {
+    fileInputRef.current?.click()
+  }
+
+  function handleFileChange(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      try {
+        importData(ev.target.result)
+        window.location.reload()
+      } catch {
+        alert('インポートに失敗しました。ファイルを確認してください。')
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
 
   return (
     <nav className={`sidebar${isOpen ? ' sidebar-open' : ''}`}>
@@ -32,6 +58,19 @@ export default function Sidebar({ selected, onSelect, countChecked, isOpen, favC
           countChecked={countChecked}
         />
       ))}
+
+      <div className="backup-section">
+        <div className="backup-title">データ管理</div>
+        <button className="backup-btn" onClick={handleExport}>📤 エクスポート</button>
+        <button className="backup-btn" onClick={handleImportClick}>📥 インポート</button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
+      </div>
     </nav>
   )
 }

@@ -953,6 +953,48 @@ html, body, #root {
   text-align: center;
 }
 
+/* ── Backup section in sidebar ── */
+.backup-section {
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  padding: 10px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.backup-title {
+  font-size: 9px;
+  color: var(--text-3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.backup-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-light);
+  border-radius: 3px;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.1s;
+  text-align: left;
+  width: 100%;
+}
+
+.backup-btn:hover,
+.backup-btn:active {
+  border-color: var(--accent-dim);
+  color: var(--accent-bright);
+  background: var(--bg-3);
+}
+
 /* Hub nav item in sidebar */
 .hub-nav-item {
   border-bottom: 2px solid var(--border);
