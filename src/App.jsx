@@ -5,20 +5,17 @@ import { useChecklist } from './hooks/useChecklist.js'
 import { useFavorites } from './hooks/useFavorites.js'
 import { useMemos } from './hooks/useMemos.js'
 import { useReadDates } from './hooks/useReadDates.js'
-import { useIsMobile } from './hooks/useIsMobile.js'
 import Sidebar from './components/Sidebar.jsx'
 import ArticleList from './components/ArticleList.jsx'
 import HubPage from './components/HubPage.jsx'
 import FavoritesPage from './components/FavoritesPage.jsx'
 import SearchPage from './components/SearchPage.jsx'
-import BranchHomeScreen from './components/BranchHomeScreen.jsx'
 
 export default function App() {
   const { toggle, markAll, isChecked, countChecked, totalChecked } = useChecklist()
   const { favorites, toggleFavorite, isFavorite } = useFavorites()
   const { getMemo, setMemo } = useMemos()
   const { setReadDate, clearReadDate, getReadDate } = useReadDates()
-  const isMobile = useIsMobile()
 
   const wrappedToggle = useCallback((id) => {
     const willBeChecked = !isChecked(id)
@@ -32,7 +29,7 @@ export default function App() {
     if (value) ids.forEach(id => setReadDate(id))
     else ids.forEach(id => clearReadDate(id))
   }, [markAll, setReadDate, clearReadDate])
-
+  // view: null | 'series' | 'hubs'
   const [selected, setSelected] = useState({ branchCode: null, view: null, seriesId: null })
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -40,16 +37,6 @@ export default function App() {
     setSelected(sel)
     setSidebarOpen(false)
   }, [])
-
-  // On mobile: branch card → branch-home; on desktop: branch card → first series
-  const handleBranchSelect = useCallback((branchCode) => {
-    if (isMobile) {
-      handleSelect({ branchCode, view: 'branch-home', seriesId: null })
-    } else {
-      const branch = BRANCHES.find(b => b.code === branchCode)
-      handleSelect({ branchCode, view: 'series', seriesId: branch?.series[0]?.id ?? null })
-    }
-  }, [isMobile, handleSelect])
 
   const currentBranch = selected.branchCode
     ? BRANCHES.find(b => b.code === selected.branchCode)
@@ -71,15 +58,6 @@ export default function App() {
   )
 
   const pct = grandTotal > 0 ? Math.round((totalChecked / grandTotal) * 100) : 0
-
-  // Back handler: from series/hubs → branch-home on mobile, else open sidebar
-  const backToBranchHome = useCallback(() => {
-    if (isMobile && selected.branchCode) {
-      handleSelect({ branchCode: selected.branchCode, view: 'branch-home', seriesId: null })
-    } else {
-      setSidebarOpen(true)
-    }
-  }, [isMobile, selected.branchCode, handleSelect])
 
   function renderMain() {
     if (selected.view === 'search') {
@@ -103,24 +81,12 @@ export default function App() {
         />
       )
     }
-    if (isMobile && selected.view === 'branch-home' && currentBranch) {
-      return (
-        <BranchHomeScreen
-          key={`${selected.branchCode}-home`}
-          branch={currentBranch}
-          countChecked={countChecked}
-          onSelectSeries={(seriesId) => handleSelect({ branchCode: selected.branchCode, view: 'series', seriesId })}
-          onSelectHubs={() => handleSelect({ branchCode: selected.branchCode, view: 'hubs' })}
-          onBack={() => handleSelect({ branchCode: null, view: null, seriesId: null })}
-        />
-      )
-    }
     if (currentBranch && selected.view === 'hubs') {
       return (
         <HubPage
           key={`${selected.branchCode}-hubs`}
           branch={currentBranch}
-          onOpenSidebar={backToBranchHome}
+          onOpenSidebar={() => setSidebarOpen(true)}
         />
       )
     }
@@ -133,7 +99,7 @@ export default function App() {
           isChecked={isChecked}
           toggle={wrappedToggle}
           markAll={wrappedMarkAll}
-          onOpenSidebar={backToBranchHome}
+          onOpenSidebar={() => setSidebarOpen(true)}
           isFavorite={isFavorite}
           toggleFavorite={toggleFavorite}
           getMemo={getMemo}
@@ -144,19 +110,12 @@ export default function App() {
     }
     return (
       <Welcome
-        onSelectBranch={handleBranchSelect}
+        onSelect={handleSelect}
         countChecked={countChecked}
         onOpenSidebar={() => setSidebarOpen(true)}
       />
     )
   }
-
-  // Bottom tab active state
-  const activeTab = (() => {
-    if (selected.view === 'favorites') return 'favorites'
-    if (selected.view === 'search') return 'search'
-    return 'branches'
-  })()
 
   return (
     <div className="app">
@@ -196,37 +155,11 @@ export default function App() {
           {renderMain()}
         </main>
       </div>
-
-      {isMobile && (
-        <nav className="bottom-tabs">
-          <button
-            className={`btab${activeTab === 'branches' ? ' active' : ''}`}
-            onClick={() => handleSelect({ branchCode: null, view: null, seriesId: null })}
-          >
-            <span className="btab-icon">≡</span>
-            <span className="btab-label">支部</span>
-          </button>
-          <button
-            className={`btab${activeTab === 'favorites' ? ' active' : ''}`}
-            onClick={() => handleSelect({ branchCode: null, view: 'favorites', seriesId: null })}
-          >
-            <span className="btab-icon">⭐</span>
-            <span className="btab-label">お気に入り</span>
-          </button>
-          <button
-            className={`btab${activeTab === 'search' ? ' active' : ''}`}
-            onClick={() => handleSelect({ branchCode: null, view: 'search', seriesId: null })}
-          >
-            <span className="btab-icon">🔍</span>
-            <span className="btab-label">検索</span>
-          </button>
-        </nav>
-      )}
     </div>
   )
 }
 
-function Welcome({ onSelectBranch, countChecked, onOpenSidebar }) {
+function Welcome({ onSelect, countChecked, onOpenSidebar }) {
   return (
     <div className="welcome">
       <div className="welcome-logo">📋</div>
@@ -252,7 +185,7 @@ function Welcome({ onSelectBranch, countChecked, onOpenSidebar }) {
             <button
               key={branch.code}
               className="welcome-branch-card"
-              onClick={() => onSelectBranch(branch.code)}
+              onClick={() => onSelect({ branchCode: branch.code, view: 'series', seriesId: branch.series[0]?.id ?? null })}
             >
               <div className="wc-code">{branch.code}</div>
               <div className="wc-name">{branch.nativeName}</div>
