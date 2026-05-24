@@ -514,6 +514,12 @@ html, body, #root {
   color: var(--accent-bright);
 }
 
+.mark-btn.active {
+  border-color: var(--accent);
+  color: var(--accent-bright);
+  background: var(--bg-3);
+}
+
 /* ── Article List ── */
 
 .article-list-wrap {
@@ -634,6 +640,14 @@ html, body, #root {
 
 .article-row.is-read .scp-title {
   color: var(--text-3);
+}
+
+.scp-charcount {
+  font-size: 10px;
+  color: var(--accent-dim);
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-weight: normal;
 }
 
 .article-row:hover .scp-title {
