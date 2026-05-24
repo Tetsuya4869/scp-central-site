@@ -30,8 +30,29 @@ export function importData(jsonText) {
   const data = JSON.parse(jsonText)
   if (!data || data.version !== 1) throw new Error('形式が不正です')
 
-  if (Array.isArray(data.checklist)) localStorage.setItem(KEYS.checklist, JSON.stringify(data.checklist))
-  if (Array.isArray(data.favorites)) localStorage.setItem(KEYS.favorites, JSON.stringify(data.favorites))
-  if (data.memos    && typeof data.memos    === 'object') localStorage.setItem(KEYS.memos,     JSON.stringify(data.memos))
-  if (data.readDates && typeof data.readDates === 'object') localStorage.setItem(KEYS.readDates, JSON.stringify(data.readDates))
+  // checklist: 既存 ∪ インポート（どちらかにあれば残す）
+  if (Array.isArray(data.checklist)) {
+    const existing = new Set(JSON.parse(localStorage.getItem(KEYS.checklist) || '[]'))
+    data.checklist.forEach(id => existing.add(id))
+    localStorage.setItem(KEYS.checklist, JSON.stringify([...existing]))
+  }
+
+  // favorites: 既存 ∪ インポート
+  if (Array.isArray(data.favorites)) {
+    const existing = new Set(JSON.parse(localStorage.getItem(KEYS.favorites) || '[]'))
+    data.favorites.forEach(id => existing.add(id))
+    localStorage.setItem(KEYS.favorites, JSON.stringify([...existing]))
+  }
+
+  // memos: 既存を残しつつインポートで上書きマージ
+  if (data.memos && typeof data.memos === 'object') {
+    const existing = JSON.parse(localStorage.getItem(KEYS.memos) || '{}')
+    localStorage.setItem(KEYS.memos, JSON.stringify({ ...existing, ...data.memos }))
+  }
+
+  // readDates: 既存を残しつつインポートで上書きマージ
+  if (data.readDates && typeof data.readDates === 'object') {
+    const existing = JSON.parse(localStorage.getItem(KEYS.readDates) || '{}')
+    localStorage.setItem(KEYS.readDates, JSON.stringify({ ...existing, ...data.readDates }))
+  }
 }
