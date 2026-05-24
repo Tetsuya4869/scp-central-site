@@ -72,7 +72,7 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
   }
 
   function cycleSort() {
-    const next = sortBy === 'number' ? 'chars-desc' : sortBy === 'chars-desc' ? 'chars-asc' : 'number'
+    const next = sortBy === 'number' ? 'chars-asc' : sortBy === 'chars-asc' ? 'chars-desc' : 'number'
     setSortBy(next)
     setPage(1)
   }
@@ -121,9 +121,9 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
           <button
             className={`mark-btn${sortBy !== 'number' ? ' active' : ''}`}
             onClick={cycleSort}
-            title="文字数順に並び替え（押すたびに多い順→少ない順→番号順）"
+            title="文字数順に並び替え（押すたびに少ない順→多い順→番号順）"
           >
-            {sortBy === 'chars-desc' ? '文字数 ▼' : sortBy === 'chars-asc' ? '文字数 ▲' : '文字数順'}
+            {sortBy === 'chars-asc' ? '文字数 ▲' : sortBy === 'chars-desc' ? '文字数 ▼' : '文字数順'}
           </button>
           <div className="mark-btns">
             <button className="mark-btn" onClick={() => markAll(allIds, true)}>全選択</button>
