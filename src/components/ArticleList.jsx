@@ -2,15 +2,23 @@ import { useState, useMemo } from 'react'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
 import TITLES from '../data/titles.json'
 import CHAR_COUNTS from '../data/char_counts.json'
+import RATINGS from '../data/ratings.json'
 
 const PAGE_SIZE = 100
 const JP_BASE = 'http://scp-jp.wikidot.com/'
 
+function getSlug(article) {
+  return article.url.startsWith(JP_BASE) ? article.url.slice(JP_BASE.length) : null
+}
+
 function getCharCount(article) {
-  const slug = article.url.startsWith(JP_BASE)
-    ? article.url.slice(JP_BASE.length)
-    : null
+  const slug = getSlug(article)
   return slug ? (CHAR_COUNTS[slug] ?? null) : null
+}
+
+function getRating(article) {
+  const slug = getSlug(article)
+  return slug ? (RATINGS[slug] ?? null) : null
 }
 
 function formatChars(n) {
@@ -41,11 +49,15 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
     let list = allArticles
     if (filter === 'read')   list = list.filter(a => isChecked(a.id))
     if (filter === 'unread') list = list.filter(a => !isChecked(a.id))
-    if (sortBy === 'chars-desc' || sortBy === 'chars-asc') {
-      const dir = sortBy === 'chars-desc' ? -1 : 1
+
+    const isCharsSort  = sortBy === 'chars-asc'  || sortBy === 'chars-desc'
+    const isRatingSort = sortBy === 'rating-asc' || sortBy === 'rating-desc'
+    if (isCharsSort || isRatingSort) {
+      const dir    = sortBy.endsWith('-asc') ? 1 : -1
+      const getter = isCharsSort ? getCharCount : getRating
       list = [...list].sort((a, b) => {
-        const ca = getCharCount(a)
-        const cb = getCharCount(b)
+        const ca = getter(a)
+        const cb = getter(b)
         if (ca == null && cb == null) return 0
         if (ca == null) return 1
         if (cb == null) return -1
@@ -71,8 +83,14 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
     setPage(1)
   }
 
-  function cycleSort() {
-    const next = sortBy === 'number' ? 'chars-asc' : sortBy === 'chars-asc' ? 'chars-desc' : 'number'
+  function cycleCharsSort() {
+    const next = sortBy === 'chars-asc' ? 'chars-desc' : sortBy === 'chars-desc' ? 'number' : 'chars-asc'
+    setSortBy(next)
+    setPage(1)
+  }
+
+  function cycleRatingSort() {
+    const next = sortBy === 'rating-asc' ? 'rating-desc' : sortBy === 'rating-desc' ? 'number' : 'rating-asc'
     setSortBy(next)
     setPage(1)
   }
@@ -119,11 +137,18 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
             ))}
           </div>
           <button
-            className={`mark-btn${sortBy !== 'number' ? ' active' : ''}`}
-            onClick={cycleSort}
-            title="文字数順に並び替え（押すたびに少ない順→多い順→番号順）"
+            className={`mark-btn${sortBy.startsWith('chars') ? ' active' : ''}`}
+            onClick={cycleCharsSort}
+            title="文字数順（少ない順→多い順→解除）"
           >
             {sortBy === 'chars-asc' ? '文字数 ▲' : sortBy === 'chars-desc' ? '文字数 ▼' : '文字数順'}
+          </button>
+          <button
+            className={`mark-btn${sortBy.startsWith('rating') ? ' active' : ''}`}
+            onClick={cycleRatingSort}
+            title="評価順（低い順→高い順→解除）"
+          >
+            {sortBy === 'rating-asc' ? '評価 ▲' : sortBy === 'rating-desc' ? '評価 ▼' : '評価順'}
           </button>
           <div className="mark-btns">
             <button className="mark-btn" onClick={() => markAll(allIds, true)}>全選択</button>
@@ -156,7 +181,9 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
                 onMemoChange={setMemo}
                 readDate={getReadDate(article.id)}
                 charCount={getCharCount(article)}
-                showChars={sortBy !== 'number'}
+                showChars={sortBy.startsWith('chars')}
+                rating={getRating(article)}
+                showRating={sortBy.startsWith('rating')}
               />
             ))}
             {paginated.length === 0 && (
@@ -177,7 +204,7 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
   )
 }
 
-function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, showChars }) {
+function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, showChars, rating, showRating }) {
   const [memoOpen, setMemoOpen] = useState(false)
 
   const rowClass = [
@@ -211,6 +238,9 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
             {title && <span className="scp-title">{title}</span>}
             {showChars && charCount != null && (
               <span className="scp-charcount">{formatChars(charCount)}</span>
+            )}
+            {showRating && rating != null && (
+              <span className="scp-charcount">👍 {rating}</span>
             )}
           </a>
         </td>
