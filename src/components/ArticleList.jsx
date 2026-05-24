@@ -1,8 +1,22 @@
 import { useState, useMemo } from 'react'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
 import TITLES from '../data/titles.json'
+import CHAR_COUNTS from '../data/char_counts.json'
 
 const PAGE_SIZE = 100
+const JP_BASE = 'http://scp-jp.wikidot.com/'
+
+function getCharCount(article) {
+  const slug = article.url.startsWith(JP_BASE)
+    ? article.url.slice(JP_BASE.length)
+    : null
+  return slug ? (CHAR_COUNTS[slug] ?? null) : null
+}
+
+function formatChars(n) {
+  if (n == null) return null
+  return n >= 10000 ? `${(n / 10000).toFixed(1)}万字` : `${n.toLocaleString()}字`
+}
 
 function formatDate(date) {
   if (!date) return null
@@ -12,6 +26,7 @@ function formatDate(date) {
 export default function ArticleList({ branch, series, isChecked, toggle, markAll, onOpenSidebar, isFavorite, toggleFavorite, getMemo, setMemo, getReadDate }) {
   const [page, setPage] = useState(1)
   const [filter, setFilter] = useState('all')
+  const [sortBy, setSortBy] = useState('number')
 
   const allArticles = useMemo(
     () => series.type === 'custom'
@@ -23,10 +38,21 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
   const allIds = useMemo(() => allArticles.map(a => a.id), [allArticles])
 
   const filtered = useMemo(() => {
-    if (filter === 'all') return allArticles
-    if (filter === 'read') return allArticles.filter(a => isChecked(a.id))
-    return allArticles.filter(a => !isChecked(a.id))
-  }, [allArticles, filter, isChecked])
+    let list = allArticles
+    if (filter === 'read')   list = list.filter(a => isChecked(a.id))
+    if (filter === 'unread') list = list.filter(a => !isChecked(a.id))
+    if (sortBy === 'chars') {
+      list = [...list].sort((a, b) => {
+        const ca = getCharCount(a)
+        const cb = getCharCount(b)
+        if (ca == null && cb == null) return 0
+        if (ca == null) return 1
+        if (cb == null) return -1
+        return cb - ca
+      })
+    }
+    return list
+  }, [allArticles, filter, sortBy, isChecked])
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
@@ -41,6 +67,11 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
 
   function handleFilter(f) {
     setFilter(f)
+    setPage(1)
+  }
+
+  function handleSort(s) {
+    setSortBy(s)
     setPage(1)
   }
 
@@ -85,6 +116,13 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
               </button>
             ))}
           </div>
+          <button
+            className={`mark-btn${sortBy === 'chars' ? ' active' : ''}`}
+            onClick={() => handleSort(sortBy === 'chars' ? 'number' : 'chars')}
+            title="文字数順に並び替え"
+          >
+            {sortBy === 'chars' ? '文字数順 ▼' : '文字数順'}
+          </button>
           <div className="mark-btns">
             <button className="mark-btn" onClick={() => markAll(allIds, true)}>全選択</button>
             <button className="mark-btn" onClick={() => markAll(allIds, false)}>全解除</button>
@@ -115,6 +153,8 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
                 memo={getMemo(article.id)}
                 onMemoChange={setMemo}
                 readDate={getReadDate(article.id)}
+                charCount={getCharCount(article)}
+                showChars={sortBy === 'chars'}
               />
             ))}
             {paginated.length === 0 && (
@@ -135,7 +175,7 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
   )
 }
 
-function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate }) {
+function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, showChars }) {
   const [memoOpen, setMemoOpen] = useState(false)
 
   const rowClass = [
@@ -167,6 +207,9 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
           >
             <span className="scp-designation">{article.designation}</span>
             {title && <span className="scp-title">{title}</span>}
+            {showChars && charCount != null && (
+              <span className="scp-charcount">{formatChars(charCount)}</span>
+            )}
           </a>
         </td>
         <td className="article-td col-badges">
