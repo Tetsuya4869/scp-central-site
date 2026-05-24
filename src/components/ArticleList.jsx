@@ -41,14 +41,15 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
     let list = allArticles
     if (filter === 'read')   list = list.filter(a => isChecked(a.id))
     if (filter === 'unread') list = list.filter(a => !isChecked(a.id))
-    if (sortBy === 'chars') {
+    if (sortBy === 'chars-desc' || sortBy === 'chars-asc') {
+      const dir = sortBy === 'chars-desc' ? -1 : 1
       list = [...list].sort((a, b) => {
         const ca = getCharCount(a)
         const cb = getCharCount(b)
         if (ca == null && cb == null) return 0
         if (ca == null) return 1
         if (cb == null) return -1
-        return cb - ca
+        return dir * (ca - cb)
       })
     }
     return list
@@ -70,8 +71,9 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
     setPage(1)
   }
 
-  function handleSort(s) {
-    setSortBy(s)
+  function cycleSort() {
+    const next = sortBy === 'number' ? 'chars-desc' : sortBy === 'chars-desc' ? 'chars-asc' : 'number'
+    setSortBy(next)
     setPage(1)
   }
 
@@ -117,11 +119,11 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
             ))}
           </div>
           <button
-            className={`mark-btn${sortBy === 'chars' ? ' active' : ''}`}
-            onClick={() => handleSort(sortBy === 'chars' ? 'number' : 'chars')}
-            title="文字数順に並び替え"
+            className={`mark-btn${sortBy !== 'number' ? ' active' : ''}`}
+            onClick={cycleSort}
+            title="文字数順に並び替え（押すたびに多い順→少ない順→番号順）"
           >
-            {sortBy === 'chars' ? '文字数順 ▼' : '文字数順'}
+            {sortBy === 'chars-desc' ? '文字数 ▼' : sortBy === 'chars-asc' ? '文字数 ▲' : '文字数順'}
           </button>
           <div className="mark-btns">
             <button className="mark-btn" onClick={() => markAll(allIds, true)}>全選択</button>
@@ -154,7 +156,7 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
                 onMemoChange={setMemo}
                 readDate={getReadDate(article.id)}
                 charCount={getCharCount(article)}
-                showChars={sortBy === 'chars'}
+                showChars={sortBy !== 'number'}
               />
             ))}
             {paginated.length === 0 && (
