@@ -181,9 +181,7 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
                 onMemoChange={setMemo}
                 readDate={getReadDate(article.id)}
                 charCount={getCharCount(article)}
-                showChars={sortBy.startsWith('chars')}
                 rating={getRating(article)}
-                showRating={sortBy.startsWith('rating')}
               />
             ))}
             {paginated.length === 0 && (
@@ -204,7 +202,7 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
   )
 }
 
-function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, showChars, rating, showRating }) {
+function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, rating }) {
   const [memoOpen, setMemoOpen] = useState(false)
 
   const rowClass = [
@@ -236,11 +234,11 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
           >
             <span className="scp-designation">{article.designation}</span>
             {title && <span className="scp-title">{title}</span>}
-            {showChars && charCount != null && (
+            {charCount != null && (
               <span className="scp-charcount">{formatChars(charCount)}</span>
             )}
-            {showRating && rating != null && (
-              <span className="scp-charcount">👍 {rating}</span>
+            {rating != null && (
+              <span className="scp-rating">👍 {rating}</span>
             )}
           </a>
         </td>

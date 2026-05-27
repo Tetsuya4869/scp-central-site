@@ -644,7 +644,15 @@ html, body, #root {
 
 .scp-charcount {
   font-size: 10px;
-  color: var(--accent-dim);
+  color: #7ab8d4;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-weight: normal;
+}
+
+.scp-rating {
+  font-size: 10px;
+  color: #c8b050;
   white-space: nowrap;
   flex-shrink: 0;
   font-weight: normal;
