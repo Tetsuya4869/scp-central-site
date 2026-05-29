@@ -186,7 +186,7 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
     article.predicted ? 'is-predicted' : '',
   ].filter(Boolean).join(' ')
 
-  const title = TITLES[article.branchCode]?.[String(article.number)] ?? ''
+  const title = article.title ?? TITLES[article.branchCode]?.[String(article.number)] ?? ''
   const hasMemo = memo.length > 0
 
   return (

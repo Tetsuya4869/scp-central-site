@@ -12,6 +12,17 @@
  *   string = scp-jp.wikidot.com/{jpSlug}
  */
 
+import JP_JOKE     from './articles/jp_joke.json'
+import EN_JOKE     from './articles/en_joke.json'
+import EN_EX       from './articles/en_ex.json'
+import EN_ARC      from './articles/en_arc.json'
+import ANOMALOUS   from './articles/anomalous_jp.json'
+import SCP_FLAVOR  from './articles/scp_flavor.json'
+import EXTRANORMAL from './articles/extranormal_jp.json'
+import LOCATIONS   from './articles/locations_jp.json'
+import TALES_JP    from './articles/tales_jp.json'
+import HUBS_JP     from './articles/hubs_jp.json'
+
 const JP = 'http://scp-jp.wikidot.com'
 
 function jp(slug) { return `${JP}/${slug}` }
@@ -38,6 +49,9 @@ export const BRANCHES = [
       { id: 8,  label: 'Series VIII', min: 7000, max: 7999, hub: '/scp-series-8' },
       { id: 9,  label: 'Series IX',   min: 8000, max: 8999, hub: '/scp-series-9' },
       { id: 10, label: 'Series X',    min: 9000, max: 9999, hub: '/scp-series-10' },
+      { id: 'en-joke', label: 'ジョークSCP',    type: 'custom', hub: '/joke-scps',   articles: EN_JOKE },
+      { id: 'en-ex',   label: 'SCP EX',         type: 'custom', hub: '/scp-ex',      articles: EN_EX   },
+      { id: 'en-arc',  label: 'SCP ARC',        type: 'custom', hub: '/series-archive', articles: EN_ARC },
     ],
     hubs: [
       { cat: 'Tales・物語',
@@ -83,7 +97,14 @@ export const BRANCHES = [
       { id: 2, label: 'JP Series II',  min: 1000, max: 1999, hub: '/scp-series-jp-2' },
       { id: 3, label: 'JP Series III', min: 2000, max: 2999, hub: '/scp-series-jp-3' },
       { id: 4, label: 'JP Series IV',  min: 3000, max: 3999, hub: '/scp-series-jp-4' },
-      { id: 5, label: 'JP Series V',   min: 4000, max: 4999, hub: '/scp-series-jp-5' },
+      { id: 5,              label: 'JP Series V',       min: 4000, max: 4999, hub: '/scp-series-jp-5' },
+      { id: 'jp-joke',      label: 'ジョークSCP-JP',    type: 'custom', hub: '/joke-scps-jp',                      articles: JP_JOKE     },
+      { id: 'anomalous-jp', label: '異常物品記録-JP',   type: 'custom', hub: '/log-of-anomalous-items-jp',         articles: ANOMALOUS   },
+      { id: 'scp-flavor',   label: 'フレーバーテキスト', type: 'custom', hub: '/log-of-anomalous-items-jp',         articles: SCP_FLAVOR  },
+      { id: 'extranormal',  label: '超常現象記録-JP',   type: 'custom', hub: '/log-of-extranormal-events-jp',      articles: EXTRANORMAL },
+      { id: 'locations-jp', label: '未解明領域記録-JP', type: 'custom', hub: '/log-of-unexplained-locations-jp',   articles: LOCATIONS   },
+      { id: 'tales-jp',     label: '財団テイル・記事',   type: 'custom', hub: '/foundation-tales-jp',               articles: TALES_JP    },
+      { id: 'hubs-jp',      label: 'ハブ一覧',          type: 'custom', hub: '/series-hub-jp',                     articles: HUBS_JP     },
       { id: 'yidan', label: '依談', type: 'custom', hub: '/yidan-hub', articles: [
         { id: 'yidan-muen',           designation: '無縁',                             url: jp('muen') },
         { id: 'yidan-scp511',         designation: 'SCP-511-JP - けりよ',              url: jp('scp-511-jp') },
