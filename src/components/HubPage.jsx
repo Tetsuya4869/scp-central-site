@@ -1,4 +1,4 @@
-export default function HubPage({ branch, onOpenSidebar }) {
+export default function HubPage({ branch, onOpenSidebar, onNavigate }) {
   return (
     <>
       <div className="content-toolbar">
@@ -14,18 +14,29 @@ export default function HubPage({ branch, onOpenSidebar }) {
           <section key={section.cat} className="hub-section">
             <h2 className="hub-section-title">{section.cat}</h2>
             <div className="hub-grid">
-              {section.items.map(item => (
-                <a
-                  key={item.id}
-                  href={item.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hub-card"
-                >
-                  <span className="hub-card-label">{item.label}</span>
-                  <span className="hub-card-icon">↗</span>
-                </a>
-              ))}
+              {section.items.map(item =>
+                item.seriesId ? (
+                  <button
+                    key={item.id}
+                    className="hub-card hub-card-internal"
+                    onClick={() => onNavigate({ branchCode: branch.code, view: 'series', seriesId: item.seriesId })}
+                  >
+                    <span className="hub-card-label">{item.label}</span>
+                    <span className="hub-card-icon">📋</span>
+                  </button>
+                ) : (
+                  <a
+                    key={item.id}
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hub-card"
+                  >
+                    <span className="hub-card-label">{item.label}</span>
+                    <span className="hub-card-icon">↗</span>
+                  </a>
+                )
+              )}
             </div>
           </section>
         ))}

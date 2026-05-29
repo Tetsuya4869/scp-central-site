@@ -87,6 +87,7 @@ export default function App() {
           key={`${selected.branchCode}-hubs`}
           branch={currentBranch}
           onOpenSidebar={() => setSidebarOpen(true)}
+          onNavigate={handleSelect}
         />
       )
     }
