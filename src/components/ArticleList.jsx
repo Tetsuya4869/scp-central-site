@@ -6,6 +6,8 @@ import CHAR_COUNTS from '../data/char_counts.json'
 import RATINGS from '../data/ratings.json'
 
 const JP_BASE = 'http://scp-jp.wikidot.com/'
+const CARD_COLS = 2
+const MATRIX_COLS = 8
 
 function getSlug(article) {
   return article.url.startsWith(JP_BASE) ? article.url.slice(JP_BASE.length) : null
@@ -31,7 +33,7 @@ function formatDate(date) {
   return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
 }
 
-export default function ArticleList({ branch, series, isChecked, toggle, markAll, onOpenSidebar, isFavorite, toggleFavorite, getMemo, setMemo, getReadDate }) {
+export default function ArticleList({ branch, series, isChecked, toggle, markAll, onOpenSidebar, isFavorite, toggleFavorite, getMemo, setMemo, getReadDate, layoutMode, setLayoutMode }) {
   const [filter, setFilter] = useState('all')
   const [sortBy, setSortBy] = useState('number')
   const [jumpValue, setJumpValue] = useState('')
@@ -68,11 +70,20 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
     return list
   }, [allArticles, filter, sortBy, isChecked])
 
+  const cols = layoutMode === 'card' ? CARD_COLS : layoutMode === 'matrix' ? MATRIX_COLS : 1
+  const virtualRows = useMemo(() => {
+    const rows = []
+    for (let i = 0; i < filtered.length; i += cols) {
+      rows.push(filtered.slice(i, i + cols))
+    }
+    return rows
+  }, [filtered, cols])
+
   const rowVirtualizer = useVirtualizer({
-    count: filtered.length,
+    count: virtualRows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 44,
-    overscan: 15,
+    estimateSize: () => layoutMode === 'card' ? 130 : layoutMode === 'matrix' ? 48 : 44,
+    overscan: layoutMode === 'matrix' ? 4 : 10,
   })
 
   const readCount = useMemo(
@@ -82,6 +93,11 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
   const pct = allArticles.length > 0
     ? Math.round((readCount / allArticles.length) * 100)
     : 0
+
+  function changeLayout(newMode) {
+    setLayoutMode(newMode)
+    rowVirtualizer.scrollToOffset(0)
+  }
 
   function handleFilter(f) {
     setFilter(f)
@@ -110,15 +126,12 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
     let idx = -1
 
     if (!isNaN(numVal)) {
-      // Exact number match first
       idx = filtered.findIndex(a => a.number === numVal)
-      // Fallback: designation contains the zero-padded number
       if (idx === -1) {
         const padded = String(numVal).padStart(3, '0')
         idx = filtered.findIndex(a => a.designation?.toLowerCase().includes(padded))
       }
     }
-    // Text search on designation / title
     if (idx === -1) {
       idx = filtered.findIndex(a =>
         a.designation?.toLowerCase().includes(val) ||
@@ -127,7 +140,7 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
     }
 
     if (idx !== -1) {
-      rowVirtualizer.scrollToIndex(idx, { align: 'start', behavior: 'smooth' })
+      rowVirtualizer.scrollToIndex(Math.floor(idx / cols), { align: 'start', behavior: 'smooth' })
     }
     setJumpValue('')
   }
@@ -173,55 +186,81 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
               </button>
             ))}
           </div>
-          <button
-            className={`mark-btn${sortBy.startsWith('chars') ? ' active' : ''}`}
-            onClick={cycleCharsSort}
-            title="文字数順（少ない順→多い順→解除）"
-          >
-            {sortBy === 'chars-asc' ? '文字数 ▲' : sortBy === 'chars-desc' ? '文字数 ▼' : '文字数順'}
-          </button>
-          <button
-            className={`mark-btn${sortBy.startsWith('rating') ? ' active' : ''}`}
-            onClick={cycleRatingSort}
-            title="評価順（低い順→高い順→解除）"
-          >
-            {sortBy === 'rating-asc' ? '評価 ▲' : sortBy === 'rating-desc' ? '評価 ▼' : '評価順'}
-          </button>
+
+          <div className="layout-switcher">
+            {[
+              { key: 'list',   icon: '≡', title: 'リスト' },
+              { key: 'card',   icon: '⊞', title: 'カード' },
+              { key: 'matrix', icon: '⣿', title: 'マトリックス' },
+            ].map(({ key, icon, title }) => (
+              <button
+                key={key}
+                className={`layout-btn${layoutMode === key ? ' active' : ''}`}
+                onClick={() => changeLayout(key)}
+                title={title}
+              >
+                {icon}
+              </button>
+            ))}
+          </div>
+
+          {layoutMode !== 'matrix' && (
+            <>
+              <button
+                className={`mark-btn${sortBy.startsWith('chars') ? ' active' : ''}`}
+                onClick={cycleCharsSort}
+                title="文字数順（少ない順→多い順→解除）"
+              >
+                {sortBy === 'chars-asc' ? '文字数 ▲' : sortBy === 'chars-desc' ? '文字数 ▼' : '文字数順'}
+              </button>
+              <button
+                className={`mark-btn${sortBy.startsWith('rating') ? ' active' : ''}`}
+                onClick={cycleRatingSort}
+                title="評価順（低い順→高い順→解除）"
+              >
+                {sortBy === 'rating-asc' ? '評価 ▲' : sortBy === 'rating-desc' ? '評価 ▼' : '評価順'}
+              </button>
+            </>
+          )}
+
           <div className="mark-btns">
             <button className="mark-btn" onClick={() => markAll(allIds, true)}>全選択</button>
             <button className="mark-btn" onClick={() => markAll(allIds, false)}>全解除</button>
           </div>
-          <input
-            className="jump-input"
-            type="text"
-            inputMode="search"
-            placeholder="番号/名前で移動…"
-            value={jumpValue}
-            onChange={e => setJumpValue(e.target.value)}
-            onKeyDown={handleJump}
-          />
+
+          {layoutMode !== 'matrix' && (
+            <input
+              className="jump-input"
+              type="text"
+              inputMode="search"
+              placeholder="番号/名前で移動…"
+              value={jumpValue}
+              onChange={e => setJumpValue(e.target.value)}
+              onKeyDown={handleJump}
+            />
+          )}
         </div>
       </div>
 
-      {/* Sticky column header */}
-      <div className="article-header-row">
-        <div className="article-th col-check">✓</div>
-        <div className="article-th col-num">No.</div>
-        <div className="article-th col-badges">状態</div>
-        <div className="article-th col-fav">★</div>
-        <div className="article-th col-memo">✎</div>
-      </div>
+      {layoutMode === 'list' && (
+        <div className="article-header-row">
+          <div className="article-th col-check">✓</div>
+          <div className="article-th col-num">No.</div>
+          <div className="article-th col-badges">状態</div>
+          <div className="article-th col-fav">★</div>
+          <div className="article-th col-memo">✎</div>
+        </div>
+      )}
 
-      {/* Virtual scroll area */}
       <div ref={parentRef} className="article-list-wrap">
-        {filtered.length === 0 ? (
+        {virtualRows.length === 0 ? (
           <div className="list-empty">
             {filter === 'read' ? '読了記事なし' : '未読記事なし'}
           </div>
         ) : (
           <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
             {rowVirtualizer.getVirtualItems().map(virtualItem => {
-              const article = filtered[virtualItem.index]
+              const rowArticles = virtualRows[virtualItem.index]
               return (
                 <div
                   key={virtualItem.key}
@@ -235,18 +274,49 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
                     transform: `translateY(${virtualItem.start}px)`,
                   }}
                 >
-                  <ArticleRow
-                    article={article}
-                    read={isChecked(article.id)}
-                    onToggle={() => toggle(article.id)}
-                    favorited={isFavorite(article.id)}
-                    onFavorite={() => toggleFavorite(article.id)}
-                    memo={getMemo(article.id)}
-                    onMemoChange={setMemo}
-                    readDate={getReadDate(article.id)}
-                    charCount={getCharCount(article)}
-                    rating={getRating(article)}
-                  />
+                  {layoutMode === 'list' ? (
+                    <ArticleRow
+                      article={rowArticles[0]}
+                      read={isChecked(rowArticles[0].id)}
+                      onToggle={() => toggle(rowArticles[0].id)}
+                      favorited={isFavorite(rowArticles[0].id)}
+                      onFavorite={() => toggleFavorite(rowArticles[0].id)}
+                      memo={getMemo(rowArticles[0].id)}
+                      onMemoChange={setMemo}
+                      readDate={getReadDate(rowArticles[0].id)}
+                      charCount={getCharCount(rowArticles[0])}
+                      rating={getRating(rowArticles[0])}
+                    />
+                  ) : layoutMode === 'card' ? (
+                    <div className="card-row">
+                      {rowArticles.map(article => (
+                        <ArticleCard
+                          key={article.id}
+                          article={article}
+                          read={isChecked(article.id)}
+                          onToggle={() => toggle(article.id)}
+                          favorited={isFavorite(article.id)}
+                          onFavorite={() => toggleFavorite(article.id)}
+                          memo={getMemo(article.id)}
+                          onMemoChange={setMemo}
+                          readDate={getReadDate(article.id)}
+                          charCount={getCharCount(article)}
+                          rating={getRating(article)}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="matrix-row">
+                      {rowArticles.map(article => (
+                        <MatrixCell
+                          key={article.id}
+                          article={article}
+                          read={isChecked(article.id)}
+                          onToggle={() => toggle(article.id)}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )
             })}
@@ -345,5 +415,100 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
         </div>
       )}
     </>
+  )
+}
+
+function ArticleCard({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, rating }) {
+  const [memoOpen, setMemoOpen] = useState(false)
+  const title = article.title ?? TITLES[article.branchCode]?.[String(article.number)] ?? ''
+  const hasMemo = memo.length > 0
+
+  const cardClass = [
+    'article-card',
+    read ? 'is-read' : '',
+    article.predicted ? 'is-predicted' : '',
+  ].filter(Boolean).join(' ')
+
+  return (
+    <div className={cardClass}>
+      <div className="card-top">
+        <input
+          type="checkbox"
+          className="scp-checkbox"
+          checked={read}
+          onChange={onToggle}
+        />
+        <a
+          className="card-desg"
+          href={article.url}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {article.designation}
+        </a>
+        <button
+          className={`fav-btn${favorited ? ' is-fav' : ''}`}
+          onClick={onFavorite}
+          title={favorited ? 'お気に入り解除' : 'お気に入り追加'}
+        >★</button>
+        <button
+          className={`memo-btn${hasMemo ? ' has-memo' : ''}${memoOpen ? ' is-open' : ''}`}
+          onClick={() => setMemoOpen(v => !v)}
+          title={hasMemo ? 'メモあり' : 'メモを追加'}
+        >✎</button>
+      </div>
+      {title && <div className="card-title">{title}</div>}
+      <div className="card-meta">
+        {charCount != null && <span className="scp-charcount">{formatChars(charCount)}</span>}
+        {rating != null && <span className="scp-rating">👍 {rating}</span>}
+        {article.predicted
+          ? <span className="badge badge-predicted">予測</span>
+          : read
+            ? <span className="badge badge-read">読了</span>
+            : null
+        }
+      </div>
+      {memoOpen && (
+        <div className="card-memo">
+          {readDate && <span className="memo-readdate">📅 {formatDate(readDate)} 読了</span>}
+          <input
+            className="memo-input"
+            type="text"
+            placeholder="メモを入力..."
+            value={memo}
+            onChange={e => onMemoChange(article.id, e.target.value)}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MatrixCell({ article, read, onToggle }) {
+  const label = article.number != null
+    ? String(article.number).padStart(3, '0')
+    : article.title?.slice(0, 8) ?? article.designation?.slice(0, 8) ?? '---'
+
+  const cellClass = [
+    'matrix-cell',
+    read ? 'is-read' : '',
+    article.predicted ? 'is-predicted' : '',
+  ].filter(Boolean).join(' ')
+
+  return (
+    <div
+      className={cellClass}
+      onClick={onToggle}
+      title={article.designation + (article.title ? ' — ' + article.title : '')}
+    >
+      <span className="matrix-num">{label}</span>
+      <a
+        className="matrix-link"
+        href={article.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={e => e.stopPropagation()}
+      >↗</a>
+    </div>
   )
 }

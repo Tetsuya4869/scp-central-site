@@ -17,6 +17,12 @@ export default function App() {
   const { getMemo, setMemo } = useMemos()
   const { setReadDate, clearReadDate, getReadDate } = useReadDates()
 
+  const [layoutMode, setLayoutModeRaw] = useState(() => localStorage.getItem('scp-layout') || 'list')
+  const setLayoutMode = useCallback(m => {
+    setLayoutModeRaw(m)
+    localStorage.setItem('scp-layout', m)
+  }, [])
+
   const wrappedToggle = useCallback((id) => {
     const willBeChecked = !isChecked(id)
     toggle(id)
@@ -107,6 +113,8 @@ export default function App() {
           getMemo={getMemo}
           setMemo={setMemo}
           getReadDate={getReadDate}
+          layoutMode={layoutMode}
+          setLayoutMode={setLayoutMode}
         />
       )
     }
