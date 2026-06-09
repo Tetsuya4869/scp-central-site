@@ -27,8 +27,9 @@
   --border-light: #333333;
   --predicted-bg: #111a22;
   --predicted-border: #1a3a5a;
-  --read-bg: #0d1a0d;
+  --read-bg: #0b1e0b;
   --font-mono: 'Courier New', Courier, monospace;
+  --font-sans: system-ui, -apple-system, 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
   --sidebar-width: 260px;
   --header-height: 50px;
 }
@@ -216,6 +217,7 @@ html, body, #root {
 
 .branch-name {
   font-size: 12px;
+  font-family: var(--font-sans);
   color: var(--text-1);
   display: block;
   white-space: nowrap;
@@ -225,6 +227,7 @@ html, body, #root {
 
 .branch-lang {
   font-size: 10px;
+  font-family: var(--font-sans);
   color: var(--text-3);
   display: block;
 }
@@ -236,7 +239,7 @@ html, body, #root {
 }
 
 .branch-progress-bar {
-  height: 2px;
+  height: 3px;
   background: var(--bg-3);
   margin: 0 12px 3px;
 }
@@ -281,7 +284,21 @@ html, body, #root {
 .series-label {
   flex: 1;
   font-size: 11px;
+  font-family: var(--font-sans);
   color: var(--text-2);
+}
+
+.series-separator {
+  padding: 8px 12px 3px 24px;
+  font-size: 9px;
+  font-family: var(--font-sans);
+  color: var(--text-3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.8;
+  pointer-events: none;
+  border-top: 1px solid var(--border);
+  margin-top: 2px;
 }
 
 .series-item.active .series-label {
@@ -434,7 +451,7 @@ html, body, #root {
 
 .progress-bar-wrap {
   width: 80px;
-  height: 5px;
+  height: 6px;
   background: var(--bg-3);
   border-radius: 3px;
   overflow: hidden;
@@ -560,6 +577,10 @@ html, body, #root {
   background: var(--read-bg);
 }
 
+.article-row.is-read .col-check {
+  box-shadow: inset 3px 0 0 var(--green);
+}
+
 .article-row.is-read:hover {
   background: #0f1f0f;
 }
@@ -631,6 +652,7 @@ html, body, #root {
 
 .scp-title {
   font-size: 11px;
+  font-family: var(--font-sans);
   color: var(--text-3);
   white-space: nowrap;
   overflow: hidden;
@@ -801,12 +823,14 @@ html, body, #root {
 
 .welcome-title {
   font-size: 15px;
+  font-family: var(--font-sans);
   color: var(--text-2);
   margin-bottom: 8px;
 }
 
 .welcome-sub {
   font-size: 12px;
+  font-family: var(--font-sans);
   line-height: 1.9;
   color: var(--text-3);
 }
@@ -840,14 +864,22 @@ html, body, #root {
   padding: 12px 14px;
   cursor: pointer;
   text-align: left;
-  transition: all 0.15s;
+  transition: all 0.2s;
   font-family: var(--font-mono);
   min-height: 80px;
 }
 
-.welcome-branch-card:hover,
-.welcome-branch-card:active {
+.welcome-branch-card:hover {
   border-color: var(--accent-dim);
+  background: var(--bg-2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.welcome-branch-card:active {
+  transform: translateY(0);
+  box-shadow: none;
+  border-color: var(--accent);
   background: var(--bg-2);
 }
 
@@ -859,12 +891,14 @@ html, body, #root {
 
 .wc-name {
   font-size: 12px;
+  font-family: var(--font-sans);
   color: var(--text-1);
   margin: 2px 0;
 }
 
 .wc-stats {
   font-size: 10px;
+  font-family: var(--font-sans);
   color: var(--text-3);
 }
 
@@ -939,33 +973,65 @@ html, body, #root {
   border-radius: 4px;
   text-decoration: none;
   color: var(--text-1);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 12px;
   min-height: 48px;
-  transition: all 0.15s;
+  transition: all 0.2s;
 }
 
-.hub-card:hover,
-.hub-card:active {
+.hub-card:hover {
   background: var(--bg-2);
   border-color: var(--accent-dim);
+  color: var(--text-1);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+}
+
+.hub-card:active {
+  background: var(--bg-2);
+  border-color: var(--accent);
+  transform: none;
+  box-shadow: none;
+}
+
+/* Internal navigation cards (📋) */
+.hub-card-internal {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  background: #13110a;
+  border-color: #3a2e10;
+  color: var(--text-2);
+}
+
+.hub-card-internal .hub-card-icon {
+  color: var(--accent-dim);
+}
+
+.hub-card-internal:hover {
+  background: var(--bg-2);
+  border-color: var(--accent);
   color: var(--accent-bright);
+}
+
+.hub-card-internal:hover .hub-card-icon {
+  color: var(--accent-bright);
+}
+
+/* External link cards (↗) */
+.hub-card:not(.hub-card-internal) .hub-card-icon {
+  font-size: 13px;
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+
+.hub-card:not(.hub-card-internal):hover .hub-card-icon {
+  color: var(--accent-dim);
 }
 
 .hub-card-label {
   flex: 1;
   line-height: 1.4;
-}
-
-.hub-card-icon {
-  font-size: 14px;
-  color: var(--accent-dim);
-  flex-shrink: 0;
-}
-
-.hub-card:hover .hub-card-icon,
-.hub-card:active .hub-card-icon {
-  color: var(--accent-bright);
 }
 
 .hub-empty {
@@ -1156,6 +1222,7 @@ html, body, #root {
 
 .fav-title {
   font-size: 11px;
+  font-family: var(--font-sans);
   color: var(--text-3);
   white-space: nowrap;
   overflow: hidden;
@@ -1334,6 +1401,7 @@ html, body, #root {
 
 .search-title {
   font-size: 11px;
+  font-family: var(--font-sans);
   color: var(--text-3);
   white-space: nowrap;
   overflow: hidden;

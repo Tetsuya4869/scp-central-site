@@ -77,11 +77,11 @@ export default function Sidebar({ selected, onSelect, countChecked, isOpen, favC
 
 function BranchItem({ branch, isOpen, activeSeriesId, activeView, onSelect, countChecked }) {
   const allIds = useMemo(
-    () => branch.series.flatMap(s =>
-      s.type === 'custom'
-        ? s.articles.map(a => a.id)
-        : generateSeriesArticles(branch.code, s.min, s.max).map(a => a.id)
-    ),
+    () => branch.series.flatMap(s => {
+      if (s.type === 'separator') return []
+      if (s.type === 'custom') return s.articles.map(a => a.id)
+      return generateSeriesArticles(branch.code, s.min, s.max).map(a => a.id)
+    }),
     [branch.code]
   )
 
@@ -133,16 +133,20 @@ function BranchItem({ branch, isOpen, activeSeriesId, activeView, onSelect, coun
           )}
 
           {/* Series list */}
-          {branch.series.map(s => (
-            <div
-              key={s.id}
-              className={`series-item${activeView === 'series' && activeSeriesId === s.id ? ' active' : ''}`}
-              onClick={() => onSelect({ branchCode: branch.code, view: 'series', seriesId: s.id })}
-            >
-              <span className="series-label">{s.label}</span>
-              <SeriesCount branch={branch} series={s} countChecked={countChecked} />
-            </div>
-          ))}
+          {branch.series.map(s =>
+            s.type === 'separator' ? (
+              <div key={s.id} className="series-separator">{s.label}</div>
+            ) : (
+              <div
+                key={s.id}
+                className={`series-item${activeView === 'series' && activeSeriesId === s.id ? ' active' : ''}`}
+                onClick={() => onSelect({ branchCode: branch.code, view: 'series', seriesId: s.id })}
+              >
+                <span className="series-label">{s.label}</span>
+                <SeriesCount branch={branch} series={s} countChecked={countChecked} />
+              </div>
+            )
+          )}
         </div>
       )}
     </div>

@@ -49,6 +49,7 @@ export default function App() {
   const grandTotal = useMemo(
     () => BRANCHES.reduce((sum, b) =>
       sum + b.series.reduce((s2, sr) => {
+        if (sr.type === 'separator') return s2
         if (sr.type === 'custom') return s2 + sr.articles.length
         const start = b.minNumber ? Math.max(sr.min, b.minNumber) : sr.min
         return s2 + (sr.max - start + 1)
