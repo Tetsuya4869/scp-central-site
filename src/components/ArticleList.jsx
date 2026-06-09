@@ -499,17 +499,23 @@ function MatrixCell({ article, read, onToggle }) {
   return (
     <div
       className={cellClass}
-      onClick={onToggle}
       title={article.designation + (article.title ? ' — ' + article.title : '')}
     >
-      <span className="matrix-num">{label}</span>
       <a
-        className="matrix-link"
+        className="matrix-link-area"
         href={article.url}
         target="_blank"
         rel="noopener noreferrer"
-        onClick={e => e.stopPropagation()}
-      >↗</a>
+      >
+        {label}
+      </a>
+      <button
+        className="matrix-toggle-btn"
+        onClick={onToggle}
+        aria-label={read ? '未読に戻す' : '読了にする'}
+      >
+        {read ? '✓' : '·'}
+      </button>
     </div>
   )
 }

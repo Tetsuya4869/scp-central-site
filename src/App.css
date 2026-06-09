@@ -1714,27 +1714,15 @@ html, body, #root {
 }
 
 .matrix-cell {
-  position: relative;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
   height: 42px;
   border: 1px solid var(--border);
   border-radius: 3px;
-  cursor: pointer;
   background: var(--bg-1);
-  transition: background 0.1s, border-color 0.1s;
+  transition: border-color 0.1s;
   overflow: hidden;
   user-select: none;
-}
-
-.matrix-cell:hover {
-  background: var(--bg-3);
-  border-color: var(--accent-dim);
-}
-
-.matrix-cell:active {
-  background: var(--bg-4);
 }
 
 .matrix-cell.is-read {
@@ -1742,48 +1730,67 @@ html, body, #root {
   border-color: #2a4a2a;
 }
 
-.matrix-cell.is-read:hover {
-  background: #0f2a0f;
-  border-color: var(--green);
-}
-
 .matrix-cell.is-predicted {
   background: var(--predicted-bg);
   border-color: var(--predicted-border);
 }
 
-.matrix-num {
+/* Left area: link to article */
+.matrix-link-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: var(--text-2);
   font-size: 10px;
   font-family: var(--font-mono);
-  color: var(--text-2);
-  text-align: center;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding: 0 14px 0 3px;
-  line-height: 1.2;
+  min-width: 0;
+  padding: 0 2px;
+  transition: background 0.1s, color 0.1s;
 }
 
-.matrix-cell.is-read .matrix-num {
+.matrix-link-area:hover {
+  background: var(--bg-3);
+  color: var(--accent-bright);
+}
+
+.matrix-cell.is-read .matrix-link-area {
   color: var(--green-text);
   font-weight: bold;
 }
 
-.matrix-link {
-  position: absolute;
-  top: 3px;
-  right: 3px;
-  font-size: 8px;
+/* Right area: read toggle button */
+.matrix-toggle-btn {
+  width: 22px;
+  min-width: 22px;
+  background: none;
+  border: none;
+  border-left: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 12px;
   color: var(--text-3);
-  text-decoration: none;
-  opacity: 0.35;
-  line-height: 1;
-  transition: opacity 0.1s, color 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s, color 0.1s;
+  padding: 0;
+  font-family: var(--font-mono);
 }
 
-.matrix-cell:hover .matrix-link {
-  opacity: 1;
-  color: var(--accent-dim);
+.matrix-toggle-btn:hover {
+  background: var(--bg-3);
+  color: var(--text-1);
+}
+
+.matrix-cell.is-read .matrix-toggle-btn {
+  color: var(--green-text);
+  background: rgba(42, 106, 42, 0.12);
+}
+
+.matrix-cell.is-read .matrix-toggle-btn:hover {
+  background: rgba(42, 106, 42, 0.25);
 }
 
 /* Matrix/card responsive */
