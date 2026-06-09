@@ -1,10 +1,10 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
 import TITLES from '../data/titles.json'
 import CHAR_COUNTS from '../data/char_counts.json'
 import RATINGS from '../data/ratings.json'
 
-const PAGE_SIZE = 100
 const JP_BASE = 'http://scp-jp.wikidot.com/'
 
 function getSlug(article) {
@@ -32,9 +32,10 @@ function formatDate(date) {
 }
 
 export default function ArticleList({ branch, series, isChecked, toggle, markAll, onOpenSidebar, isFavorite, toggleFavorite, getMemo, setMemo, getReadDate }) {
-  const [page, setPage] = useState(1)
   const [filter, setFilter] = useState('all')
   const [sortBy, setSortBy] = useState('number')
+  const [jumpValue, setJumpValue] = useState('')
+  const parentRef = useRef(null)
 
   const allArticles = useMemo(
     () => series.type === 'custom'
@@ -67,8 +68,12 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
     return list
   }, [allArticles, filter, sortBy, isChecked])
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const rowVirtualizer = useVirtualizer({
+    count: filtered.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 44,
+    overscan: 15,
+  })
 
   const readCount = useMemo(
     () => allArticles.filter(a => isChecked(a.id)).length,
@@ -80,19 +85,51 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
 
   function handleFilter(f) {
     setFilter(f)
-    setPage(1)
+    rowVirtualizer.scrollToOffset(0)
   }
 
   function cycleCharsSort() {
     const next = sortBy === 'chars-asc' ? 'chars-desc' : sortBy === 'chars-desc' ? 'number' : 'chars-asc'
     setSortBy(next)
-    setPage(1)
+    rowVirtualizer.scrollToOffset(0)
   }
 
   function cycleRatingSort() {
     const next = sortBy === 'rating-asc' ? 'rating-desc' : sortBy === 'rating-desc' ? 'number' : 'rating-asc'
     setSortBy(next)
-    setPage(1)
+    rowVirtualizer.scrollToOffset(0)
+  }
+
+  function handleJump(e) {
+    if (e.key !== 'Enter') return
+    const val = jumpValue.trim().toLowerCase()
+    if (!val) return
+
+    const numOnly = val.replace(/[^0-9]/g, '')
+    const numVal = numOnly ? parseInt(numOnly, 10) : NaN
+    let idx = -1
+
+    if (!isNaN(numVal)) {
+      // Exact number match first
+      idx = filtered.findIndex(a => a.number === numVal)
+      // Fallback: designation contains the zero-padded number
+      if (idx === -1) {
+        const padded = String(numVal).padStart(3, '0')
+        idx = filtered.findIndex(a => a.designation?.toLowerCase().includes(padded))
+      }
+    }
+    // Text search on designation / title
+    if (idx === -1) {
+      idx = filtered.findIndex(a =>
+        a.designation?.toLowerCase().includes(val) ||
+        (a.title ?? '').toLowerCase().includes(val)
+      )
+    }
+
+    if (idx !== -1) {
+      rowVirtualizer.scrollToIndex(idx, { align: 'start', behavior: 'smooth' })
+    }
+    setJumpValue('')
   }
 
   const hubUrl = branch.domain + series.hub
@@ -154,50 +191,72 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
             <button className="mark-btn" onClick={() => markAll(allIds, true)}>全選択</button>
             <button className="mark-btn" onClick={() => markAll(allIds, false)}>全解除</button>
           </div>
+          <input
+            className="jump-input"
+            type="text"
+            inputMode="search"
+            placeholder="番号/名前で移動…"
+            value={jumpValue}
+            onChange={e => setJumpValue(e.target.value)}
+            onKeyDown={handleJump}
+          />
         </div>
       </div>
 
-      <div className="article-list-wrap">
-        <table className="article-table">
-          <thead>
-            <tr>
-              <th className="article-td col-check">✓</th>
-              <th className="article-td col-num">No.</th>
-              <th className="article-td col-badges">状態</th>
-              <th className="article-td col-fav">★</th>
-              <th className="article-td col-memo">✎</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginated.map(article => (
-              <ArticleRow
-                key={article.id}
-                article={article}
-                read={isChecked(article.id)}
-                onToggle={() => toggle(article.id)}
-                favorited={isFavorite(article.id)}
-                onFavorite={() => toggleFavorite(article.id)}
-                memo={getMemo(article.id)}
-                onMemoChange={setMemo}
-                readDate={getReadDate(article.id)}
-                charCount={getCharCount(article)}
-                rating={getRating(article)}
-              />
-            ))}
-            {paginated.length === 0 && (
-              <tr>
-                <td colSpan={5} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-3)' }}>
-                  {filter === 'read' ? '読了記事なし' : '未読記事なし'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      {/* Sticky column header */}
+      <div className="article-header-row">
+        <div className="article-th col-check">✓</div>
+        <div className="article-th col-num">No.</div>
+        <div className="article-th col-badges">状態</div>
+        <div className="article-th col-fav">★</div>
+        <div className="article-th col-memo">✎</div>
       </div>
 
-      {totalPages > 1 && (
-        <Pagination page={page} totalPages={totalPages} total={filtered.length} onPage={setPage} />
-      )}
+      {/* Virtual scroll area */}
+      <div ref={parentRef} className="article-list-wrap">
+        {filtered.length === 0 ? (
+          <div className="list-empty">
+            {filter === 'read' ? '読了記事なし' : '未読記事なし'}
+          </div>
+        ) : (
+          <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
+            {rowVirtualizer.getVirtualItems().map(virtualItem => {
+              const article = filtered[virtualItem.index]
+              return (
+                <div
+                  key={virtualItem.key}
+                  data-index={virtualItem.index}
+                  ref={rowVirtualizer.measureElement}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualItem.start}px)`,
+                  }}
+                >
+                  <ArticleRow
+                    article={article}
+                    read={isChecked(article.id)}
+                    onToggle={() => toggle(article.id)}
+                    favorited={isFavorite(article.id)}
+                    onFavorite={() => toggleFavorite(article.id)}
+                    memo={getMemo(article.id)}
+                    onMemoChange={setMemo}
+                    readDate={getReadDate(article.id)}
+                    charCount={getCharCount(article)}
+                    rating={getRating(article)}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="list-footer">
+        <span className="list-count">全 <strong>{filtered.length}</strong> 件</span>
+      </div>
     </>
   )
 }
@@ -211,21 +270,21 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
     article.predicted ? 'is-predicted' : '',
   ].filter(Boolean).join(' ')
 
-  const title = TITLES[article.branchCode]?.[String(article.number)] ?? ''
+  const title = article.title ?? TITLES[article.branchCode]?.[String(article.number)] ?? ''
   const hasMemo = memo.length > 0
 
   return (
     <>
-      <tr className={rowClass}>
-        <td className="article-td col-check">
+      <div className={rowClass}>
+        <div className="article-td col-check">
           <input
             type="checkbox"
             className="scp-checkbox"
             checked={read}
             onChange={onToggle}
           />
-        </td>
-        <td className="article-td col-num">
+        </div>
+        <div className="article-td col-num">
           <a
             className="scp-num-cell"
             href={article.url}
@@ -241,16 +300,16 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
               <span className="scp-rating">👍 {rating}</span>
             )}
           </a>
-        </td>
-        <td className="article-td col-badges">
+        </div>
+        <div className="article-td col-badges">
           {article.predicted
             ? <span className="badge badge-predicted">予測</span>
             : read
               ? <span className="badge badge-read">読了</span>
               : null
           }
-        </td>
-        <td className="article-td col-fav">
+        </div>
+        <div className="article-td col-fav">
           <button
             className={`fav-btn${favorited ? ' is-fav' : ''}`}
             onClick={onFavorite}
@@ -258,8 +317,8 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
           >
             ★
           </button>
-        </td>
-        <td className="article-td col-memo">
+        </div>
+        <div className="article-td col-memo">
           <button
             className={`memo-btn${hasMemo ? ' has-memo' : ''}${memoOpen ? ' is-open' : ''}`}
             onClick={() => setMemoOpen(v => !v)}
@@ -267,78 +326,24 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
           >
             ✎
           </button>
-        </td>
-      </tr>
+        </div>
+      </div>
       {memoOpen && (
-        <tr className="memo-expand-row">
-          <td colSpan={5} className="memo-expand-cell">
-            <div className="memo-expand">
-              {readDate && (
-                <span className="memo-readdate">📅 {formatDate(readDate)} 読了</span>
-              )}
-              <input
-                className="memo-input"
-                type="text"
-                placeholder="メモを入力..."
-                value={memo}
-                onChange={e => onMemoChange(article.id, e.target.value)}
-              />
-            </div>
-          </td>
-        </tr>
+        <div className="memo-expand-row">
+          <div className="memo-expand">
+            {readDate && (
+              <span className="memo-readdate">📅 {formatDate(readDate)} 読了</span>
+            )}
+            <input
+              className="memo-input"
+              type="text"
+              placeholder="メモを入力..."
+              value={memo}
+              onChange={e => onMemoChange(article.id, e.target.value)}
+            />
+          </div>
+        </div>
       )}
     </>
   )
-}
-
-function Pagination({ page, totalPages, total, onPage }) {
-  const pages = buildPageNums(page, totalPages)
-
-  return (
-    <div className="pagination">
-      <button className="page-btn" disabled={page <= 1} onClick={() => onPage(page - 1)}>
-        ◀
-      </button>
-
-      <div className="page-nums">
-        {pages.map((p, i) =>
-          p === '…' ? (
-            <span key={`e-${i}`} className="page-ellipsis">…</span>
-          ) : (
-            <button
-              key={p}
-              className={`page-num${p === page ? ' active' : ''}`}
-              onClick={() => onPage(p)}
-            >
-              {p}
-            </button>
-          )
-        )}
-      </div>
-
-      <button className="page-btn" disabled={page >= totalPages} onClick={() => onPage(page + 1)}>
-        ▶
-      </button>
-
-      <span className="page-info">全 <span>{total}</span> 件</span>
-    </div>
-  )
-}
-
-function buildPageNums(current, total) {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
-  const pages = new Set([1, total, current])
-  for (let d = -2; d <= 2; d++) {
-    const p = current + d
-    if (p >= 1 && p <= total) pages.add(p)
-  }
-  const sorted = [...pages].sort((a, b) => a - b)
-  const result = []
-  let prev = null
-  for (const p of sorted) {
-    if (prev !== null && p - prev > 1) result.push('…')
-    result.push(p)
-    prev = p
-  }
-  return result
 }
