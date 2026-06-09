@@ -170,6 +170,24 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
           </div>
         </div>
 
+        {/* Layout selector — full-width segmented control */}
+        <div className="toolbar-row toolbar-row-layout">
+          {[
+            { key: 'list',   label: 'リスト',   sub: '行一覧' },
+            { key: 'card',   label: 'カード',   sub: '詳細表示' },
+            { key: 'matrix', label: 'グリッド', sub: '全体把握' },
+          ].map(({ key, label, sub }) => (
+            <button
+              key={key}
+              className={`layout-tab${layoutMode === key ? ' active' : ''}`}
+              onClick={() => changeLayout(key)}
+            >
+              <span className="layout-tab-label">{label}</span>
+              <span className="layout-tab-sub">{sub}</span>
+            </button>
+          ))}
+        </div>
+
         <div className="toolbar-row toolbar-row-bottom">
           <div className="filter-tabs">
             {[
@@ -183,23 +201,6 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
                 onClick={() => handleFilter(key)}
               >
                 {label}
-              </button>
-            ))}
-          </div>
-
-          <div className="layout-switcher">
-            {[
-              { key: 'list',   icon: '≡', title: 'リスト' },
-              { key: 'card',   icon: '⊞', title: 'カード' },
-              { key: 'matrix', icon: '⣿', title: 'マトリックス' },
-            ].map(({ key, icon, title }) => (
-              <button
-                key={key}
-                className={`layout-btn${layoutMode === key ? ' active' : ''}`}
-                onClick={() => changeLayout(key)}
-                title={title}
-              >
-                {icon}
               </button>
             ))}
           </div>
