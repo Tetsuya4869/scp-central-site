@@ -6,18 +6,23 @@ import { useChecklist } from './hooks/useChecklist.js'
 import { useFavorites } from './hooks/useFavorites.js'
 import { useMemos } from './hooks/useMemos.js'
 import { useReadDates } from './hooks/useReadDates.js'
+import { useQueue } from './hooks/useQueue.js'
+import { useUserRatings } from './hooks/useUserRatings.js'
 import Sidebar from './components/Sidebar.jsx'
 import ArticleList from './components/ArticleList.jsx'
 import HubPage from './components/HubPage.jsx'
 import FavoritesPage from './components/FavoritesPage.jsx'
 import SearchPage from './components/SearchPage.jsx'
 import StatsPage from './components/StatsPage.jsx'
+import QueuePage from './components/QueuePage.jsx'
 
 export default function App() {
   const { toggle, markAll, isChecked, countChecked, totalChecked } = useChecklist()
   const { favorites, toggleFavorite, isFavorite } = useFavorites()
   const { getMemo, setMemo } = useMemos()
   const { setReadDate, clearReadDate, getReadDate } = useReadDates()
+  const { queue, addToQueue, removeFromQueue, moveUp, moveDown, isQueued } = useQueue()
+  const { userRatings, setRating, getRating, hasRating } = useUserRatings()
 
   const [layoutMode, setLayoutModeRaw] = useState(() => localStorage.getItem('scp-layout') || 'list')
   const setLayoutMode = useCallback(m => {
@@ -37,8 +42,8 @@ export default function App() {
     if (value) ids.forEach(id => setReadDate(id))
     else ids.forEach(id => clearReadDate(id))
   }, [markAll, setReadDate, clearReadDate])
-  // view: null | 'series' | 'hubs'
-  const [selected, setSelected] = useState({ branchCode: null, view: null, seriesId: null })
+  // view: null | 'series' | 'hubs' | 'search' | 'favorites' | 'stats' | 'queue'
+  const [selected, setSelected] = useState({ branchCode: null, view: null, seriesId: null, targetId: null })
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const handleSelect = useCallback((sel) => {
@@ -88,6 +93,19 @@ export default function App() {
           toggleFavorite={toggleFavorite}
           onOpenSidebar={() => setSidebarOpen(true)}
           isChecked={isChecked}
+          getUserRating={getRating}
+        />
+      )
+    }
+    if (selected.view === 'queue') {
+      return (
+        <QueuePage
+          key="queue"
+          queue={queue}
+          removeFromQueue={removeFromQueue}
+          moveUp={moveUp}
+          moveDown={moveDown}
+          onOpenSidebar={() => setSidebarOpen(true)}
         />
       )
     }
@@ -99,6 +117,7 @@ export default function App() {
           grandTotal={grandTotal}
           countChecked={countChecked}
           onOpenSidebar={() => setSidebarOpen(true)}
+          userRatings={userRatings}
         />
       )
     }
@@ -129,6 +148,12 @@ export default function App() {
           getReadDate={getReadDate}
           layoutMode={layoutMode}
           setLayoutMode={setLayoutMode}
+          isQueued={isQueued}
+          addToQueue={addToQueue}
+          getUserRating={getRating}
+          setUserRating={setRating}
+          hasUserRating={hasRating}
+          targetId={selected.targetId ?? null}
         />
       )
     }
@@ -173,6 +198,7 @@ export default function App() {
           countChecked={countChecked}
           isOpen={sidebarOpen}
           favCount={favorites.size}
+          queueCount={queue.length}
         />
 
         <main className="main-content">

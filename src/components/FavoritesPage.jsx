@@ -14,7 +14,7 @@ function fmtChars(n) {
   return n >= 10000 ? `${(n / 10000).toFixed(1)}万字` : `${n.toLocaleString()}字`
 }
 
-export default function FavoritesPage({ favorites, toggleFavorite, onOpenSidebar, isChecked }) {
+export default function FavoritesPage({ favorites, toggleFavorite, onOpenSidebar, isChecked, getUserRating }) {
   const [sortBy,     setSortBy]     = useState('branch')   // 'branch' | 'name'
   const [readFilter, setReadFilter] = useState('all')      // 'all' | 'read' | 'unread'
 
@@ -117,6 +117,11 @@ export default function FavoritesPage({ favorites, toggleFavorite, onOpenSidebar
                         {charCount != null && <span className="scp-charcount">{fmtChars(charCount)}</span>}
                         {rating    != null && <span className="scp-rating">👍 {rating}</span>}
                       </a>
+                      {getUserRating?.(article.id) && (
+                        <span className="my-rating-badge">
+                          {'★'.repeat(getUserRating(article.id))}
+                        </span>
+                      )}
                       <button
                         className="fav-remove-btn"
                         onClick={() => toggleFavorite(article.id)}

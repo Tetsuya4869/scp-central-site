@@ -127,7 +127,7 @@ export default function SearchPage({ onNavigate, onOpenSidebar, isChecked, isFav
     } else if (e.key === 'Enter' && highlightIdx >= 0) {
       e.preventDefault()
       const r = results[highlightIdx]
-      if (r) onNavigate({ branchCode: r.branch.code, view: 'series', seriesId: r.series.id })
+      if (r) onNavigate({ branchCode: r.branch.code, view: 'series', seriesId: r.series.id, targetId: r.article.id })
     }
   }, [results, highlightIdx, onNavigate])
 
@@ -203,7 +203,7 @@ export default function SearchPage({ onNavigate, onOpenSidebar, isChecked, isFav
                 isChecked(article.id) ? 'is-read' : '',
                 idx === highlightIdx ? 'is-highlighted' : '',
               ].filter(Boolean).join(' ')}
-              onClick={() => onNavigate({ branchCode: branch.code, view: 'series', seriesId: series.id })}
+              onClick={() => onNavigate({ branchCode: branch.code, view: 'series', seriesId: series.id, targetId: article.id })}
             >
               <span className="search-branch-badge" style={{ background: branch.accent }}>
                 {branch.code}

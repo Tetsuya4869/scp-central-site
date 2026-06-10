@@ -1,18 +1,22 @@
 const KEYS = {
-  checklist: 'scp-checklist-v1',
-  favorites: 'scp-favorites-v1',
-  memos:     'scp-memos-v1',
-  readDates: 'scp-readdates-v1',
+  checklist:   'scp-checklist-v1',
+  favorites:   'scp-favorites-v1',
+  memos:       'scp-memos-v1',
+  readDates:   'scp-readdates-v1',
+  queue:       'scp-queue-v1',
+  userRatings: 'scp-user-ratings-v1',
 }
 
 export function exportData() {
   const data = {
     version: 1,
     exportedAt: new Date().toISOString(),
-    checklist: JSON.parse(localStorage.getItem(KEYS.checklist) || '[]'),
-    favorites: JSON.parse(localStorage.getItem(KEYS.favorites) || '[]'),
-    memos:     JSON.parse(localStorage.getItem(KEYS.memos)     || '{}'),
-    readDates: JSON.parse(localStorage.getItem(KEYS.readDates) || '{}'),
+    checklist:   JSON.parse(localStorage.getItem(KEYS.checklist)   || '[]'),
+    favorites:   JSON.parse(localStorage.getItem(KEYS.favorites)   || '[]'),
+    memos:       JSON.parse(localStorage.getItem(KEYS.memos)       || '{}'),
+    readDates:   JSON.parse(localStorage.getItem(KEYS.readDates)   || '{}'),
+    queue:       JSON.parse(localStorage.getItem(KEYS.queue)       || '[]'),
+    userRatings: JSON.parse(localStorage.getItem(KEYS.userRatings) || '{}'),
   }
 
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
@@ -54,5 +58,18 @@ export function importData(jsonText) {
   if (data.readDates && typeof data.readDates === 'object') {
     const existing = JSON.parse(localStorage.getItem(KEYS.readDates) || '{}')
     localStorage.setItem(KEYS.readDates, JSON.stringify({ ...existing, ...data.readDates }))
+  }
+
+  // queue: 既存 + インポート（重複除去）
+  if (Array.isArray(data.queue)) {
+    const existing = JSON.parse(localStorage.getItem(KEYS.queue) || '[]')
+    const merged = [...existing, ...data.queue.filter(id => !existing.includes(id))]
+    localStorage.setItem(KEYS.queue, JSON.stringify(merged))
+  }
+
+  // userRatings: 既存を残しつつインポートで上書きマージ
+  if (data.userRatings && typeof data.userRatings === 'object') {
+    const existing = JSON.parse(localStorage.getItem(KEYS.userRatings) || '{}')
+    localStorage.setItem(KEYS.userRatings, JSON.stringify({ ...existing, ...data.userRatings }))
   }
 }

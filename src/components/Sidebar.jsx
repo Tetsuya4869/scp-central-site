@@ -3,7 +3,7 @@ import { BRANCHES } from '../data/branches.js'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
 import { exportData, importData } from '../utils/dataBackup.js'
 
-export default function Sidebar({ selected, onSelect, countChecked, isOpen, favCount }) {
+export default function Sidebar({ selected, onSelect, countChecked, isOpen, favCount, queueCount }) {
   const { branchCode, view, seriesId } = selected
   const fileInputRef = useRef(null)
 
@@ -45,6 +45,13 @@ export default function Sidebar({ selected, onSelect, countChecked, isOpen, favC
       >
         <span className="fav-nav-label">⭐ お気に入り</span>
         <span className="series-count">{favCount}</span>
+      </div>
+      <div
+        className={`fav-nav-item${view === 'queue' && !branchCode ? ' active' : ''}`}
+        onClick={() => onSelect({ branchCode: null, view: 'queue', seriesId: null })}
+      >
+        <span className="fav-nav-label">📚 後で読む</span>
+        <span className="series-count">{queueCount}</span>
       </div>
       <div
         className={`fav-nav-item${view === 'stats' && !branchCode ? ' active' : ''}`}

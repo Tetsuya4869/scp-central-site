@@ -2259,3 +2259,316 @@ html, body, #root {
     display: none;
   }
 }
+
+/* ══════════════════════════════════════════
+   ARTICLE LIST: extended grid columns (queue + myrating)
+   ══════════════════════════════════════════ */
+
+.article-header-row,
+.article-row {
+  grid-template-columns: 44px 1fr 60px 40px 36px 36px 72px;
+}
+
+.col-queue,
+.col-myrating {
+  justify-content: center;
+}
+
+/* ── Queue button ── */
+.queue-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-family: var(--font-mono);
+  color: var(--text-3);
+  padding: 4px;
+  border-radius: var(--radius-s);
+  transition: color 0.1s, background 0.1s;
+  line-height: 1;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.queue-btn:hover {
+  color: var(--accent-bright);
+  background: var(--bg-3);
+}
+
+.queue-btn.is-queued {
+  color: var(--accent);
+}
+
+/* ── User rating stars (inline) ── */
+.user-rating-stars {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  cursor: pointer;
+}
+
+.ur-star {
+  font-size: 12px;
+  color: var(--border-light);
+  transition: color 0.1s, transform 0.1s;
+  line-height: 1;
+  user-select: none;
+}
+
+.ur-star.filled {
+  color: #f5c518;
+}
+
+.ur-star:hover {
+  transform: scale(1.2);
+}
+
+/* My rating badge (favorites / stats) */
+.my-rating-badge {
+  font-size: 11px;
+  color: #f5c518;
+  letter-spacing: -1px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Mobile: hide rating and queue columns */
+@media (max-width: 768px) {
+  .article-header-row,
+  .article-row {
+    grid-template-columns: 40px 1fr 40px 36px 36px;
+  }
+
+  .col-badges,
+  .col-myrating {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .article-header-row,
+  .article-row {
+    grid-template-columns: 40px 1fr 36px 36px;
+  }
+
+  .col-queue {
+    display: none;
+  }
+}
+
+/* ══════════════════════════════════════════
+   TARGET HIGHLIGHT (search jump)
+   ══════════════════════════════════════════ */
+
+@keyframes targetPulse {
+  0%   { box-shadow: inset 0 0 0 2px var(--accent); background: var(--bg-3); }
+  50%  { box-shadow: inset 0 0 0 2px var(--accent-bright); background: rgba(212, 149, 32, 0.1); }
+  100% { box-shadow: none; background: transparent; }
+}
+
+.article-row.is-target-highlight {
+  animation: targetPulse 2s ease-out forwards;
+}
+
+.article-card.is-target-highlight {
+  animation: targetPulse 2s ease-out forwards;
+}
+
+.matrix-cell.is-target-highlight {
+  animation: targetPulse 2s ease-out forwards;
+}
+
+/* ══════════════════════════════════════════
+   ACTIVITY HEATMAP
+   ══════════════════════════════════════════ */
+
+.heatmap-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.hm-month-row {
+  display: grid;
+  grid-template-columns: repeat(53, 13px);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.hm-month-cell {
+  position: relative;
+  height: 13px;
+}
+
+.hm-month-label {
+  font-size: 9px;
+  color: var(--text-3);
+  font-family: var(--font-sans);
+  white-space: nowrap;
+  position: absolute;
+  left: 0;
+  top: 1px;
+}
+
+.heatmap-grid {
+  display: grid;
+  grid-template-rows: repeat(7, 13px);
+  grid-auto-flow: column;
+  gap: 2px;
+  width: max-content;
+}
+
+.hm-cell {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  cursor: default;
+}
+
+.hm-level-0 { background: var(--bg-3); }
+.hm-level-1 { background: var(--accent-dim); opacity: 0.55; }
+.hm-level-2 { background: var(--accent); }
+.hm-level-3 { background: var(--accent-bright); box-shadow: 0 0 4px rgba(255, 182, 39, 0.4); }
+.hm-future  { opacity: 0.2; }
+
+/* ══════════════════════════════════════════
+   QUEUE PAGE
+   ══════════════════════════════════════════ */
+
+.queue-page {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.queue-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.queue-row:hover {
+  background: var(--bg-2);
+  border-color: var(--border-light);
+}
+
+.queue-pos {
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.queue-idx {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+
+.badge-next {
+  background: var(--accent);
+  color: #000;
+  font-size: 9px;
+  font-weight: bold;
+  padding: 2px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+}
+
+.queue-link {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  text-decoration: none;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.queue-designation {
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.queue-link:hover .queue-designation {
+  color: var(--accent-bright);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.queue-title {
+  font-size: 11px;
+  font-family: var(--font-sans);
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.queue-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.queue-move-btn {
+  background: none;
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  color: var(--text-3);
+  font-size: 10px;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+}
+
+.queue-move-btn:hover:not(:disabled) {
+  color: var(--accent-bright);
+  border-color: var(--accent-dim);
+}
+
+.queue-move-btn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.queue-remove-btn {
+  background: none;
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  color: var(--text-3);
+  font-size: 13px;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+}
+
+.queue-remove-btn:hover {
+  color: #e05252;
+  border-color: #a03030;
+}

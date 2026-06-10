@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
 import TITLES from '../data/titles.json'
@@ -33,11 +33,20 @@ function formatDate(date) {
   return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
 }
 
-export default function ArticleList({ branch, series, isChecked, toggle, markAll, onOpenSidebar, isFavorite, toggleFavorite, getMemo, setMemo, getReadDate, layoutMode, setLayoutMode }) {
+export default function ArticleList({
+  branch, series, isChecked, toggle, markAll, onOpenSidebar,
+  isFavorite, toggleFavorite, getMemo, setMemo, getReadDate,
+  layoutMode, setLayoutMode,
+  isQueued, addToQueue,
+  getUserRating, setUserRating, hasUserRating,
+  targetId,
+}) {
   const [filter, setFilter] = useState('all')
   const [sortBy, setSortBy] = useState('number')
   const [jumpValue, setJumpValue] = useState('')
+  const [highlightedId, setHighlightedId] = useState(null)
   const parentRef = useRef(null)
+  const highlightTimerRef = useRef(null)
 
   const allArticles = useMemo(
     () => series.type === 'custom'
@@ -52,12 +61,19 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
     let list = allArticles
     if (filter === 'read')   list = list.filter(a => isChecked(a.id))
     if (filter === 'unread') list = list.filter(a => !isChecked(a.id))
+    if (filter === 'rated')  list = list.filter(a => hasUserRating?.(a.id))
 
-    const isCharsSort  = sortBy === 'chars-asc'  || sortBy === 'chars-desc'
-    const isRatingSort = sortBy === 'rating-asc' || sortBy === 'rating-desc'
-    if (isCharsSort || isRatingSort) {
-      const dir    = sortBy.endsWith('-asc') ? 1 : -1
-      const getter = isCharsSort ? getCharCount : getRating
+    const isCharsSort    = sortBy === 'chars-asc'    || sortBy === 'chars-desc'
+    const isRatingSort   = sortBy === 'rating-asc'   || sortBy === 'rating-desc'
+    const isMyRatingSort = sortBy === 'myrating-asc' || sortBy === 'myrating-desc'
+
+    if (isCharsSort || isRatingSort || isMyRatingSort) {
+      const dir = sortBy.endsWith('-asc') ? 1 : -1
+      const getter = isCharsSort
+        ? getCharCount
+        : isRatingSort
+          ? getRating
+          : (a) => getUserRating?.(a.id) ?? null
       list = [...list].sort((a, b) => {
         const ca = getter(a)
         const cb = getter(b)
@@ -68,7 +84,7 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
       })
     }
     return list
-  }, [allArticles, filter, sortBy, isChecked])
+  }, [allArticles, filter, sortBy, isChecked, hasUserRating, getUserRating])
 
   const cols = layoutMode === 'card' ? CARD_COLS : layoutMode === 'matrix' ? MATRIX_COLS : 1
   const virtualRows = useMemo(() => {
@@ -85,6 +101,23 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
     estimateSize: () => layoutMode === 'card' ? 130 : layoutMode === 'matrix' ? 48 : 44,
     overscan: layoutMode === 'matrix' ? 4 : 10,
   })
+
+  // Jump to targetId on mount (from search navigation)
+  useEffect(() => {
+    if (!targetId) return
+    const idx = filtered.findIndex(a => a.id === targetId)
+    if (idx === -1) return
+    const rowIdx = Math.floor(idx / cols)
+    const t = setTimeout(() => {
+      rowVirtualizer.scrollToIndex(rowIdx, { align: 'center', behavior: 'smooth' })
+      setHighlightedId(targetId)
+      highlightTimerRef.current = setTimeout(() => setHighlightedId(null), 2000)
+    }, 80)
+    return () => {
+      clearTimeout(t)
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current)
+    }
+  }, []) // run once on mount; filtered/cols/rowVirtualizer are stable at mount time
 
   const readCount = useMemo(
     () => allArticles.filter(a => isChecked(a.id)).length,
@@ -112,6 +145,12 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
 
   function cycleRatingSort() {
     const next = sortBy === 'rating-asc' ? 'rating-desc' : sortBy === 'rating-desc' ? 'number' : 'rating-asc'
+    setSortBy(next)
+    rowVirtualizer.scrollToOffset(0)
+  }
+
+  function cycleMyRatingSort() {
+    const next = sortBy === 'myrating-asc' ? 'myrating-desc' : sortBy === 'myrating-desc' ? 'number' : 'myrating-asc'
     setSortBy(next)
     rowVirtualizer.scrollToOffset(0)
   }
@@ -170,7 +209,7 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
           </div>
         </div>
 
-        {/* Layout selector — full-width segmented control */}
+        {/* Layout selector */}
         <div className="toolbar-row toolbar-row-layout">
           {[
             { key: 'list',   label: 'リスト',   sub: '行一覧' },
@@ -194,6 +233,7 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
               { key: 'all',    label: '全て' },
               { key: 'read',   label: '読了' },
               { key: 'unread', label: '未読' },
+              { key: 'rated',  label: '評価済' },
             ].map(({ key, label }) => (
               <button
                 key={key}
@@ -210,16 +250,23 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
               <button
                 className={`mark-btn${sortBy.startsWith('chars') ? ' active' : ''}`}
                 onClick={cycleCharsSort}
-                title="文字数順（少ない順→多い順→解除）"
+                title="文字数順"
               >
                 {sortBy === 'chars-asc' ? '文字数 ▲' : sortBy === 'chars-desc' ? '文字数 ▼' : '文字数順'}
               </button>
               <button
                 className={`mark-btn${sortBy.startsWith('rating') ? ' active' : ''}`}
                 onClick={cycleRatingSort}
-                title="評価順（低い順→高い順→解除）"
+                title="評価順"
               >
                 {sortBy === 'rating-asc' ? '評価 ▲' : sortBy === 'rating-desc' ? '評価 ▼' : '評価順'}
+              </button>
+              <button
+                className={`mark-btn${sortBy.startsWith('myrating') ? ' active' : ''}`}
+                onClick={cycleMyRatingSort}
+                title="マイ評価順"
+              >
+                {sortBy === 'myrating-asc' ? 'マイ評価 ▲' : sortBy === 'myrating-desc' ? 'マイ評価 ▼' : 'マイ評価順'}
               </button>
             </>
           )}
@@ -249,14 +296,16 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
           <div className="article-th col-num">No.</div>
           <div className="article-th col-badges">状態</div>
           <div className="article-th col-fav">★</div>
+          <div className="article-th col-queue">+</div>
           <div className="article-th col-memo">✎</div>
+          <div className="article-th col-myrating">マイ評価</div>
         </div>
       )}
 
       <div ref={parentRef} className="article-list-wrap">
         {virtualRows.length === 0 ? (
           <div className="list-empty">
-            {filter === 'read' ? '読了記事なし' : '未読記事なし'}
+            {filter === 'read' ? '読了記事なし' : filter === 'rated' ? '評価済み記事なし' : '未読記事なし'}
           </div>
         ) : (
           <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
@@ -287,6 +336,11 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
                       readDate={getReadDate(rowArticles[0].id)}
                       charCount={getCharCount(rowArticles[0])}
                       rating={getRating(rowArticles[0])}
+                      queued={isQueued?.(rowArticles[0].id)}
+                      onQueue={() => addToQueue?.(rowArticles[0].id)}
+                      userRating={getUserRating?.(rowArticles[0].id)}
+                      onUserRating={(id, val) => setUserRating?.(id, val)}
+                      highlighted={highlightedId === rowArticles[0].id}
                     />
                   ) : layoutMode === 'card' ? (
                     <div className="card-row">
@@ -303,6 +357,9 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
                           readDate={getReadDate(article.id)}
                           charCount={getCharCount(article)}
                           rating={getRating(article)}
+                          queued={isQueued?.(article.id)}
+                          onQueue={() => addToQueue?.(article.id)}
+                          highlighted={highlightedId === article.id}
                         />
                       ))}
                     </div>
@@ -314,6 +371,7 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
                           article={article}
                           read={isChecked(article.id)}
                           onToggle={() => toggle(article.id)}
+                          highlighted={highlightedId === article.id}
                         />
                       ))}
                     </div>
@@ -332,13 +390,31 @@ export default function ArticleList({ branch, series, isChecked, toggle, markAll
   )
 }
 
-function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, rating }) {
+function UserRatingStars({ id, rating, onSet }) {
+  const [hovered, setHovered] = useState(0)
+  return (
+    <div className="user-rating-stars" onMouseLeave={() => setHovered(0)}>
+      {[1, 2, 3, 4, 5].map(n => (
+        <span
+          key={n}
+          className={`ur-star${(hovered || rating || 0) >= n ? ' filled' : ''}`}
+          onMouseEnter={() => setHovered(n)}
+          onClick={() => onSet(id, rating === n ? null : n)}
+          title={`${n}★`}
+        >★</span>
+      ))}
+    </div>
+  )
+}
+
+function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, rating, queued, onQueue, userRating, onUserRating, highlighted }) {
   const [memoOpen, setMemoOpen] = useState(false)
 
   const rowClass = [
     'article-row',
     read ? 'is-read' : '',
     article.predicted ? 'is-predicted' : '',
+    highlighted ? 'is-target-highlight' : '',
   ].filter(Boolean).join(' ')
 
   const title = article.title ?? TITLES[article.branchCode]?.[String(article.number)] ?? ''
@@ -364,12 +440,8 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
           >
             <span className="scp-designation">{article.designation}</span>
             {title && <span className="scp-title">{title}</span>}
-            {charCount != null && (
-              <span className="scp-charcount">{formatChars(charCount)}</span>
-            )}
-            {rating != null && (
-              <span className="scp-rating">👍 {rating}</span>
-            )}
+            {charCount != null && <span className="scp-charcount">{formatChars(charCount)}</span>}
+            {rating != null && <span className="scp-rating">👍 {rating}</span>}
           </a>
         </div>
         <div className="article-td col-badges">
@@ -385,18 +457,24 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
             className={`fav-btn${favorited ? ' is-fav' : ''}`}
             onClick={onFavorite}
             title={favorited ? 'お気に入り解除' : 'お気に入り追加'}
-          >
-            ★
-          </button>
+          >★</button>
+        </div>
+        <div className="article-td col-queue">
+          <button
+            className={`queue-btn${queued ? ' is-queued' : ''}`}
+            onClick={onQueue}
+            title={queued ? '後で読むに追加済み' : '後で読むに追加'}
+          >{queued ? '✓' : '+'}</button>
         </div>
         <div className="article-td col-memo">
           <button
             className={`memo-btn${hasMemo ? ' has-memo' : ''}${memoOpen ? ' is-open' : ''}`}
             onClick={() => setMemoOpen(v => !v)}
             title={hasMemo ? 'メモあり（クリックで編集）' : 'メモを追加'}
-          >
-            ✎
-          </button>
+          >✎</button>
+        </div>
+        <div className="article-td col-myrating">
+          <UserRatingStars id={article.id} rating={userRating} onSet={onUserRating} />
         </div>
       </div>
       {memoOpen && (
@@ -419,7 +497,7 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
   )
 }
 
-function ArticleCard({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, rating }) {
+function ArticleCard({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, rating, queued, onQueue, highlighted }) {
   const [memoOpen, setMemoOpen] = useState(false)
   const title = article.title ?? TITLES[article.branchCode]?.[String(article.number)] ?? ''
   const hasMemo = memo.length > 0
@@ -428,6 +506,7 @@ function ArticleCard({ article, read, onToggle, favorited, onFavorite, memo, onM
     'article-card',
     read ? 'is-read' : '',
     article.predicted ? 'is-predicted' : '',
+    highlighted ? 'is-target-highlight' : '',
   ].filter(Boolean).join(' ')
 
   return (
@@ -452,6 +531,11 @@ function ArticleCard({ article, read, onToggle, favorited, onFavorite, memo, onM
           onClick={onFavorite}
           title={favorited ? 'お気に入り解除' : 'お気に入り追加'}
         >★</button>
+        <button
+          className={`queue-btn${queued ? ' is-queued' : ''}`}
+          onClick={onQueue}
+          title={queued ? '後で読むに追加済み' : '後で読むに追加'}
+        >{queued ? '✓' : '+'}</button>
         <button
           className={`memo-btn${hasMemo ? ' has-memo' : ''}${memoOpen ? ' is-open' : ''}`}
           onClick={() => setMemoOpen(v => !v)}
@@ -485,7 +569,7 @@ function ArticleCard({ article, read, onToggle, favorited, onFavorite, memo, onM
   )
 }
 
-function MatrixCell({ article, read, onToggle }) {
+function MatrixCell({ article, read, onToggle, highlighted }) {
   const label = article.number != null
     ? String(article.number).padStart(3, '0')
     : article.title?.slice(0, 8) ?? article.designation?.slice(0, 8) ?? '---'
@@ -494,6 +578,7 @@ function MatrixCell({ article, read, onToggle }) {
     'matrix-cell',
     read ? 'is-read' : '',
     article.predicted ? 'is-predicted' : '',
+    highlighted ? 'is-target-highlight' : '',
   ].filter(Boolean).join(' ')
 
   return (

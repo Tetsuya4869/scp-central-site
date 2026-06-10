@@ -36,18 +36,29 @@ function getLast7Days(map) {
   return days
 }
 
+function buildHeatmapData(map) {
+  const dayCounts = new Map()
+  for (const ts of map.values()) {
+    const d = new Date(ts)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    dayCounts.set(key, (dayCounts.get(key) ?? 0) + 1)
+  }
+  return dayCounts
+}
+
 function fmtDate(ts) {
   const d = new Date(ts)
   return `${d.getMonth() + 1}/${d.getDate()}`
 }
 
-export default function StatsPage({ totalChecked, grandTotal, countChecked, onOpenSidebar }) {
+export default function StatsPage({ totalChecked, grandTotal, countChecked, onOpenSidebar, userRatings }) {
   const readDatesMap = useMemo(() => loadReadDates(), [])
 
-  const streak   = useMemo(() => computeStreak(readDatesMap), [readDatesMap])
-  const last7    = useMemo(() => getLast7Days(readDatesMap),  [readDatesMap])
-  const maxDay   = Math.max(...last7.map(d => d.count), 1)
-  const totalPct = grandTotal > 0 ? Math.round((totalChecked / grandTotal) * 100) : 0
+  const streak      = useMemo(() => computeStreak(readDatesMap), [readDatesMap])
+  const last7       = useMemo(() => getLast7Days(readDatesMap),  [readDatesMap])
+  const heatmapData = useMemo(() => buildHeatmapData(readDatesMap), [readDatesMap])
+  const maxDay      = Math.max(...last7.map(d => d.count), 1)
+  const totalPct    = grandTotal > 0 ? Math.round((totalChecked / grandTotal) * 100) : 0
 
   const recentlyRead = useMemo(() => {
     return [...readDatesMap.entries()]
@@ -70,6 +81,19 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
     const done  = countChecked(allIds)
     return { branch, done, total, pct: total > 0 ? Math.round((done / total) * 100) : 0 }
   }), [countChecked])
+
+  const topRated = useMemo(() => {
+    if (!userRatings || userRatings.size === 0) return []
+    return [...userRatings.entries()]
+      .filter(([, r]) => r >= 4)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([id, rating]) => {
+        const article = lookupArticle(id)
+        return article ? { ...article, myRating: rating } : null
+      })
+      .filter(Boolean)
+  }, [userRatings])
 
   return (
     <>
@@ -123,6 +147,12 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
           </div>
         </div>
 
+        {/* 活動カレンダー */}
+        <div className="stats-card">
+          <div className="stats-card-title">活動カレンダー（直近1年）</div>
+          <ActivityHeatmap dayCounts={heatmapData} />
+        </div>
+
         {/* 支部別進捗 */}
         <div className="stats-card">
           <div className="stats-card-title">支部別進捗</div>
@@ -138,6 +168,31 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
             ))}
           </div>
         </div>
+
+        {/* マイ高評価 */}
+        {topRated.length > 0 && (
+          <div className="stats-card">
+            <div className="stats-card-title">マイ高評価 (4★以上)</div>
+            <div className="stats-recent-list">
+              {topRated.map(article => (
+                <div key={article.id} className="stats-recent-row">
+                  <a
+                    className="stats-recent-link"
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {article.designation}
+                  </a>
+                  {article.title && <span className="stats-recent-title">{article.title}</span>}
+                  <span className="my-rating-badge" style={{ flexShrink: 0 }}>
+                    {'★'.repeat(article.myRating)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 最近読んだ */}
         {recentlyRead.length > 0 && (
@@ -164,5 +219,72 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
 
       </div>
     </>
+  )
+}
+
+const MONTHS_JP = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
+
+function ActivityHeatmap({ dayCounts }) {
+  const { cells, monthLabels } = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    // The grid ends on the next Sunday (or today if today is Sunday)
+    const lastDay = new Date(today)
+    const dow = today.getDay() // 0=Sun
+    lastDay.setDate(today.getDate() + (dow === 0 ? 0 : 7 - dow))
+
+    // Grid starts 370 days before lastDay (371 days total = 53 weeks)
+    const startDay = new Date(lastDay)
+    startDay.setDate(lastDay.getDate() - 370)
+
+    const cells = []
+    for (let i = 0; i < 371; i++) {
+      const d = new Date(startDay)
+      d.setDate(startDay.getDate() + i)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      cells.push({ date: d, key, count: dayCounts.get(key) ?? 0, isFuture: d > today })
+    }
+
+    // Month labels: one per 53 columns (7 cells each)
+    const monthLabels = Array(53).fill(null)
+    let lastMonth = -1
+    for (let col = 0; col < 53; col++) {
+      const d = cells[col * 7]?.date
+      if (d) {
+        const m = d.getMonth()
+        if (m !== lastMonth) {
+          monthLabels[col] = MONTHS_JP[m]
+          lastMonth = m
+        }
+      }
+    }
+
+    return { cells, monthLabels }
+  }, [dayCounts])
+
+  return (
+    <div className="heatmap-wrap">
+      <div className="hm-month-row">
+        {monthLabels.map((label, i) => (
+          <div key={i} className="hm-month-cell">
+            {label && <span className="hm-month-label">{label}</span>}
+          </div>
+        ))}
+      </div>
+      <div className="heatmap-grid">
+        {cells.map(({ date, key, count, isFuture }) => {
+          const level = isFuture ? 0 : count === 0 ? 0 : count <= 2 ? 1 : count <= 4 ? 2 : 3
+          const title = isFuture ? '' : `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} · ${count}件`
+          return (
+            <div
+              key={key}
+              className={`hm-cell hm-level-${level}${isFuture ? ' hm-future' : ''}`}
+              title={title}
+            />
+          )
+        })}
+      </div>
+    </div>
   )
 }
