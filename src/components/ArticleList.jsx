@@ -479,28 +479,30 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
             onChange={onToggle}
           />
         </div>
-        <div className="article-td col-num">
-          <a
-            className="scp-num-cell"
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span className="scp-designation">{article.designation}</span>
-            {title && <span className="scp-title">{title}</span>}
-            {charCount != null && <span className="scp-charcount">{formatChars(charCount)}</span>}
-            {charCount != null && <span className="scp-readmin">約{Math.ceil(charCount / 500)}分</span>}
-            {rating != null && <span className="scp-rating">👍 {rating}</span>}
-          </a>
-        </div>
-        <div className="article-td col-badges">
-          {article.predicted
-            ? <span className="badge badge-predicted">予測</span>
-            : read
-              ? <span className="badge badge-read">読了</span>
-              : null
-          }
-        </div>
+        <a
+          className="article-link-zone"
+          href={article.url}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <div className="article-td col-num">
+            <span className="scp-num-cell">
+              <span className="scp-designation">{article.designation}</span>
+              {title && <span className="scp-title">{title}</span>}
+              {charCount != null && <span className="scp-charcount">{formatChars(charCount)}</span>}
+              {charCount != null && <span className="scp-readmin">約{Math.ceil(charCount / 500)}分</span>}
+              {rating != null && <span className="scp-rating">👍 {rating}</span>}
+            </span>
+          </div>
+          <div className="article-td col-badges">
+            {article.predicted
+              ? <span className="badge badge-predicted">予測</span>
+              : read
+                ? <span className="badge badge-read">読了</span>
+                : null
+            }
+          </div>
+        </a>
         <div className="article-td col-fav">
           <button
             className={`fav-btn${favorited ? ' is-fav' : ''}`}

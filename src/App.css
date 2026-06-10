@@ -704,6 +704,17 @@ html, body, #root {
   accent-color: var(--accent);
 }
 
+/* Link zone: everything between the checkbox and the ★ button opens the article */
+.article-link-zone {
+  grid-column: span 2;
+  display: grid;
+  grid-template-columns: 1fr 60px;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
 /* Number */
 .col-num {
   /* link fills the whole cell for an easy click target */
@@ -718,12 +729,10 @@ html, body, #root {
   gap: 8px;
   padding: 0 8px;
   overflow: hidden;
-  text-decoration: none;
-  cursor: pointer;
 }
 
-.scp-num-cell:hover .scp-designation,
-.scp-num-cell:active .scp-designation {
+.article-link-zone:hover .scp-designation,
+.article-link-zone:active .scp-designation {
   color: var(--accent-bright);
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -2545,6 +2554,12 @@ html, body, #root {
   .col-badges,
   .col-myrating {
     display: none;
+  }
+
+  /* badges column is hidden, so the link zone occupies a single track */
+  .article-link-zone {
+    grid-column: span 1;
+    grid-template-columns: 1fr;
   }
 }
 
