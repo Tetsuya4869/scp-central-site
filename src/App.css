@@ -10,25 +10,30 @@
 }
 
 :root {
-  --bg-0: #0a0a0a;
-  --bg-1: #111111;
-  --bg-2: #1a1a1a;
-  --bg-3: #222222;
-  --bg-4: #2a2a2a;
-  --text-1: #e0e0e0;
-  --text-2: #aaaaaa;
-  --text-3: #666666;
-  --accent: #cc8800;
-  --accent-dim: #885500;
-  --accent-bright: #ffaa00;
+  --bg-0: #0b0c0e;
+  --bg-1: #121316;
+  --bg-2: #1a1c20;
+  --bg-3: #23252a;
+  --bg-4: #2c2f35;
+  --text-1: #e8e6e1;
+  --text-2: #a9a7a1;
+  --text-3: #6e6d68;
+  --accent: #d49520;
+  --accent-dim: #8a6210;
+  --accent-bright: #ffb627;
   --green: #2a6a2a;
-  --green-text: #55cc55;
-  --border: #2a2a2a;
-  --border-light: #333333;
-  --predicted-bg: #111a22;
+  --green-text: #5ecf6a;
+  --border: #26282d;
+  --border-light: #35383f;
+  --predicted-bg: #10161e;
   --predicted-border: #1a3a5a;
-  --read-bg: #0b1e0b;
-  --font-mono: 'Courier New', Courier, monospace;
+  --read-bg: #0c1d0e;
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-2: 0 6px 24px rgba(0, 0, 0, 0.45);
+  --focus-ring: 0 0 0 3px rgba(212, 149, 32, 0.15);
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', Menlo, Consolas, 'Courier New', monospace;
   --font-sans: system-ui, -apple-system, 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
   --sidebar-width: 260px;
   --header-height: 50px;
@@ -43,6 +48,8 @@ html, body, #root {
   font-family: var(--font-mono);
   font-size: 13px;
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   /* Prevent pull-to-refresh on mobile from interfering */
   overscroll-behavior: none;
 }
@@ -58,8 +65,9 @@ html, body, #root {
 
 .app-header {
   height: var(--header-height);
-  background: var(--bg-1);
-  border-bottom: 2px solid var(--accent-dim);
+  background: linear-gradient(180deg, #17181c 0%, #101114 100%);
+  border-bottom: 1px solid var(--accent-dim);
+  box-shadow: 0 1px 0 rgba(255, 182, 39, 0.06), 0 2px 12px rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   padding: 0 12px;
@@ -113,7 +121,7 @@ html, body, #root {
   height: 36px;
   background: none;
   border: 1px solid var(--border-light);
-  border-radius: 3px;
+  border-radius: var(--radius-s);
   cursor: pointer;
   padding: 6px;
   flex-shrink: 0;
@@ -267,7 +275,7 @@ html, body, #root {
   min-height: 44px;
   cursor: pointer;
   gap: 8px;
-  border-bottom: 1px solid #161616;
+  border-bottom: 1px solid #1c1e22;
   transition: background 0.1s;
 }
 
@@ -392,7 +400,7 @@ html, body, #root {
   height: 32px;
   background: none;
   border: 1px solid var(--border-light);
-  border-radius: 3px;
+  border-radius: var(--radius-s);
   color: var(--text-2);
   font-size: 16px;
   cursor: pointer;
@@ -476,9 +484,10 @@ html, body, #root {
 .filter-tabs {
   display: flex;
   gap: 2px;
-  background: var(--bg-2);
-  padding: 2px;
-  border-radius: 3px;
+  background: var(--bg-0);
+  padding: 3px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--border);
 }
 
 .filter-tab {
@@ -489,9 +498,9 @@ html, body, #root {
   background: none;
   border: none;
   cursor: pointer;
-  border-radius: 2px;
-  transition: all 0.1s;
-  min-height: 32px;
+  border-radius: 4px;
+  transition: all 0.15s;
+  min-height: 30px;
 }
 
 .filter-tab:hover,
@@ -503,6 +512,7 @@ html, body, #root {
 .filter-tab.active {
   color: var(--accent-bright);
   background: var(--bg-3);
+  box-shadow: var(--shadow-1);
 }
 
 /* Mark buttons */
@@ -520,8 +530,8 @@ html, body, #root {
   background: var(--bg-2);
   color: var(--text-2);
   cursor: pointer;
-  border-radius: 2px;
-  transition: all 0.1s;
+  border-radius: var(--radius-s);
+  transition: all 0.15s;
   min-height: 32px;
 }
 
@@ -576,7 +586,7 @@ html, body, #root {
   display: grid;
   grid-template-columns: 44px 1fr 60px 40px 36px;
   min-height: 44px;
-  border-bottom: 1px solid #161616;
+  border-bottom: 1px solid #1c1e22;
   transition: background 0.1s;
 }
 
@@ -733,7 +743,7 @@ html, body, #root {
 .jump-input {
   background: var(--bg-0);
   border: 1px solid var(--border-light);
-  border-radius: 3px;
+  border-radius: var(--radius-s);
   color: var(--text-1);
   font-family: var(--font-mono);
   font-size: 11px;
@@ -742,10 +752,12 @@ html, body, #root {
   width: 110px;
   min-height: 32px;
   flex-shrink: 0;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .jump-input:focus {
   border-color: var(--accent-dim);
+  box-shadow: var(--focus-ring);
 }
 
 /* ── List footer ── */
@@ -805,9 +817,11 @@ html, body, #root {
 }
 
 .welcome-title {
-  font-size: 15px;
+  font-size: 17px;
+  font-weight: bold;
   font-family: var(--font-sans);
-  color: var(--text-2);
+  color: var(--text-1);
+  letter-spacing: 0.03em;
   margin-bottom: 8px;
 }
 
@@ -841,22 +855,23 @@ html, body, #root {
 }
 
 .welcome-branch-card {
-  background: var(--bg-1);
+  background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 100%);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 12px 14px;
+  border-radius: var(--radius-m);
+  padding: 14px 16px;
   cursor: pointer;
   text-align: left;
   transition: all 0.2s;
   font-family: var(--font-mono);
   min-height: 80px;
+  box-shadow: var(--shadow-1);
 }
 
 .welcome-branch-card:hover {
   border-color: var(--accent-dim);
   background: var(--bg-2);
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-2);
 }
 
 .welcome-branch-card:active {
@@ -900,17 +915,18 @@ html, body, #root {
 /* ── Scrollbar (desktop) ── */
 
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-1);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--bg-4);
-  border-radius: 3px;
+  border-radius: 4px;
+  border: 2px solid var(--bg-0);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -953,13 +969,14 @@ html, body, #root {
   padding: 12px 14px;
   background: var(--bg-1);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-s);
   text-decoration: none;
   color: var(--text-1);
   font-family: var(--font-sans);
   font-size: 12px;
   min-height: 48px;
   transition: all 0.2s;
+  box-shadow: var(--shadow-1);
 }
 
 .hub-card:hover {
@@ -967,7 +984,7 @@ html, body, #root {
   border-color: var(--accent-dim);
   color: var(--text-1);
   transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-2);
 }
 
 .hub-card:active {
@@ -1049,12 +1066,12 @@ html, body, #root {
   padding: 7px 10px;
   background: var(--bg-2);
   border: 1px solid var(--border-light);
-  border-radius: 3px;
+  border-radius: var(--radius-s);
   color: var(--text-2);
   font-family: var(--font-mono);
   font-size: 11px;
   cursor: pointer;
-  transition: all 0.1s;
+  transition: all 0.15s;
   text-align: left;
   width: 100%;
 }
@@ -1090,6 +1107,7 @@ html, body, #root {
 .fav-nav-item.active {
   background: var(--bg-2);
   color: #f5c518;
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .fav-nav-label {
@@ -1275,17 +1293,19 @@ html, body, #root {
   flex: 1;
   background: var(--bg-0);
   border: 1px solid var(--border-light);
-  border-radius: 3px;
+  border-radius: var(--radius-s);
   color: var(--text-1);
   font-family: var(--font-mono);
   font-size: 12px;
   padding: 4px 8px;
   outline: none;
   min-width: 0;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .memo-input:focus {
   border-color: var(--accent-dim);
+  box-shadow: var(--focus-ring);
 }
 
 /* ── Search page ── */
@@ -1293,17 +1313,19 @@ html, body, #root {
   flex: 1;
   background: var(--bg-0);
   border: 1px solid var(--border-light);
-  border-radius: 4px;
+  border-radius: var(--radius-s);
   color: var(--text-1);
   font-family: var(--font-mono);
   font-size: 13px;
-  padding: 6px 10px;
+  padding: 7px 12px;
   outline: none;
   width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .search-input:focus {
   border-color: var(--accent-dim);
+  box-shadow: var(--focus-ring);
 }
 
 .search-results {
@@ -1324,7 +1346,7 @@ html, body, #root {
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-bottom: 1px solid #161616;
+  border-bottom: 1px solid #1c1e22;
   cursor: pointer;
   transition: background 0.1s;
 }
@@ -1569,7 +1591,7 @@ html, body, #root {
   padding: 7px 8px;
   background: var(--bg-1);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-s);
   cursor: pointer;
   transition: all 0.15s;
   color: var(--text-3);
@@ -1618,17 +1640,20 @@ html, body, #root {
 .article-card {
   background: var(--bg-1);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-m);
   padding: 10px 12px;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s;
   display: flex;
   flex-direction: column;
   gap: 5px;
+  box-shadow: var(--shadow-1);
 }
 
 .article-card:hover {
   background: var(--bg-2);
   border-color: var(--border-light);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-2);
 }
 
 .article-card.is-read {
@@ -1718,11 +1743,16 @@ html, body, #root {
   align-items: stretch;
   height: 42px;
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: 5px;
   background: var(--bg-1);
-  transition: border-color 0.1s;
+  transition: border-color 0.1s, box-shadow 0.1s;
   overflow: hidden;
   user-select: none;
+}
+
+.matrix-cell:hover {
+  border-color: var(--border-light);
+  box-shadow: var(--shadow-1);
 }
 
 .matrix-cell.is-read {
@@ -1767,7 +1797,7 @@ html, body, #root {
   min-width: 22px;
   background: none;
   border: none;
-  border-left: 1px solid #3a3a3a;
+  border-left: 1px solid var(--border-light);
   cursor: pointer;
   font-size: 12px;
   color: var(--text-3);
@@ -1861,10 +1891,11 @@ html, body, #root {
 }
 
 .stats-card {
-  background: var(--bg-1);
+  background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 100%);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 14px 16px;
+  border-radius: var(--radius-m);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-1);
 }
 
 .stats-card-title {
@@ -1915,9 +1946,10 @@ html, body, #root {
 
 .stats-total-fill {
   height: 100%;
-  background: var(--accent);
+  background: linear-gradient(90deg, var(--accent-dim), var(--accent-bright));
   border-radius: 3px;
   transition: width 0.4s ease;
+  box-shadow: 0 0 8px rgba(255, 182, 39, 0.25);
 }
 
 /* Streak + chart side by side */
@@ -1966,8 +1998,8 @@ html, body, #root {
 
 .stats-chart-bar {
   width: 100%;
-  background: var(--accent-dim);
-  border-radius: 2px 2px 0 0;
+  background: linear-gradient(180deg, var(--accent), var(--accent-dim));
+  border-radius: 3px 3px 0 0;
   min-height: 3px;
   transition: height 0.3s ease;
 }
@@ -2033,7 +2065,7 @@ html, body, #root {
   align-items: baseline;
   gap: 8px;
   padding: 4px 0;
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--border);
 }
 
 .stats-recent-row:last-child {
@@ -2159,10 +2191,11 @@ html, body, #root {
   margin-top: 16px;
   width: 100%;
   max-width: 900px;
-  background: var(--bg-1);
+  background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 100%);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 12px 16px;
+  border-radius: var(--radius-m);
+  padding: 14px 18px;
+  box-shadow: var(--shadow-1);
 }
 
 .welcome-recent-title {
