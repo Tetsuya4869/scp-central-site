@@ -46,6 +46,12 @@ export default function Sidebar({ selected, onSelect, countChecked, isOpen, favC
         <span className="fav-nav-label">⭐ お気に入り</span>
         <span className="series-count">{favCount}</span>
       </div>
+      <div
+        className={`fav-nav-item${view === 'stats' && !branchCode ? ' active' : ''}`}
+        onClick={() => onSelect({ branchCode: null, view: 'stats', seriesId: null })}
+      >
+        <span className="fav-nav-label">📊 統計</span>
+      </div>
       <div className="sidebar-title">全支部一覧 · ALL BRANCHES</div>
       {BRANCHES.map(branch => (
         <BranchItem

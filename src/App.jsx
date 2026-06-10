@@ -1,6 +1,7 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { BRANCHES } from './data/branches.js'
 import { generateSeriesArticles } from './utils/urlGenerator.js'
+import { loadReadDates, lookupArticle } from './utils/lookupArticle.js'
 import { useChecklist } from './hooks/useChecklist.js'
 import { useFavorites } from './hooks/useFavorites.js'
 import { useMemos } from './hooks/useMemos.js'
@@ -10,6 +11,7 @@ import ArticleList from './components/ArticleList.jsx'
 import HubPage from './components/HubPage.jsx'
 import FavoritesPage from './components/FavoritesPage.jsx'
 import SearchPage from './components/SearchPage.jsx'
+import StatsPage from './components/StatsPage.jsx'
 
 export default function App() {
   const { toggle, markAll, isChecked, countChecked, totalChecked } = useChecklist()
@@ -84,6 +86,18 @@ export default function App() {
           key="favorites"
           favorites={favorites}
           toggleFavorite={toggleFavorite}
+          onOpenSidebar={() => setSidebarOpen(true)}
+          isChecked={isChecked}
+        />
+      )
+    }
+    if (selected.view === 'stats') {
+      return (
+        <StatsPage
+          key="stats"
+          totalChecked={totalChecked}
+          grandTotal={grandTotal}
+          countChecked={countChecked}
           onOpenSidebar={() => setSidebarOpen(true)}
         />
       )
@@ -162,14 +176,45 @@ export default function App() {
         />
 
         <main className="main-content">
-          {renderMain()}
+          <ViewWrapper viewKey={selected.view + (selected.branchCode ?? '') + (selected.seriesId ?? '')}>
+            {renderMain()}
+          </ViewWrapper>
         </main>
       </div>
     </div>
   )
 }
 
+function ViewWrapper({ viewKey, children }) {
+  const [key, setKey] = useState(viewKey)
+  const [visible, setVisible] = useState(true)
+
+  useEffect(() => {
+    if (viewKey === key) return
+    setVisible(false)
+    const t = setTimeout(() => { setKey(viewKey); setVisible(true) }, 80)
+    return () => clearTimeout(t)
+  }, [viewKey, key])
+
+  return (
+    <div className={`view-wrap${visible ? ' view-visible' : ' view-hidden'}`}>
+      {children}
+    </div>
+  )
+}
+
 function Welcome({ onSelect, countChecked, onOpenSidebar }) {
+  const recentlyRead = useMemo(() => {
+    const map = loadReadDates()
+    return [...map.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([id, ts]) => {
+        const article = lookupArticle(id)
+        return article ? { ...article, ts } : null
+      })
+      .filter(Boolean)
+  }, [])
   return (
     <div className="welcome">
       <div className="welcome-logo">📋</div>
@@ -179,6 +224,26 @@ function Welcome({ onSelect, countChecked, onOpenSidebar }) {
         支部を選んでSCP番号一覧またはハブページへ。<br />
         <span className="welcome-hint" onClick={onOpenSidebar}>≡ メニューから支部を選択</span>
       </div>
+
+      {recentlyRead.length > 0 && (
+        <div className="welcome-recent">
+          <div className="welcome-recent-title">最近読んだ記事</div>
+          <div className="welcome-recent-list">
+            {recentlyRead.map(article => (
+              <a
+                key={article.id}
+                className="welcome-recent-item"
+                href={article.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className="welcome-recent-desg">{article.designation}</span>
+                {article.title && <span className="welcome-recent-ttl">{article.title}</span>}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="welcome-grid">
         {BRANCHES.map(branch => {
