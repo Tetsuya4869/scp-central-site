@@ -591,7 +591,14 @@ function ArticleCard({ article, read, onToggle, favorited, onFavorite, memo, onM
           title={hasMemo ? 'メモあり' : 'メモを追加'}
         >✎</button>
       </div>
-      {title && <div className="card-title">{title}</div>}
+      {title && (
+        <a
+          className="card-title"
+          href={article.url}
+          target="_blank"
+          rel="noopener noreferrer"
+        >{title}</a>
+      )}
       <div className="card-meta">
         {charCount != null && <span className="scp-charcount">{formatChars(charCount)}</span>}
         {charCount != null && <span className="scp-readmin">約{Math.ceil(charCount / 500)}分</span>}

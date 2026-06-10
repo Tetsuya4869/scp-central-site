@@ -706,13 +706,17 @@ html, body, #root {
 
 /* Number */
 .col-num {
-  /* flexible */
+  /* link fills the whole cell for an easy click target */
+  padding: 0;
 }
 
 .scp-num-cell {
   display: flex;
-  align-items: baseline;
+  flex: 1;
+  align-self: stretch;
+  align-items: center;
   gap: 8px;
+  padding: 0 8px;
   overflow: hidden;
   text-decoration: none;
   cursor: pointer;
@@ -1607,11 +1611,17 @@ html, body, #root {
     padding: 0 6px;
   }
 
+  .article-td.col-num {
+    padding: 0;
+  }
+
   /* Allow SCP name/title to wrap instead of pushing grid wide */
   .scp-num-cell {
     flex-direction: column;
     align-items: flex-start;
+    justify-content: center;
     gap: 2px;
+    padding: 4px 6px;
   }
 
   .scp-designation {
@@ -1786,6 +1796,9 @@ html, body, #root {
   white-space: nowrap;
   min-width: 0;
   transition: color 0.1s;
+  /* enlarge tap target without changing layout */
+  padding: 10px 0;
+  margin: -10px 0;
 }
 
 .card-desg:hover {
@@ -1807,6 +1820,15 @@ html, body, #root {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.1s;
+}
+
+.card-title:hover {
+  color: var(--accent-bright);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .card-meta {
