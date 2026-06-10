@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { lookupArticle } from '../utils/lookupArticle.js'
 
-export default function QueuePage({ queue, removeFromQueue, moveUp, moveDown, onOpenSidebar }) {
+export default function QueuePage({ queue, removeFromQueue, moveUp, moveDown, onOpenSidebar, isChecked }) {
   const items = useMemo(
     () => queue.map(id => lookupArticle(id)).filter(Boolean),
     [queue]
@@ -27,7 +27,7 @@ export default function QueuePage({ queue, removeFromQueue, moveUp, moveDown, on
         )}
 
         {items.map((article, idx) => (
-          <div key={article.id} className="queue-row">
+          <div key={article.id} className={`queue-row${isChecked?.(article.id) ? ' is-read' : ''}`}>
             <div className="queue-pos">
               {idx === 0
                 ? <span className="badge badge-next">次</span>

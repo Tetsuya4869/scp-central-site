@@ -2,12 +2,14 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import { BRANCHES } from './data/branches.js'
 import { generateSeriesArticles } from './utils/urlGenerator.js'
 import { loadReadDates, lookupArticle } from './utils/lookupArticle.js'
+import { parseHash, buildHash, DEFAULT_SELECTED } from './utils/routing.js'
 import { useChecklist } from './hooks/useChecklist.js'
 import { useFavorites } from './hooks/useFavorites.js'
 import { useMemos } from './hooks/useMemos.js'
 import { useReadDates } from './hooks/useReadDates.js'
 import { useQueue } from './hooks/useQueue.js'
 import { useUserRatings } from './hooks/useUserRatings.js'
+import { useGoal } from './hooks/useGoal.js'
 import Sidebar from './components/Sidebar.jsx'
 import ArticleList from './components/ArticleList.jsx'
 import HubPage from './components/HubPage.jsx'
@@ -23,6 +25,7 @@ export default function App() {
   const { setReadDate, clearReadDate, getReadDate } = useReadDates()
   const { queue, addToQueue, removeFromQueue, moveUp, moveDown, isQueued } = useQueue()
   const { userRatings, setRating, getRating, hasRating } = useUserRatings()
+  const { goal, setGoal } = useGoal()
 
   const [layoutMode, setLayoutModeRaw] = useState(() => localStorage.getItem('scp-layout') || 'list')
   const setLayoutMode = useCallback(m => {
@@ -42,13 +45,39 @@ export default function App() {
     if (value) ids.forEach(id => setReadDate(id))
     else ids.forEach(id => clearReadDate(id))
   }, [markAll, setReadDate, clearReadDate])
+  const [theme, setTheme] = useState(() => localStorage.getItem('scp-theme') || 'dark')
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('scp-theme', theme)
+  }, [theme])
+
   // view: null | 'series' | 'hubs' | 'search' | 'favorites' | 'stats' | 'queue'
-  const [selected, setSelected] = useState({ branchCode: null, view: null, seriesId: null, targetId: null })
+  const [selected, setSelected] = useState(() => {
+    const fromHash = parseHash(window.location.hash)
+    if (fromHash.view || fromHash.branchCode) return fromHash
+    try {
+      const saved = localStorage.getItem('scp-last-view')
+      if (saved) return { ...JSON.parse(saved), targetId: null }
+    } catch {}
+    return DEFAULT_SELECTED
+  })
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const handleSelect = useCallback((sel) => {
     setSelected(sel)
+    const hash = buildHash(sel)
+    history.replaceState(null, '', hash)
+    localStorage.setItem('scp-last-view', JSON.stringify({ ...sel, targetId: null }))
     setSidebarOpen(false)
+  }, [])
+
+  useEffect(() => {
+    const onHashChange = () => {
+      const parsed = parseHash(window.location.hash)
+      setSelected(parsed)
+    }
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
   const currentBranch = selected.branchCode
@@ -106,6 +135,7 @@ export default function App() {
           moveUp={moveUp}
           moveDown={moveDown}
           onOpenSidebar={() => setSidebarOpen(true)}
+          isChecked={isChecked}
         />
       )
     }
@@ -118,6 +148,8 @@ export default function App() {
           countChecked={countChecked}
           onOpenSidebar={() => setSidebarOpen(true)}
           userRatings={userRatings}
+          goal={goal}
+          setGoal={setGoal}
         />
       )
     }
@@ -185,6 +217,15 @@ export default function App() {
           <span className="header-stat-val">{grandTotal.toLocaleString()}</span>
           <span className="header-stat-pct">({pct}%)</span>
         </div>
+
+        <button
+          className="theme-toggle"
+          onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+          aria-label="テーマ切り替え"
+          title={theme === 'dark' ? 'ライトモードに切り替え' : 'ダークモードに切り替え'}
+        >
+          {theme === 'dark' ? '☀' : '🌙'}
+        </button>
       </header>
 
       <div className="body-wrap">

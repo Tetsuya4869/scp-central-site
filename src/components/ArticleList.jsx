@@ -45,6 +45,8 @@ export default function ArticleList({
   const [sortBy, setSortBy] = useState('number')
   const [jumpValue, setJumpValue] = useState('')
   const [highlightedId, setHighlightedId] = useState(null)
+  const [confirmUnmark, setConfirmUnmark] = useState(false)
+  const confirmUnmarkTimerRef = useRef(null)
   const parentRef = useRef(null)
   const highlightTimerRef = useRef(null)
 
@@ -118,6 +120,24 @@ export default function ArticleList({
       if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current)
     }
   }, []) // run once on mount; filtered/cols/rowVirtualizer are stable at mount time
+
+  const scrollToAndHighlight = useCallback((id) => {
+    const idx = filtered.findIndex(a => a.id === id)
+    if (idx === -1) return
+    rowVirtualizer.scrollToIndex(Math.floor(idx / cols), { align: 'center', behavior: 'smooth' })
+    clearTimeout(highlightTimerRef.current)
+    setHighlightedId(id)
+    highlightTimerRef.current = setTimeout(() => setHighlightedId(null), 2000)
+  }, [filtered, cols, rowVirtualizer])
+
+  const pickRandom = useCallback(() => {
+    const unread = allArticles.filter(a => !isChecked(a.id))
+    if (!unread.length) return
+    const pick = unread[Math.floor(Math.random() * unread.length)]
+    // show all articles so the pick is always visible
+    setFilter('all')
+    setTimeout(() => scrollToAndHighlight(pick.id), 30)
+  }, [allArticles, isChecked, scrollToAndHighlight])
 
   const readCount = useMemo(
     () => allArticles.filter(a => isChecked(a.id)).length,
@@ -273,7 +293,28 @@ export default function ArticleList({
 
           <div className="mark-btns">
             <button className="mark-btn" onClick={() => markAll(allIds, true)}>全選択</button>
-            <button className="mark-btn" onClick={() => markAll(allIds, false)}>全解除</button>
+            {confirmUnmark
+              ? (
+                <button
+                  className="mark-btn mark-btn-confirm"
+                  onClick={() => {
+                    clearTimeout(confirmUnmarkTimerRef.current)
+                    setConfirmUnmark(false)
+                    markAll(allIds, false)
+                  }}
+                >本当に解除</button>
+              )
+              : (
+                <button
+                  className="mark-btn"
+                  onClick={() => {
+                    setConfirmUnmark(true)
+                    clearTimeout(confirmUnmarkTimerRef.current)
+                    confirmUnmarkTimerRef.current = setTimeout(() => setConfirmUnmark(false), 3000)
+                  }}
+                >全解除</button>
+              )
+            }
           </div>
 
           {layoutMode !== 'matrix' && (
@@ -287,6 +328,13 @@ export default function ArticleList({
               onKeyDown={handleJump}
             />
           )}
+
+          <button
+            className="toolbar-dice-btn"
+            onClick={pickRandom}
+            disabled={allArticles.every(a => isChecked(a.id))}
+            title="未読をランダムに選ぶ"
+          >🎲</button>
         </div>
       </div>
 
@@ -441,6 +489,7 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
             <span className="scp-designation">{article.designation}</span>
             {title && <span className="scp-title">{title}</span>}
             {charCount != null && <span className="scp-charcount">{formatChars(charCount)}</span>}
+            {charCount != null && <span className="scp-readmin">約{Math.ceil(charCount / 500)}分</span>}
             {rating != null && <span className="scp-rating">👍 {rating}</span>}
           </a>
         </div>
@@ -545,6 +594,7 @@ function ArticleCard({ article, read, onToggle, favorited, onFavorite, memo, onM
       {title && <div className="card-title">{title}</div>}
       <div className="card-meta">
         {charCount != null && <span className="scp-charcount">{formatChars(charCount)}</span>}
+        {charCount != null && <span className="scp-readmin">約{Math.ceil(charCount / 500)}分</span>}
         {rating != null && <span className="scp-rating">👍 {rating}</span>}
         {article.predicted
           ? <span className="badge badge-predicted">予測</span>

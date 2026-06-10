@@ -115,6 +115,7 @@ export default function FavoritesPage({ favorites, toggleFavorite, onOpenSidebar
                         <span className="fav-designation">{article.designation}</span>
                         {article.title && <span className="fav-title">{article.title}</span>}
                         {charCount != null && <span className="scp-charcount">{fmtChars(charCount)}</span>}
+                        {charCount != null && <span className="scp-readmin">約{Math.ceil(charCount / 500)}分</span>}
                         {rating    != null && <span className="scp-rating">👍 {rating}</span>}
                       </a>
                       {getUserRating?.(article.id) && (

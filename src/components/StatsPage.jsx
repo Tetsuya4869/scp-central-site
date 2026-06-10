@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { BRANCHES } from '../data/branches.js'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
 import { loadReadDates, lookupArticle } from '../utils/lookupArticle.js'
@@ -51,14 +51,27 @@ function fmtDate(ts) {
   return `${d.getMonth() + 1}/${d.getDate()}`
 }
 
-export default function StatsPage({ totalChecked, grandTotal, countChecked, onOpenSidebar, userRatings }) {
+export default function StatsPage({ totalChecked, grandTotal, countChecked, onOpenSidebar, userRatings, goal, setGoal }) {
   const readDatesMap = useMemo(() => loadReadDates(), [])
+  const [editingGoal, setEditingGoal] = useState(false)
+  const [goalInput, setGoalInput] = useState('')
 
   const streak      = useMemo(() => computeStreak(readDatesMap), [readDatesMap])
   const last7       = useMemo(() => getLast7Days(readDatesMap),  [readDatesMap])
   const heatmapData = useMemo(() => buildHeatmapData(readDatesMap), [readDatesMap])
   const maxDay      = Math.max(...last7.map(d => d.count), 1)
   const totalPct    = grandTotal > 0 ? Math.round((totalChecked / grandTotal) * 100) : 0
+
+  const thisMonthCount = useMemo(() => {
+    const now = new Date()
+    const y = now.getFullYear(), m = now.getMonth()
+    let count = 0
+    for (const ts of readDatesMap.values()) {
+      const d = new Date(ts)
+      if (d.getFullYear() === y && d.getMonth() === m) count++
+    }
+    return count
+  }, [readDatesMap])
 
   const recentlyRead = useMemo(() => {
     return [...readDatesMap.entries()]
@@ -117,6 +130,69 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
           <div className="stats-total-bar">
             <div className="stats-total-fill" style={{ width: `${totalPct}%` }} />
           </div>
+        </div>
+
+        {/* 今月の目標 */}
+        <div className="stats-card stats-goal-card">
+          <div className="stats-card-title">今月の読書目標</div>
+          {goal?.monthly ? (
+            <div className="stats-goal-body">
+              <div className="stats-goal-nums">
+                <span className="stats-hero-num" style={{ fontSize: '1.6rem' }}>{thisMonthCount}</span>
+                <span className="stats-hero-denom"> / {goal.monthly} 記事</span>
+                {thisMonthCount >= goal.monthly && <span className="stats-goal-achieved">達成！🎉</span>}
+              </div>
+              <div className="stats-goal-bar">
+                <div className="stats-goal-fill" style={{ width: `${Math.min(100, Math.round((thisMonthCount / goal.monthly) * 100))}%` }} />
+              </div>
+              {editingGoal ? (
+                <div className="stats-goal-edit">
+                  <input
+                    className="stats-goal-input"
+                    type="number"
+                    min="1"
+                    max="9999"
+                    value={goalInput}
+                    onChange={e => setGoalInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') { setGoal({ monthly: parseInt(goalInput, 10) || null }); setEditingGoal(false) }
+                      if (e.key === 'Escape') setEditingGoal(false)
+                    }}
+                    autoFocus
+                  />
+                  <button className="stats-goal-btn" onClick={() => { setGoal({ monthly: parseInt(goalInput, 10) || null }); setEditingGoal(false) }}>設定</button>
+                  <button className="stats-goal-btn stats-goal-btn-del" onClick={() => { setGoal({ monthly: null }); setEditingGoal(false) }}>削除</button>
+                </div>
+              ) : (
+                <button className="stats-goal-btn stats-goal-btn-edit" onClick={() => { setGoalInput(String(goal.monthly)); setEditingGoal(true) }}>目標を変更</button>
+              )}
+            </div>
+          ) : (
+            <div className="stats-goal-body">
+              <div className="stats-zero-hint">今月の目標件数を設定しましょう</div>
+              {editingGoal ? (
+                <div className="stats-goal-edit">
+                  <input
+                    className="stats-goal-input"
+                    type="number"
+                    min="1"
+                    max="9999"
+                    value={goalInput}
+                    placeholder="例: 30"
+                    onChange={e => setGoalInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') { setGoal({ monthly: parseInt(goalInput, 10) || null }); setEditingGoal(false) }
+                      if (e.key === 'Escape') setEditingGoal(false)
+                    }}
+                    autoFocus
+                  />
+                  <button className="stats-goal-btn" onClick={() => { setGoal({ monthly: parseInt(goalInput, 10) || null }); setEditingGoal(false) }}>設定</button>
+                </div>
+              ) : (
+                <button className="stats-goal-btn stats-goal-btn-edit" onClick={() => { setGoalInput(''); setEditingGoal(true) }}>目標を設定</button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ストリーク + 7日グラフ */}

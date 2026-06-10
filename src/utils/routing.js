@@ -1,0 +1,46 @@
+import { BRANCHES } from '../data/branches.js'
+
+export const DEFAULT_SELECTED = { branchCode: null, view: null, seriesId: null, targetId: null }
+
+export function parseHash(hash) {
+  const path = hash.replace(/^#\/?/, '')
+  if (!path) return DEFAULT_SELECTED
+
+  const parts = path.split('/')
+
+  if (parts[0] === 'stats')     return { ...DEFAULT_SELECTED, view: 'stats' }
+  if (parts[0] === 'search')    return { ...DEFAULT_SELECTED, view: 'search' }
+  if (parts[0] === 'favorites') return { ...DEFAULT_SELECTED, view: 'favorites' }
+  if (parts[0] === 'queue')     return { ...DEFAULT_SELECTED, view: 'queue' }
+
+  // branch-specific: <CODE>/hubs or <CODE>/series/<id>
+  const branchCode = parts[0]?.toUpperCase()
+  if (!branchCode) return DEFAULT_SELECTED
+  const branch = BRANCHES.find(b => b.code === branchCode)
+  if (!branch) return DEFAULT_SELECTED
+
+  if (parts[1] === 'hubs') {
+    return { branchCode, view: 'hubs', seriesId: null, targetId: null }
+  }
+  if (parts[1] === 'series') {
+    const seriesId = parts[2] != null ? parseInt(parts[2], 10) : null
+    const validId = seriesId != null && !isNaN(seriesId) && branch.series.some(s => s.id === seriesId)
+      ? seriesId
+      : (branch.series.find(s => s.type !== 'separator')?.id ?? null)
+    return { branchCode, view: 'series', seriesId: validId, targetId: null }
+  }
+
+  return DEFAULT_SELECTED
+}
+
+export function buildHash(selected) {
+  const { branchCode, view, seriesId } = selected
+  if (!view && !branchCode) return '#/'
+  if (view === 'stats')     return '#/stats'
+  if (view === 'search')    return '#/search'
+  if (view === 'favorites') return '#/favorites'
+  if (view === 'queue')     return '#/queue'
+  if (branchCode && view === 'hubs')   return `#/${branchCode}/hubs`
+  if (branchCode && view === 'series') return `#/${branchCode}/series/${seriesId ?? ''}`
+  return '#/'
+}

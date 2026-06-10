@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 
 const STORAGE_KEY = 'scp-memos-v1'
 
@@ -19,12 +19,14 @@ function save(map) {
 
 export function useMemos() {
   const [memos, setMemos] = useState(() => load())
+  const timerRef = useRef(null)
 
   const setMemo = useCallback((id, text) => {
     setMemos(prev => {
       const next = new Map(prev)
       text.trim() ? next.set(id, text) : next.delete(id)
-      save(next)
+      clearTimeout(timerRef.current)
+      timerRef.current = setTimeout(() => save(next), 300)
       return next
     })
   }, [])
