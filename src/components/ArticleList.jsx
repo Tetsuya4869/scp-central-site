@@ -130,14 +130,29 @@ export default function ArticleList({
     highlightTimerRef.current = setTimeout(() => setHighlightedId(null), 2000)
   }, [filtered, cols, rowVirtualizer])
 
+  // pickRandom はフィルター変更後の再レンダーを待ってからスクロールする
+  // （古い filtered のインデックスで誤った行に飛ぶのを防ぐ）
+  const [pendingScrollId, setPendingScrollId] = useState(null)
+  useEffect(() => {
+    if (!pendingScrollId) return
+    scrollToAndHighlight(pendingScrollId)
+    setPendingScrollId(null)
+  }, [pendingScrollId, scrollToAndHighlight])
+
   const pickRandom = useCallback(() => {
     const unread = allArticles.filter(a => !isChecked(a.id))
     if (!unread.length) return
     const pick = unread[Math.floor(Math.random() * unread.length)]
     // show all articles so the pick is always visible
     setFilter('all')
-    setTimeout(() => scrollToAndHighlight(pick.id), 30)
-  }, [allArticles, isChecked, scrollToAndHighlight])
+    setPendingScrollId(pick.id)
+  }, [allArticles, isChecked])
+
+  // unmount時に保留中のタイマーを破棄
+  useEffect(() => () => {
+    clearTimeout(confirmUnmarkTimerRef.current)
+    clearTimeout(highlightTimerRef.current)
+  }, [])
 
   const readCount = useMemo(
     () => allArticles.filter(a => isChecked(a.id)).length,
@@ -334,6 +349,7 @@ export default function ArticleList({
             onClick={pickRandom}
             disabled={allArticles.every(a => isChecked(a.id))}
             title="未読をランダムに選ぶ"
+            aria-label="未読をランダムに選ぶ"
           >🎲</button>
         </div>
       </div>
@@ -508,6 +524,8 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
             className={`fav-btn${favorited ? ' is-fav' : ''}`}
             onClick={onFavorite}
             title={favorited ? 'お気に入り解除' : 'お気に入り追加'}
+            aria-label={favorited ? 'お気に入り解除' : 'お気に入り追加'}
+            aria-pressed={favorited}
           >★</button>
         </div>
         <div className="article-td col-queue">
@@ -515,6 +533,8 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
             className={`queue-btn${queued ? ' is-queued' : ''}`}
             onClick={onQueue}
             title={queued ? '後で読むに追加済み' : '後で読むに追加'}
+            aria-label={queued ? '後で読むに追加済み' : '後で読むに追加'}
+            aria-pressed={queued}
           >{queued ? '✓' : '+'}</button>
         </div>
         <div className="article-td col-memo">
@@ -522,6 +542,8 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
             className={`memo-btn${hasMemo ? ' has-memo' : ''}${memoOpen ? ' is-open' : ''}`}
             onClick={() => setMemoOpen(v => !v)}
             title={hasMemo ? 'メモあり（クリックで編集）' : 'メモを追加'}
+            aria-label={hasMemo ? 'メモを編集' : 'メモを追加'}
+            aria-expanded={memoOpen}
           >✎</button>
         </div>
         <div className="article-td col-myrating">
@@ -581,16 +603,22 @@ function ArticleCard({ article, read, onToggle, favorited, onFavorite, memo, onM
           className={`fav-btn${favorited ? ' is-fav' : ''}`}
           onClick={onFavorite}
           title={favorited ? 'お気に入り解除' : 'お気に入り追加'}
+          aria-label={favorited ? 'お気に入り解除' : 'お気に入り追加'}
+          aria-pressed={favorited}
         >★</button>
         <button
           className={`queue-btn${queued ? ' is-queued' : ''}`}
           onClick={onQueue}
           title={queued ? '後で読むに追加済み' : '後で読むに追加'}
+          aria-label={queued ? '後で読むに追加済み' : '後で読むに追加'}
+          aria-pressed={queued}
         >{queued ? '✓' : '+'}</button>
         <button
           className={`memo-btn${hasMemo ? ' has-memo' : ''}${memoOpen ? ' is-open' : ''}`}
           onClick={() => setMemoOpen(v => !v)}
           title={hasMemo ? 'メモあり' : 'メモを追加'}
+          aria-label={hasMemo ? 'メモを編集' : 'メモを追加'}
+          aria-expanded={memoOpen}
         >✎</button>
       </div>
       {title && (

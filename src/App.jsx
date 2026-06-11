@@ -63,10 +63,18 @@ export default function App() {
   })
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  // 初回ロードでlocalStorageから復元したとき、URLバーを実際のビューに合わせる
+  useEffect(() => {
+    const hash = buildHash(selected)
+    if (window.location.hash !== hash) history.replaceState(null, '', hash)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleSelect = useCallback((sel) => {
     setSelected(sel)
     const hash = buildHash(sel)
-    history.replaceState(null, '', hash)
+    // location.hash への代入で履歴に積む → ブラウザの戻る/進むが機能する
+    if (window.location.hash !== hash) window.location.hash = hash
     localStorage.setItem('scp-last-view', JSON.stringify({ ...sel, targetId: null }))
     setSidebarOpen(false)
   }, [])
@@ -74,7 +82,12 @@ export default function App() {
   useEffect(() => {
     const onHashChange = () => {
       const parsed = parseHash(window.location.hash)
-      setSelected(parsed)
+      setSelected(prev => {
+        // handleSelect 由来のハッシュ変更なら state は既に正しい（targetIdを保持）
+        if (buildHash(prev) === buildHash(parsed)) return prev
+        localStorage.setItem('scp-last-view', JSON.stringify({ ...parsed, targetId: null }))
+        return parsed
+      })
     }
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
@@ -282,6 +295,18 @@ function Welcome({ onSelect, countChecked, onOpenSidebar }) {
       })
       .filter(Boolean)
   }, [])
+
+  const branchCards = useMemo(() => BRANCHES.map(branch => {
+    const allIds = branch.series.flatMap(s => {
+      if (s.type === 'separator') return []
+      if (s.type === 'custom') return s.articles.map(a => a.id)
+      return generateSeriesArticles(branch.code, s.min, s.max).map(a => a.id)
+    })
+    const total = allIds.length
+    const done = countChecked(allIds)
+    return { branch, done, total, pct: total > 0 ? Math.round((done / total) * 100) : 0 }
+  }), [countChecked])
+
   return (
     <div className="welcome">
       <div className="welcome-logo">📋</div>
@@ -313,16 +338,7 @@ function Welcome({ onSelect, countChecked, onOpenSidebar }) {
       )}
 
       <div className="welcome-grid">
-        {BRANCHES.map(branch => {
-          const allIds = branch.series.flatMap(s =>
-            s.type === 'custom'
-              ? s.articles.map(a => a.id)
-              : generateSeriesArticles(branch.code, s.min, s.max).map(a => a.id)
-          )
-          const total = allIds.length
-          const done = countChecked(allIds)
-          const pct = total > 0 ? Math.round((done / total) * 100) : 0
-
+        {branchCards.map(({ branch, done, total, pct }) => {
           return (
             <button
               key={branch.code}

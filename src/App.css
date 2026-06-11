@@ -28,6 +28,22 @@
   --predicted-bg: #10161e;
   --predicted-border: #1a3a5a;
   --read-bg: #0c1d0e;
+  --border-row: #1c1e22;
+  --read-hover: #0f1f0f;
+  --predicted-hover: #131d26;
+  --read-predicted-bg: #0a1a15;
+  --info-blue: #7ab8d4;
+  --info-green: #88bb88;
+  --info-gold: #c8b050;
+  --badge-predicted-text: #6aaadd;
+  --badge-predicted-border: #1a4a7a;
+  --badge-read-text: #55cc55;
+  --badge-read-border: #2a5a2a;
+  --hub-internal-bg: #13110a;
+  --hub-internal-border: #3a2e10;
+  --card-read-border: #1e3a1e;
+  --card-read-hover: #0f2a0f;
+  --matrix-read-border: #2a4a2a;
   --radius-s: 6px;
   --radius-m: 10px;
   --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.35);
@@ -59,6 +75,22 @@
   --predicted-bg: #e8f0f8;
   --predicted-border: #a0b8d8;
   --read-bg: #daf0dc;
+  --border-row: #ddd9ce;
+  --read-hover: #c8e6ca;
+  --predicted-hover: #d8e4f2;
+  --read-predicted-bg: #d2e8da;
+  --info-blue: #2a7aa8;
+  --info-green: #3a8a3a;
+  --info-gold: #8a7420;
+  --badge-predicted-text: #f0f6fc;
+  --badge-predicted-border: #6a94c0;
+  --badge-read-text: #1c4a1c;
+  --badge-read-border: #88c088;
+  --hub-internal-bg: #f2ecd9;
+  --hub-internal-border: #d4c48a;
+  --card-read-border: #9cc89c;
+  --card-read-hover: #cce8cc;
+  --matrix-read-border: #88b888;
   --shadow-1: 0 1px 4px rgba(0, 0, 0, 0.08);
   --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.10);
   --focus-ring: 0 0 0 3px rgba(176, 122, 16, 0.18);
@@ -329,7 +361,7 @@ html, body, #root {
   min-height: 44px;
   cursor: pointer;
   gap: 8px;
-  border-bottom: 1px solid #1c1e22;
+  border-bottom: 1px solid var(--border-row);
   transition: background 0.1s;
 }
 
@@ -652,7 +684,7 @@ html, body, #root {
   display: grid;
   grid-template-columns: 44px 1fr 60px 40px 36px;
   min-height: 44px;
-  border-bottom: 1px solid #1c1e22;
+  border-bottom: 1px solid var(--border-row);
   transition: background 0.1s;
 }
 
@@ -669,7 +701,7 @@ html, body, #root {
 }
 
 .article-row.is-read:hover {
-  background: #0f1f0f;
+  background: var(--read-hover);
 }
 
 .article-row.is-predicted {
@@ -677,11 +709,11 @@ html, body, #root {
 }
 
 .article-row.is-predicted:hover {
-  background: #131d26;
+  background: var(--predicted-hover);
 }
 
 .article-row.is-read.is-predicted {
-  background: #0a1a15;
+  background: var(--read-predicted-bg);
 }
 
 .article-td {
@@ -767,7 +799,7 @@ html, body, #root {
 
 .scp-charcount {
   font-size: 10px;
-  color: #7ab8d4;
+  color: var(--info-blue);
   white-space: nowrap;
   flex-shrink: 0;
   font-weight: normal;
@@ -775,7 +807,7 @@ html, body, #root {
 
 .scp-readmin {
   font-size: 10px;
-  color: #88bb88;
+  color: var(--info-green);
   white-space: nowrap;
   flex-shrink: 0;
   font-weight: normal;
@@ -783,7 +815,7 @@ html, body, #root {
 
 .scp-rating {
   font-size: 10px;
-  color: #c8b050;
+  color: var(--info-gold);
   white-space: nowrap;
   flex-shrink: 0;
   font-weight: normal;
@@ -814,14 +846,14 @@ html, body, #root {
 
 .badge-predicted {
   background: var(--predicted-border);
-  color: #6aaadd;
-  border: 1px solid #1a4a7a;
+  color: var(--badge-predicted-text);
+  border: 1px solid var(--badge-predicted-border);
 }
 
 .badge-read {
   background: var(--green);
-  color: #55cc55;
-  border: 1px solid #2a5a2a;
+  color: var(--badge-read-text);
+  border: 1px solid var(--badge-read-border);
 }
 
 
@@ -1110,8 +1142,8 @@ html, body, #root {
   width: 100%;
   text-align: left;
   cursor: pointer;
-  background: #13110a;
-  border-color: #3a2e10;
+  background: var(--hub-internal-bg);
+  border-color: var(--hub-internal-border);
   color: var(--text-2);
 }
 
@@ -1457,7 +1489,7 @@ html, body, #root {
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-bottom: 1px solid #1c1e22;
+  border-bottom: 1px solid var(--border-row);
   cursor: pointer;
   transition: background 0.1s;
 }
@@ -1775,11 +1807,11 @@ html, body, #root {
 
 .article-card.is-read {
   background: var(--read-bg);
-  border-color: #1e3a1e;
+  border-color: var(--card-read-border);
 }
 
 .article-card.is-read:hover {
-  background: #0f2a0f;
+  background: var(--card-read-hover);
 }
 
 .article-card.is-predicted {
@@ -1886,7 +1918,7 @@ html, body, #root {
 
 .matrix-cell.is-read {
   background: var(--read-bg);
-  border-color: #2a4a2a;
+  border-color: var(--matrix-read-border);
 }
 
 .matrix-cell.is-predicted {
