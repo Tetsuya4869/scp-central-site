@@ -682,7 +682,7 @@ html, body, #root {
 
 .article-row {
   display: grid;
-  grid-template-columns: 44px 1fr 60px 40px 36px;
+  grid-template-columns: 1fr 60px 40px 36px 36px 72px 52px;
   min-height: 44px;
   border-bottom: 1px solid var(--border-row);
   transition: background 0.1s;
@@ -696,8 +696,8 @@ html, body, #root {
   background: var(--read-bg);
 }
 
-.article-row.is-read .col-check {
-  box-shadow: inset 3px 0 0 var(--green);
+.article-row.is-read .read-toggle-btn {
+  background: color-mix(in srgb, var(--green-text) 15%, transparent);
 }
 
 .article-row.is-read:hover {
@@ -724,19 +724,44 @@ html, body, #root {
   overflow: hidden;
 }
 
-/* Checkbox */
+/* Read toggle — far right column */
 .col-check {
+  padding: 0;
+}
+
+.read-toggle-btn {
+  display: flex;
+  align-items: center;
   justify-content: center;
-}
-
-.scp-checkbox {
-  width: 18px;
-  height: 18px;
+  width: 100%;
+  height: 100%;
+  min-height: 44px;
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--border);
+  color: var(--text-3);
+  font-size: 18px;
+  font-family: var(--font-mono);
   cursor: pointer;
-  accent-color: var(--accent);
+  transition: background 0.12s, color 0.12s;
 }
 
-/* Link zone: everything between the checkbox and the ★ button opens the article */
+.read-toggle-btn:hover {
+  background: var(--bg-3);
+  color: var(--text-1);
+}
+
+.read-toggle-btn.is-read {
+  color: var(--green-text);
+  font-weight: bold;
+}
+
+.read-toggle-btn.is-read:hover {
+  background: rgba(200,50,50,0.08);
+  color: #e05252;
+}
+
+/* Link zone: from start to the ★ button */
 .article-link-zone {
   grid-column: span 2;
   display: grid;
@@ -1638,10 +1663,10 @@ html, body, #root {
     display: none;
   }
 
-  /* Article grid: hide badge column on mobile */
+  /* Article grid: hide badge column on mobile (base rule; overridden below) */
   .article-header-row,
   .article-row {
-    grid-template-columns: 40px 1fr 40px 36px;
+    grid-template-columns: 1fr 40px 36px 36px 52px;
   }
 
   .col-badges {
@@ -2507,7 +2532,7 @@ html, body, #root {
 
 .article-header-row,
 .article-row {
-  grid-template-columns: 44px 1fr 60px 40px 36px 36px 72px;
+  grid-template-columns: 1fr 60px 40px 36px 36px 72px 52px;
 }
 
 .col-queue,
@@ -2580,7 +2605,7 @@ html, body, #root {
 @media (max-width: 768px) {
   .article-header-row,
   .article-row {
-    grid-template-columns: 40px 1fr 40px 36px 36px;
+    grid-template-columns: 1fr 40px 36px 36px 52px;
   }
 
   .col-badges,
@@ -2598,7 +2623,7 @@ html, body, #root {
 @media (max-width: 480px) {
   .article-header-row,
   .article-row {
-    grid-template-columns: 40px 1fr 36px 36px;
+    grid-template-columns: 1fr 40px 36px 52px;
   }
 
   .col-queue {
@@ -2825,4 +2850,197 @@ html, body, #root {
 .queue-remove-btn:hover {
   color: #e05252;
   border-color: #a03030;
+}
+
+/* ══════════════════════════════════════════
+   CARD: read button at bottom
+   ══════════════════════════════════════════ */
+
+.card-bottom {
+  margin-top: auto;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.card-read-btn {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-s);
+  background: var(--bg-2);
+  color: var(--text-3);
+  cursor: pointer;
+  min-height: 34px;
+  min-width: 64px;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.card-read-btn:hover {
+  background: var(--bg-3);
+  color: var(--text-1);
+  border-color: var(--border-light);
+}
+
+.card-read-btn.is-read {
+  background: color-mix(in srgb, var(--green-text) 15%, transparent);
+  color: var(--green-text);
+  border-color: var(--badge-read-border);
+  font-weight: bold;
+}
+
+.card-read-btn.is-read:hover {
+  background: rgba(200, 50, 50, 0.10);
+  color: #e05252;
+  border-color: #a03030;
+}
+
+/* ══════════════════════════════════════════
+   FILTER PANEL (collapsible)
+   ══════════════════════════════════════════ */
+
+.filter-panel {
+  background: var(--bg-0);
+  border-top: 1px solid var(--border);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-panel-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filter-panel-label {
+  font-size: 10px;
+  color: var(--text-3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  min-width: 32px;
+  flex-shrink: 0;
+}
+
+/* Active filter indicator on the toggle button */
+.mark-btn.filter-active {
+  border-color: var(--accent-dim);
+  color: var(--accent-bright);
+}
+
+/* ══════════════════════════════════════════
+   MEMO SEARCH PAGE
+   ══════════════════════════════════════════ */
+
+.memo-search-page {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+}
+
+.memo-search-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-row);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.memo-search-row:hover {
+  background: var(--bg-2);
+}
+
+.memo-search-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #fff;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.memo-search-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.memo-search-desg {
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.memo-search-title {
+  font-size: 11px;
+  font-family: var(--font-sans);
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.memo-search-text {
+  font-size: 11px;
+  font-family: var(--font-sans);
+  color: var(--accent-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ══════════════════════════════════════════
+   SERIES COMPLETION BADGE
+   ══════════════════════════════════════════ */
+
+.series-count-done {
+  font-size: 10px;
+  font-weight: bold;
+  color: var(--green-text);
+  padding: 1px 4px;
+  border: 1px solid var(--badge-read-border);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--green-text) 10%, transparent);
+  white-space: nowrap;
+}
+
+/* ══════════════════════════════════════════
+   STATS: CSV export button
+   ══════════════════════════════════════════ */
+
+.stats-csv-btn {
+  background: var(--bg-2);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-s);
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 5px 10px;
+  min-height: 30px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.stats-csv-btn:hover {
+  border-color: var(--accent-dim);
+  color: var(--accent-bright);
 }

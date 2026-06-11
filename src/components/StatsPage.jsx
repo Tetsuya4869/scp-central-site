@@ -95,6 +95,25 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
     return { branch, done, total, pct: total > 0 ? Math.round((done / total) * 100) : 0 }
   }), [countChecked])
 
+  function exportCSV() {
+    const rows = [['date', 'branch', 'id', 'designation', 'title']]
+    const sorted = [...readDatesMap.entries()].sort((a, b) => a[1] - b[1])
+    for (const [id, ts] of sorted) {
+      const article = lookupArticle(id)
+      if (!article) continue
+      const d = new Date(ts)
+      const date = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+      rows.push([date, article.branch.code, id, article.designation, article.title ?? ''])
+    }
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = `scp-reading-history-${new Date().toISOString().slice(0,10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const topRated = useMemo(() => {
     if (!userRatings || userRatings.size === 0) return []
     return [...userRatings.entries()]
@@ -114,6 +133,10 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
         <div className="toolbar-row toolbar-row-top">
           <button className="toolbar-back" onClick={onOpenSidebar} aria-label="メニュー">≡</button>
           <span className="toolbar-title">📊 統計</span>
+          <div className="toolbar-spacer" />
+          <button className="stats-csv-btn" onClick={exportCSV} title="読書履歴をCSVでダウンロード">
+            📥 CSV
+          </button>
         </div>
       </div>
 

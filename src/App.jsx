@@ -17,11 +17,12 @@ import FavoritesPage from './components/FavoritesPage.jsx'
 import SearchPage from './components/SearchPage.jsx'
 import StatsPage from './components/StatsPage.jsx'
 import QueuePage from './components/QueuePage.jsx'
+import MemoSearchPage from './components/MemoSearchPage.jsx'
 
 export default function App() {
   const { toggle, markAll, isChecked, countChecked, totalChecked } = useChecklist()
   const { favorites, toggleFavorite, isFavorite } = useFavorites()
-  const { getMemo, setMemo } = useMemos()
+  const { getMemo, setMemo, memos } = useMemos()
   const { setReadDate, clearReadDate, getReadDate } = useReadDates()
   const { queue, addToQueue, removeFromQueue, moveUp, moveDown, isQueued } = useQueue()
   const { userRatings, setRating, getRating, hasRating } = useUserRatings()
@@ -116,6 +117,16 @@ export default function App() {
   const pct = grandTotal > 0 ? Math.round((totalChecked / grandTotal) * 100) : 0
 
   function renderMain() {
+    if (selected.view === 'memos') {
+      return (
+        <MemoSearchPage
+          key="memos"
+          memos={memos}
+          onNavigate={handleSelect}
+          onOpenSidebar={() => setSidebarOpen(true)}
+        />
+      )
+    }
     if (selected.view === 'search') {
       return (
         <SearchPage
@@ -253,6 +264,7 @@ export default function App() {
           isOpen={sidebarOpen}
           favCount={favorites.size}
           queueCount={queue.length}
+          memoCount={memos.size}
         />
 
         <main className="main-content">

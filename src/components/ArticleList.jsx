@@ -46,6 +46,9 @@ export default function ArticleList({
   const [jumpValue, setJumpValue] = useState('')
   const [highlightedId, setHighlightedId] = useState(null)
   const [confirmUnmark, setConfirmUnmark] = useState(false)
+  const [charFilter, setCharFilter] = useState('all')
+  const [ratingFilter, setRatingFilter] = useState('all')
+  const [filterPanelOpen, setFilterPanelOpen] = useState(false)
   const confirmUnmarkTimerRef = useRef(null)
   const parentRef = useRef(null)
   const highlightTimerRef = useRef(null)
@@ -64,6 +67,20 @@ export default function ArticleList({
     if (filter === 'read')   list = list.filter(a => isChecked(a.id))
     if (filter === 'unread') list = list.filter(a => !isChecked(a.id))
     if (filter === 'rated')  list = list.filter(a => hasUserRating?.(a.id))
+
+    if (charFilter !== 'all') {
+      list = list.filter(a => {
+        const c = getCharCount(a)
+        if (charFilter === 'short')  return c != null && c <= 5000
+        if (charFilter === 'medium') return c != null && c > 5000 && c <= 30000
+        if (charFilter === 'long')   return c != null && c > 30000
+        return true
+      })
+    }
+    if (ratingFilter !== 'all') {
+      const min = ratingFilter === 'popular' ? 50 : ratingFilter === 'high' ? 100 : 200
+      list = list.filter(a => { const r = getRating(a); return r != null && r >= min })
+    }
 
     const isCharsSort    = sortBy === 'chars-asc'    || sortBy === 'chars-desc'
     const isRatingSort   = sortBy === 'rating-asc'   || sortBy === 'rating-desc'
@@ -86,7 +103,7 @@ export default function ArticleList({
       })
     }
     return list
-  }, [allArticles, filter, sortBy, isChecked, hasUserRating, getUserRating])
+  }, [allArticles, filter, charFilter, ratingFilter, sortBy, isChecked, hasUserRating, getUserRating])
 
   const cols = layoutMode === 'card' ? CARD_COLS : layoutMode === 'matrix' ? MATRIX_COLS : 1
   const virtualRows = useMemo(() => {
@@ -351,18 +368,58 @@ export default function ArticleList({
             title="未読をランダムに選ぶ"
             aria-label="未読をランダムに選ぶ"
           >🎲</button>
+          <button
+            className={`mark-btn${filterPanelOpen ? ' active' : ''}${charFilter !== 'all' || ratingFilter !== 'all' ? ' filter-active' : ''}`}
+            onClick={() => setFilterPanelOpen(v => !v)}
+            title="絞り込みフィルター"
+          >絞込{filterPanelOpen ? '▲' : '▼'}</button>
         </div>
+
+        {filterPanelOpen && (
+          <div className="filter-panel">
+            <div className="filter-panel-row">
+              <span className="filter-panel-label">文字数</span>
+              {[
+                { key: 'all', label: '全て' },
+                { key: 'short', label: '〜5千字' },
+                { key: 'medium', label: '5千〜3万字' },
+                { key: 'long', label: '3万字〜' },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  className={`filter-tab${charFilter === key ? ' active' : ''}`}
+                  onClick={() => setCharFilter(key)}
+                >{label}</button>
+              ))}
+            </div>
+            <div className="filter-panel-row">
+              <span className="filter-panel-label">評価</span>
+              {[
+                { key: 'all', label: '全て' },
+                { key: 'popular', label: '+50以上' },
+                { key: 'high', label: '+100以上' },
+                { key: 'top', label: '+200以上' },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  className={`filter-tab${ratingFilter === key ? ' active' : ''}`}
+                  onClick={() => setRatingFilter(key)}
+                >{label}</button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {layoutMode === 'list' && (
         <div className="article-header-row">
-          <div className="article-th col-check">✓</div>
           <div className="article-th col-num">No.</div>
           <div className="article-th col-badges">状態</div>
           <div className="article-th col-fav">★</div>
           <div className="article-th col-queue">+</div>
           <div className="article-th col-memo">✎</div>
           <div className="article-th col-myrating">マイ評価</div>
+          <div className="article-th col-check">✓</div>
         </div>
       )}
 
@@ -487,14 +544,6 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
   return (
     <>
       <div className={rowClass}>
-        <div className="article-td col-check">
-          <input
-            type="checkbox"
-            className="scp-checkbox"
-            checked={read}
-            onChange={onToggle}
-          />
-        </div>
         <a
           className="article-link-zone"
           href={article.url}
@@ -549,6 +598,14 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
         <div className="article-td col-myrating">
           <UserRatingStars id={article.id} rating={userRating} onSet={onUserRating} />
         </div>
+        <div className="article-td col-check">
+          <button
+            className={`read-toggle-btn${read ? ' is-read' : ''}`}
+            onClick={onToggle}
+            aria-label={read ? '未読に戻す' : '読了にする'}
+            aria-pressed={read}
+          >{read ? '✓' : ''}</button>
+        </div>
       </div>
       {memoOpen && (
         <div className="memo-expand-row">
@@ -585,12 +642,6 @@ function ArticleCard({ article, read, onToggle, favorited, onFavorite, memo, onM
   return (
     <div className={cardClass}>
       <div className="card-top">
-        <input
-          type="checkbox"
-          className="scp-checkbox"
-          checked={read}
-          onChange={onToggle}
-        />
         <a
           className="card-desg"
           href={article.url}
@@ -633,12 +684,15 @@ function ArticleCard({ article, read, onToggle, favorited, onFavorite, memo, onM
         {charCount != null && <span className="scp-charcount">{formatChars(charCount)}</span>}
         {charCount != null && <span className="scp-readmin">約{Math.ceil(charCount / 500)}分</span>}
         {rating != null && <span className="scp-rating">👍 {rating}</span>}
-        {article.predicted
-          ? <span className="badge badge-predicted">予測</span>
-          : read
-            ? <span className="badge badge-read">読了</span>
-            : null
-        }
+        {article.predicted && <span className="badge badge-predicted">予測</span>}
+      </div>
+      <div className="card-bottom">
+        <button
+          className={`card-read-btn${read ? ' is-read' : ''}`}
+          onClick={onToggle}
+          aria-label={read ? '未読に戻す' : '読了にする'}
+          aria-pressed={read}
+        >{read ? '✓ 読了' : '未読'}</button>
       </div>
       {memoOpen && (
         <div className="card-memo">

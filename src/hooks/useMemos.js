@@ -56,5 +56,5 @@ export function useMemos() {
 
   const getMemo = useCallback((id) => memos.get(id) ?? '', [memos])
 
-  return { getMemo, setMemo }
+  return { getMemo, setMemo, memos }
 }

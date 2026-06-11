@@ -3,7 +3,7 @@ import { BRANCHES } from '../data/branches.js'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
 import { exportData, importData } from '../utils/dataBackup.js'
 
-export default function Sidebar({ selected, onSelect, countChecked, isOpen, favCount, queueCount }) {
+export default function Sidebar({ selected, onSelect, countChecked, isOpen, favCount, queueCount, memoCount }) {
   const { branchCode, view, seriesId } = selected
   const fileInputRef = useRef(null)
 
@@ -52,6 +52,13 @@ export default function Sidebar({ selected, onSelect, countChecked, isOpen, favC
       >
         <span className="fav-nav-label">📚 後で読む</span>
         <span className="series-count">{queueCount}</span>
+      </div>
+      <div
+        className={`fav-nav-item${view === 'memos' && !branchCode ? ' active' : ''}`}
+        onClick={() => onSelect({ branchCode: null, view: 'memos', seriesId: null })}
+      >
+        <span className="fav-nav-label">✎ メモ一覧</span>
+        {memoCount > 0 && <span className="series-count">{memoCount}</span>}
       </div>
       <div
         className={`fav-nav-item${view === 'stats' && !branchCode ? ' active' : ''}`}
@@ -174,7 +181,8 @@ function SeriesCount({ branch, series, countChecked }) {
     [branch.code, series]
   )
   const done = countChecked(ids)
-  return (
-    <span className="series-count">{done}/{ids.length}</span>
-  )
+  const complete = ids.length > 0 && done === ids.length
+  return complete
+    ? <span className="series-count series-count-done">完</span>
+    : <span className="series-count">{done}/{ids.length}</span>
 }

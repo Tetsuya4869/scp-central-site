@@ -7,7 +7,7 @@ export function lookupArticle(id) {
     for (const series of branch.series) {
       if (series.type === 'custom') {
         const a = series.articles.find(a => a.id === id)
-        if (a) return { ...a, branchCode: branch.code, branch }
+        if (a) return { ...a, branchCode: branch.code, branch, seriesId: series.id }
       }
     }
   }
@@ -19,7 +19,12 @@ export function lookupArticle(id) {
         const [article] = generateSeriesArticles(branch.code, number, number)
         if (article) {
           const title = TITLES[branch.code]?.[String(number)] ?? ''
-          return { ...article, branch, title }
+          const series = branch.series.find(s => {
+            if (s.type === 'custom' || s.type === 'separator') return false
+            const min = branch.minNumber ? Math.max(s.min, branch.minNumber) : s.min
+            return number >= min && number <= s.max
+          })
+          return { ...article, branch, title, seriesId: series?.id ?? null }
         }
       }
     }
