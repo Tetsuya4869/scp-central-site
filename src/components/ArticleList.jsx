@@ -259,6 +259,27 @@ export default function ArticleList({
             <span className="progress-text">{readCount}</span>
             <span className="progress-denom">/{allArticles.length} ({pct}%)</span>
           </div>
+        </div>
+
+        {/* Layout selector + filters + sort + actions — all in one row */}
+        <div className="toolbar-row toolbar-row-controls">
+          {[
+            { key: 'list',   label: 'リスト',   sub: '行一覧' },
+            { key: 'card',   label: 'カード',   sub: '詳細表示' },
+            { key: 'matrix', label: 'グリッド', sub: '全体把握' },
+          ].map(({ key, label, sub }) => (
+            <button
+              key={key}
+              className={`layout-tab${layoutMode === key ? ' active' : ''}`}
+              onClick={() => changeLayout(key)}
+            >
+              <span className="layout-tab-label">{label}</span>
+              <span className="layout-tab-sub">{sub}</span>
+            </button>
+          ))}
+
+          <span className="toolbar-sep" />
+
           <div className="filter-tabs">
             {[
               { key: 'all',    label: '全て' },
@@ -275,27 +296,7 @@ export default function ArticleList({
               </button>
             ))}
           </div>
-        </div>
 
-        {/* Layout selector */}
-        <div className="toolbar-row toolbar-row-layout">
-          {[
-            { key: 'list',   label: 'リスト',   sub: '行一覧' },
-            { key: 'card',   label: 'カード',   sub: '詳細表示' },
-            { key: 'matrix', label: 'グリッド', sub: '全体把握' },
-          ].map(({ key, label, sub }) => (
-            <button
-              key={key}
-              className={`layout-tab${layoutMode === key ? ' active' : ''}`}
-              onClick={() => changeLayout(key)}
-            >
-              <span className="layout-tab-label">{label}</span>
-              <span className="layout-tab-sub">{sub}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="toolbar-row toolbar-row-bottom">
           {layoutMode !== 'matrix' && (
             <>
               <button
