@@ -1996,6 +1996,10 @@ html, body, #root {
   flex-wrap: wrap;
 }
 
+.card-meta-spacer {
+  flex: 1;
+}
+
 .card-memo {
   display: flex;
   flex-direction: column;

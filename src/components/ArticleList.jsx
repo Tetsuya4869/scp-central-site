@@ -117,7 +117,7 @@ export default function ArticleList({
   const rowVirtualizer = useVirtualizer({
     count: virtualRows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => layoutMode === 'card' ? 130 : layoutMode === 'matrix' ? 48 : 44,
+    estimateSize: () => layoutMode === 'card' ? 110 : layoutMode === 'matrix' ? 48 : 44,
     overscan: layoutMode === 'matrix' ? 4 : 10,
   })
 
@@ -695,8 +695,7 @@ function ArticleCard({ article, read, onToggle, favorited, onFavorite, memo, onM
         {charCount != null && <span className="scp-readmin">約{Math.ceil(charCount / 500)}分</span>}
         {rating != null && <span className="scp-rating">👍 {rating}</span>}
         {article.predicted && <span className="badge badge-predicted">予測</span>}
-      </div>
-      <div className="card-bottom">
+        <span className="card-meta-spacer" />
         <button
           className={`card-read-btn${read ? ' is-read' : ''}`}
           onClick={onToggle}
