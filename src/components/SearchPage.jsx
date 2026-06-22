@@ -203,7 +203,10 @@ export default function SearchPage({ onNavigate, onOpenSidebar, isChecked, isFav
                 isChecked(article.id) ? 'is-read' : '',
                 idx === highlightIdx ? 'is-highlighted' : '',
               ].filter(Boolean).join(' ')}
+              role="button"
+              tabIndex={0}
               onClick={() => onNavigate({ branchCode: branch.code, view: 'series', seriesId: series.id, targetId: article.id })}
+              onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onNavigate({ branchCode: branch.code, view: 'series', seriesId: series.id, targetId: article.id })}
             >
               <span className="search-branch-badge" style={{ background: branch.accent }}>
                 {branch.code}

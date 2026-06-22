@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { BRANCHES } from '../data/branches.js'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
 import { loadReadDates, lookupArticle } from '../utils/lookupArticle.js'
+import { useToast } from './Toast.jsx'
+import { useAchievements } from '../hooks/useAchievements.js'
 
 function computeStreak(map) {
   const days = new Set()
@@ -19,6 +21,53 @@ function computeStreak(map) {
   let streak = 0
   while (days.has(cur)) { streak++; cur -= 86400000 }
   return streak
+}
+
+function computeLongestStreak(map) {
+  if (map.size === 0) return 0
+  const days = new Set()
+  for (const ts of map.values()) {
+    const d = new Date(ts)
+    d.setHours(0, 0, 0, 0)
+    days.add(d.getTime())
+  }
+  const sorted = [...days].sort((a, b) => a - b)
+  let max = 1, cur = 1
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] - sorted[i - 1] === 86400000) {
+      cur++
+      if (cur > max) max = cur
+    } else {
+      cur = 1
+    }
+  }
+  return max
+}
+
+function computeWeeklyAvg(map) {
+  if (map.size === 0) return 0
+  const days = new Set()
+  for (const ts of map.values()) {
+    const d = new Date(ts)
+    d.setHours(0, 0, 0, 0)
+    days.add(d.getTime())
+  }
+  const sorted = [...days].sort((a, b) => a - b)
+  if (sorted.length === 0) return 0
+  const spanDays = Math.max(1, Math.round((sorted[sorted.length - 1] - sorted[0]) / 86400000) + 1)
+  const weeks = spanDays / 7
+  return Math.round((map.size / Math.max(weeks, 1)) * 10) / 10
+}
+
+function computeProjection(totalChecked, grandTotal, map) {
+  if (map.size === 0 || totalChecked >= grandTotal) return null
+  const weeklyAvg = computeWeeklyAvg(map)
+  if (weeklyAvg <= 0) return null
+  const remaining = grandTotal - totalChecked
+  const weeksLeft = remaining / weeklyAvg
+  const d = new Date()
+  d.setDate(d.getDate() + Math.round(weeksLeft * 7))
+  return `${d.getFullYear()}年${d.getMonth() + 1}月`
 }
 
 function getLast7Days(map) {
@@ -52,15 +101,21 @@ function fmtDate(ts) {
 }
 
 export default function StatsPage({ totalChecked, grandTotal, countChecked, onOpenSidebar, userRatings, goal, setGoal }) {
+  const toast = useToast()
   const readDatesMap = useMemo(() => loadReadDates(), [])
   const [editingGoal, setEditingGoal] = useState(false)
   const [goalInput, setGoalInput] = useState('')
 
-  const streak      = useMemo(() => computeStreak(readDatesMap), [readDatesMap])
-  const last7       = useMemo(() => getLast7Days(readDatesMap),  [readDatesMap])
-  const heatmapData = useMemo(() => buildHeatmapData(readDatesMap), [readDatesMap])
-  const maxDay      = Math.max(...last7.map(d => d.count), 1)
-  const totalPct    = grandTotal > 0 ? Math.round((totalChecked / grandTotal) * 100) : 0
+  const streak        = useMemo(() => computeStreak(readDatesMap),              [readDatesMap])
+  const longestStreak = useMemo(() => computeLongestStreak(readDatesMap),       [readDatesMap])
+  const weeklyAvg     = useMemo(() => computeWeeklyAvg(readDatesMap),           [readDatesMap])
+  const projection    = useMemo(() => computeProjection(totalChecked, grandTotal, readDatesMap), [totalChecked, grandTotal, readDatesMap])
+  const last7         = useMemo(() => getLast7Days(readDatesMap),                [readDatesMap])
+  const heatmapData   = useMemo(() => buildHeatmapData(readDatesMap),           [readDatesMap])
+  const maxDay        = Math.max(...last7.map(d => d.count), 1)
+  const totalPct      = grandTotal > 0 ? Math.round((totalChecked / grandTotal) * 100) : 0
+
+  const achievements = useAchievements({ totalChecked, streak })
 
   const thisMonthCount = useMemo(() => {
     const now = new Date()
@@ -112,6 +167,15 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
     a.href = url; a.download = `scp-reading-history-${new Date().toISOString().slice(0,10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
+    toast.success(`${readDatesMap.size}件の読書履歴をエクスポートしました`)
+  }
+
+  function handleSetGoal(value) {
+    const n = parseInt(value, 10) || null
+    setGoal({ monthly: n })
+    setEditingGoal(false)
+    if (n) toast.success(`今月の目標を${n}記事に設定しました`)
+    else toast.info('目標を削除しました')
   }
 
   const topRated = useMemo(() => {
@@ -178,13 +242,13 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
                     value={goalInput}
                     onChange={e => setGoalInput(e.target.value)}
                     onKeyDown={e => {
-                      if (e.key === 'Enter') { setGoal({ monthly: parseInt(goalInput, 10) || null }); setEditingGoal(false) }
+                      if (e.key === 'Enter') handleSetGoal(goalInput)
                       if (e.key === 'Escape') setEditingGoal(false)
                     }}
                     autoFocus
                   />
-                  <button className="stats-goal-btn" onClick={() => { setGoal({ monthly: parseInt(goalInput, 10) || null }); setEditingGoal(false) }}>設定</button>
-                  <button className="stats-goal-btn stats-goal-btn-del" onClick={() => { setGoal({ monthly: null }); setEditingGoal(false) }}>削除</button>
+                  <button className="stats-goal-btn" onClick={() => handleSetGoal(goalInput)}>設定</button>
+                  <button className="stats-goal-btn stats-goal-btn-del" onClick={() => handleSetGoal(null)}>削除</button>
                 </div>
               ) : (
                 <button className="stats-goal-btn stats-goal-btn-edit" onClick={() => { setGoalInput(String(goal.monthly)); setEditingGoal(true) }}>目標を変更</button>
@@ -204,18 +268,43 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
                     placeholder="例: 30"
                     onChange={e => setGoalInput(e.target.value)}
                     onKeyDown={e => {
-                      if (e.key === 'Enter') { setGoal({ monthly: parseInt(goalInput, 10) || null }); setEditingGoal(false) }
+                      if (e.key === 'Enter') handleSetGoal(goalInput)
                       if (e.key === 'Escape') setEditingGoal(false)
                     }}
                     autoFocus
                   />
-                  <button className="stats-goal-btn" onClick={() => { setGoal({ monthly: parseInt(goalInput, 10) || null }); setEditingGoal(false) }}>設定</button>
+                  <button className="stats-goal-btn" onClick={() => handleSetGoal(goalInput)}>設定</button>
                 </div>
               ) : (
                 <button className="stats-goal-btn stats-goal-btn-edit" onClick={() => { setGoalInput(''); setEditingGoal(true) }}>目標を設定</button>
               )}
             </div>
           )}
+        </div>
+
+        {/* 詳細統計 */}
+        <div className="stats-card">
+          <div className="stats-card-title">詳細統計</div>
+          <div className="stats-extra-row">
+            <div className="stats-mini-card">
+              <div className="stats-mini-label">現在の連続</div>
+              <div className="stats-mini-value">{streak}<span className="stats-mini-unit"> 日</span></div>
+            </div>
+            <div className="stats-mini-card">
+              <div className="stats-mini-label">最長連続記録</div>
+              <div className="stats-mini-value">{longestStreak}<span className="stats-mini-unit"> 日</span></div>
+            </div>
+            <div className="stats-mini-card">
+              <div className="stats-mini-label">週平均読了数</div>
+              <div className="stats-mini-value">{weeklyAvg}<span className="stats-mini-unit"> 記事</span></div>
+            </div>
+            {projection && (
+              <div className="stats-mini-card">
+                <div className="stats-mini-label">全制覇予測</div>
+                <div className="stats-mini-value" style={{ fontSize: 'var(--fs-m)' }}>{projection}</div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ストリーク + 7日グラフ */}
@@ -315,6 +404,24 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
             </div>
           </div>
         )}
+
+        {/* 実績・バッジ */}
+        <div className="stats-card">
+          <div className="stats-card-title">実績・バッジ</div>
+          <div className="achievements-grid">
+            {achievements.map(a => (
+              <div
+                key={a.id}
+                className={`achievement-badge${a.achieved ? ' achieved' : ''}`}
+                title={a.desc}
+              >
+                <span className="achievement-icon">{a.icon}</span>
+                <span className="achievement-label">{a.label}</span>
+                <span className="achievement-desc">{a.desc}</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
       </div>
     </>

@@ -259,6 +259,22 @@ export default function ArticleList({
             <span className="progress-text">{readCount}</span>
             <span className="progress-denom">/{allArticles.length} ({pct}%)</span>
           </div>
+          <div className="filter-tabs">
+            {[
+              { key: 'all',    label: '全て' },
+              { key: 'read',   label: '読了' },
+              { key: 'unread', label: '未読' },
+              { key: 'rated',  label: '評価済' },
+            ].map(({ key, label }) => (
+              <button
+                key={key}
+                className={`filter-tab${filter === key ? ' active' : ''}`}
+                onClick={() => handleFilter(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Layout selector */}
@@ -280,23 +296,6 @@ export default function ArticleList({
         </div>
 
         <div className="toolbar-row toolbar-row-bottom">
-          <div className="filter-tabs">
-            {[
-              { key: 'all',    label: '全て' },
-              { key: 'read',   label: '読了' },
-              { key: 'unread', label: '未読' },
-              { key: 'rated',  label: '評価済' },
-            ].map(({ key, label }) => (
-              <button
-                key={key}
-                className={`filter-tab${filter === key ? ' active' : ''}`}
-                onClick={() => handleFilter(key)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
           {layoutMode !== 'matrix' && (
             <>
               <button
@@ -425,8 +424,18 @@ export default function ArticleList({
 
       <div ref={parentRef} className="article-list-wrap">
         {virtualRows.length === 0 ? (
-          <div className="list-empty">
-            {filter === 'read' ? '読了記事なし' : filter === 'rated' ? '評価済み記事なし' : '未読記事なし'}
+          <div className="empty-state">
+            <div className="empty-state-icon">
+              {filter === 'read' ? '📭' : filter === 'rated' ? '⭐' : '🔍'}
+            </div>
+            <div className="empty-state-title">
+              {filter === 'read' ? '読了記事なし' : filter === 'rated' ? '評価済み記事なし' : '未読記事なし'}
+            </div>
+            <div className="empty-state-hint">
+              {filter === 'read' ? '記事を読んでチェックを入れると、ここに表示されます。' :
+               filter === 'rated' ? '記事に星評価をつけると、ここに表示されます。' :
+               '現在のフィルター条件に一致する未読記事がありません。'}
+            </div>
           </div>
         ) : (
           <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>

@@ -18,6 +18,8 @@ import SearchPage from './components/SearchPage.jsx'
 import StatsPage from './components/StatsPage.jsx'
 import QueuePage from './components/QueuePage.jsx'
 import MemoSearchPage from './components/MemoSearchPage.jsx'
+import { ToastProvider } from './components/Toast.jsx'
+import CommandPalette from './components/CommandPalette.jsx'
 
 export default function App() {
   const { toggle, markAll, isChecked, countChecked, totalChecked } = useChecklist()
@@ -28,6 +30,7 @@ export default function App() {
   const { userRatings, setRating, getRating, hasRating } = useUserRatings()
   const { goal, setGoal } = useGoal()
 
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
   const [layoutMode, setLayoutModeRaw] = useState(() => localStorage.getItem('scp-layout') || 'list')
   const setLayoutMode = useCallback(m => {
     setLayoutModeRaw(m)
@@ -47,10 +50,29 @@ export default function App() {
     else ids.forEach(id => clearReadDate(id))
   }, [markAll, setReadDate, clearReadDate])
   const [theme, setTheme] = useState(() => localStorage.getItem('scp-theme') || 'dark')
+  const toggleTheme = useCallback(() => setTheme(t => t === 'dark' ? 'light' : 'dark'), [])
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
     localStorage.setItem('scp-theme', theme)
   }, [theme])
+
+  // Global keyboard shortcut: Ctrl/Cmd+K → command palette
+  useEffect(() => {
+    function onKeyDown(e) {
+      // Don't hijack when composing (IME) or inside an input/textarea
+      if (e.isComposing) return
+      const tag = document.activeElement?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault()
+        setCommandPaletteOpen(v => !v)
+      }
+      if (e.key === 'Escape') setCommandPaletteOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
 
   // view: null | 'series' | 'hubs' | 'search' | 'favorites' | 'stats' | 'queue'
   const [selected, setSelected] = useState(() => {
@@ -223,57 +245,66 @@ export default function App() {
   }
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <button
-          className="hamburger"
-          onClick={() => setSidebarOpen(v => !v)}
-          aria-label="メニュー"
-        >
-          <span /><span /><span />
-        </button>
+    <ToastProvider>
+      <div className="app">
+        <header className="app-header">
+          <button
+            className="hamburger"
+            onClick={() => setSidebarOpen(v => !v)}
+            aria-label="メニュー"
+          >
+            <span /><span /><span />
+          </button>
 
-        <h1>SCP · 読破チェックリスト</h1>
+          <h1>SCP · 読破チェックリスト</h1>
 
-        <div className="header-stats">
-          <span className="header-stat-val">{totalChecked.toLocaleString()}</span>
-          <span className="header-stat-sep">/</span>
-          <span className="header-stat-val">{grandTotal.toLocaleString()}</span>
-          <span className="header-stat-pct">({pct}%)</span>
+          <div className="header-stats">
+            <span className="header-stat-val">{totalChecked.toLocaleString()}</span>
+            <span className="header-stat-sep">/</span>
+            <span className="header-stat-val">{grandTotal.toLocaleString()}</span>
+            <span className="header-stat-pct">({pct}%)</span>
+          </div>
+
+          <button
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-label="テーマ切り替え"
+            title={theme === 'dark' ? 'ライトモードに切り替え' : 'ダークモードに切り替え'}
+          >
+            {theme === 'dark' ? '☀' : '🌙'}
+          </button>
+        </header>
+
+        <div className="body-wrap">
+          {sidebarOpen && (
+            <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
+          )}
+
+          <Sidebar
+            selected={selected}
+            onSelect={handleSelect}
+            countChecked={countChecked}
+            isOpen={sidebarOpen}
+            favCount={favorites.size}
+            queueCount={queue.length}
+            memoCount={memos.size}
+          />
+
+          <main className="main-content">
+            <ViewWrapper viewKey={selected.view + (selected.branchCode ?? '') + (selected.seriesId ?? '')}>
+              {renderMain()}
+            </ViewWrapper>
+          </main>
         </div>
 
-        <button
-          className="theme-toggle"
-          onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-          aria-label="テーマ切り替え"
-          title={theme === 'dark' ? 'ライトモードに切り替え' : 'ダークモードに切り替え'}
-        >
-          {theme === 'dark' ? '☀' : '🌙'}
-        </button>
-      </header>
-
-      <div className="body-wrap">
-        {sidebarOpen && (
-          <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
-        )}
-
-        <Sidebar
-          selected={selected}
-          onSelect={handleSelect}
-          countChecked={countChecked}
-          isOpen={sidebarOpen}
-          favCount={favorites.size}
-          queueCount={queue.length}
-          memoCount={memos.size}
+        <CommandPalette
+          isOpen={commandPaletteOpen}
+          onClose={() => setCommandPaletteOpen(false)}
+          onNavigate={handleSelect}
+          onToggleTheme={toggleTheme}
         />
-
-        <main className="main-content">
-          <ViewWrapper viewKey={selected.view + (selected.branchCode ?? '') + (selected.seriesId ?? '')}>
-            {renderMain()}
-          </ViewWrapper>
-        </main>
       </div>
-    </div>
+    </ToastProvider>
   )
 }
 

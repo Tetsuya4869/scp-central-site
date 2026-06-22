@@ -2,13 +2,16 @@ import { useMemo, useRef } from 'react'
 import { BRANCHES } from '../data/branches.js'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
 import { exportData, importData } from '../utils/dataBackup.js'
+import { useToast } from './Toast.jsx'
 
 export default function Sidebar({ selected, onSelect, countChecked, isOpen, favCount, queueCount, memoCount }) {
   const { branchCode, view, seriesId } = selected
   const fileInputRef = useRef(null)
+  const toast = useToast()
 
   function handleExport() {
     exportData()
+    toast.success('データをエクスポートしました')
   }
 
   function handleImportClick() {
@@ -22,9 +25,11 @@ export default function Sidebar({ selected, onSelect, countChecked, isOpen, favC
     reader.onload = (ev) => {
       try {
         importData(ev.target.result)
+        // Toast can't render after reload — queue it in localStorage
+        toast.pending('データをインポートしました')
         window.location.reload()
       } catch {
-        alert('インポートに失敗しました。ファイルを確認してください。')
+        toast.error('インポートに失敗しました。ファイルを確認してください。')
       }
     }
     reader.readAsText(file)
@@ -35,34 +40,54 @@ export default function Sidebar({ selected, onSelect, countChecked, isOpen, favC
     <nav className={`sidebar${isOpen ? ' sidebar-open' : ''}`}>
       <div
         className={`fav-nav-item${view === 'search' && !branchCode ? ' active' : ''}`}
+        role="button"
+        tabIndex={0}
+        aria-current={view === 'search' && !branchCode ? 'page' : undefined}
         onClick={() => onSelect({ branchCode: null, view: 'search', seriesId: null })}
+        onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onSelect({ branchCode: null, view: 'search', seriesId: null })}
       >
         <span className="fav-nav-label">🔍 全体検索</span>
       </div>
       <div
         className={`fav-nav-item${view === 'favorites' && !branchCode ? ' active' : ''}`}
+        role="button"
+        tabIndex={0}
+        aria-current={view === 'favorites' && !branchCode ? 'page' : undefined}
         onClick={() => onSelect({ branchCode: null, view: 'favorites', seriesId: null })}
+        onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onSelect({ branchCode: null, view: 'favorites', seriesId: null })}
       >
         <span className="fav-nav-label">⭐ お気に入り</span>
         <span className="series-count">{favCount}</span>
       </div>
       <div
         className={`fav-nav-item${view === 'queue' && !branchCode ? ' active' : ''}`}
+        role="button"
+        tabIndex={0}
+        aria-current={view === 'queue' && !branchCode ? 'page' : undefined}
         onClick={() => onSelect({ branchCode: null, view: 'queue', seriesId: null })}
+        onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onSelect({ branchCode: null, view: 'queue', seriesId: null })}
       >
         <span className="fav-nav-label">📚 後で読む</span>
         <span className="series-count">{queueCount}</span>
       </div>
       <div
         className={`fav-nav-item${view === 'memos' && !branchCode ? ' active' : ''}`}
+        role="button"
+        tabIndex={0}
+        aria-current={view === 'memos' && !branchCode ? 'page' : undefined}
         onClick={() => onSelect({ branchCode: null, view: 'memos', seriesId: null })}
+        onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onSelect({ branchCode: null, view: 'memos', seriesId: null })}
       >
         <span className="fav-nav-label">✎ メモ一覧</span>
         {memoCount > 0 && <span className="series-count">{memoCount}</span>}
       </div>
       <div
         className={`fav-nav-item${view === 'stats' && !branchCode ? ' active' : ''}`}
+        role="button"
+        tabIndex={0}
+        aria-current={view === 'stats' && !branchCode ? 'page' : undefined}
         onClick={() => onSelect({ branchCode: null, view: 'stats', seriesId: null })}
+        onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onSelect({ branchCode: null, view: 'stats', seriesId: null })}
       >
         <span className="fav-nav-label">📊 統計</span>
       </div>
@@ -121,7 +146,11 @@ function BranchItem({ branch, isOpen, activeSeriesId, activeView, onSelect, coun
     <div className="branch-item">
       <div
         className={`branch-header${isOpen ? ' active' : ''}`}
+        role="button"
+        tabIndex={0}
+        aria-expanded={isOpen}
         onClick={handleClick}
+        onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && handleClick()}
       >
         <span className="branch-code">{branch.code}</span>
         <span className="branch-info">
@@ -145,7 +174,11 @@ function BranchItem({ branch, isOpen, activeSeriesId, activeView, onSelect, coun
           {branch.hubs.length > 0 && (
             <div
               className={`series-item hub-nav-item${activeView === 'hubs' ? ' active' : ''}`}
+              role="button"
+              tabIndex={0}
+              aria-current={activeView === 'hubs' ? 'page' : undefined}
               onClick={() => onSelect({ branchCode: branch.code, view: 'hubs', seriesId: null })}
+              onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onSelect({ branchCode: branch.code, view: 'hubs', seriesId: null })}
             >
               <span className="series-label">📂 ハブ・特殊ページ</span>
               <span className="series-count">{branch.hubs.reduce((s, c) => s + c.items.length, 0)}</span>
@@ -160,7 +193,11 @@ function BranchItem({ branch, isOpen, activeSeriesId, activeView, onSelect, coun
               <div
                 key={s.id}
                 className={`series-item${activeView === 'series' && activeSeriesId === s.id ? ' active' : ''}`}
+                role="button"
+                tabIndex={0}
+                aria-current={activeView === 'series' && activeSeriesId === s.id ? 'page' : undefined}
                 onClick={() => onSelect({ branchCode: branch.code, view: 'series', seriesId: s.id })}
+                onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onSelect({ branchCode: branch.code, view: 'series', seriesId: s.id })}
               >
                 <span className="series-label">{s.label}</span>
                 <SeriesCount branch={branch} series={s} countChecked={countChecked} />
