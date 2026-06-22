@@ -514,6 +514,7 @@ html, body, #root {
 .toolbar-row-top {
   border-bottom: 1px solid var(--border);
   min-height: 40px;
+  flex-wrap: wrap;
 }
 
 .toolbar-row-bottom {

@@ -259,6 +259,22 @@ export default function ArticleList({
             <span className="progress-text">{readCount}</span>
             <span className="progress-denom">/{allArticles.length} ({pct}%)</span>
           </div>
+          <div className="filter-tabs">
+            {[
+              { key: 'all',    label: '全て' },
+              { key: 'read',   label: '読了' },
+              { key: 'unread', label: '未読' },
+              { key: 'rated',  label: '評価済' },
+            ].map(({ key, label }) => (
+              <button
+                key={key}
+                className={`filter-tab${filter === key ? ' active' : ''}`}
+                onClick={() => handleFilter(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Layout selector */}
@@ -280,23 +296,6 @@ export default function ArticleList({
         </div>
 
         <div className="toolbar-row toolbar-row-bottom">
-          <div className="filter-tabs">
-            {[
-              { key: 'all',    label: '全て' },
-              { key: 'read',   label: '読了' },
-              { key: 'unread', label: '未読' },
-              { key: 'rated',  label: '評価済' },
-            ].map(({ key, label }) => (
-              <button
-                key={key}
-                className={`filter-tab${filter === key ? ' active' : ''}`}
-                onClick={() => handleFilter(key)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
           {layoutMode !== 'matrix' && (
             <>
               <button
