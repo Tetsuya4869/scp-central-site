@@ -521,6 +521,23 @@ html, body, #root {
   min-height: 38px;
 }
 
+.toolbar-row-controls {
+  min-height: 38px;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-0);
+}
+
+.toolbar-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--border-light);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
 /* Back/menu button (always visible on mobile, hidden on desktop) */
 .toolbar-back {
   display: none;
@@ -1977,6 +1994,10 @@ html, body, #root {
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+}
+
+.card-meta-spacer {
+  flex: 1;
 }
 
 .card-memo {
