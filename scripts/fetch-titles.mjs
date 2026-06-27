@@ -172,7 +172,8 @@ async function main() {
     ),
   }
 
-  writeFileSync(OUT, JSON.stringify(sorted, null, 2), 'utf8')
+  // house style: minified 単一行（char_counts.json / ratings.json と統一、末尾改行なし）
+  writeFileSync(OUT, JSON.stringify(sorted), 'utf8')
 
   console.log(`\n✓ 完了`)
   console.log(`  EN: ${Object.keys(sorted.EN).length} 件`)
