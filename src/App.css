@@ -3579,3 +3579,29 @@ html, body, #root {
 [data-theme='light'] .branch-header.active {
   background: color-mix(in srgb, var(--accent) 10%, var(--bg-2));
 }
+
+/* ── Confetti overlay ─────────────────────────────────────────────────── */
+.confetti-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.confetti-particle {
+  position: absolute;
+  top: -12px;
+  border-radius: 2px;
+  animation: confetti-fall linear both;
+}
+
+@keyframes confetti-fall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(105vh) rotate(var(--rot)); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confetti-particle { display: none; }
+}

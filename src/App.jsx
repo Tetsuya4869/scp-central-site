@@ -25,7 +25,7 @@ export default function App() {
   const { toggle, markAll, isChecked, countChecked, totalChecked } = useChecklist()
   const { favorites, toggleFavorite, isFavorite } = useFavorites()
   const { getMemo, setMemo, memos } = useMemos()
-  const { setReadDate, clearReadDate, getReadDate } = useReadDates()
+  const { setReadDate, clearReadDate, getReadDate, dates } = useReadDates()
   const { queue, addToQueue, removeFromQueue, moveUp, moveDown, isQueued } = useQueue()
   const { userRatings, setRating, getRating, hasRating } = useUserRatings()
   const { goal, setGoal } = useGoal()
@@ -232,6 +232,7 @@ export default function App() {
           setUserRating={setRating}
           hasUserRating={hasRating}
           targetId={selected.targetId ?? null}
+          dates={dates}
         />
       )
     }

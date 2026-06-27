@@ -43,5 +43,5 @@ export function useReadDates() {
     return ts ? new Date(ts) : null
   }, [dates])
 
-  return { setReadDate, clearReadDate, getReadDate }
+  return { setReadDate, clearReadDate, getReadDate, dates }
 }
