@@ -1,10 +1,12 @@
 import { useMemo } from 'react'
 import { lookupArticle } from '../utils/lookupArticle.js'
+import { useDataReady } from '../data/dataStore.js'
 
 export default function QueuePage({ queue, removeFromQueue, moveUp, moveDown, onOpenSidebar, isChecked }) {
+  const dataReady = useDataReady()
   const items = useMemo(
     () => queue.map(id => lookupArticle(id)).filter(Boolean),
-    [queue]
+    [queue, dataReady]
   )
 
   return (

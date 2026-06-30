@@ -1,9 +1,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
-import TITLES from '../data/titles.json'
-import CHAR_COUNTS from '../data/char_counts.json'
-import RATINGS from '../data/ratings.json'
+import { getTitles, getCharCounts, getRatings, useDataReady } from '../data/dataStore.js'
 import { useToast } from './Toast.jsx'
 import Confetti from './Confetti.jsx'
 
@@ -17,12 +15,12 @@ function getSlug(article) {
 
 function getCharCount(article) {
   const slug = getSlug(article)
-  return slug ? (CHAR_COUNTS[slug] ?? null) : null
+  return slug ? (getCharCounts()[slug] ?? null) : null
 }
 
 function getRating(article) {
   const slug = getSlug(article)
-  return slug ? (RATINGS[slug] ?? null) : null
+  return slug ? (getRatings()[slug] ?? null) : null
 }
 
 function formatChars(n) {
@@ -59,6 +57,7 @@ export default function ArticleList({
   dates,
 }) {
   const toast = useToast()
+  const dataReady = useDataReady() // データ到着時に再描画してタイトル/文字数/評価を反映
   const [confetti, setConfetti] = useState(false)
   const [filter, setFilter] = useState('all')
   const [sortBy, setSortBy] = useState('number')
@@ -122,7 +121,7 @@ export default function ArticleList({
       })
     }
     return list
-  }, [allArticles, filter, charFilter, ratingFilter, sortBy, isChecked, hasUserRating, getUserRating])
+  }, [allArticles, filter, charFilter, ratingFilter, sortBy, isChecked, hasUserRating, getUserRating, dataReady])
 
   const cols = layoutMode === 'card' ? CARD_COLS : layoutMode === 'matrix' ? MATRIX_COLS : 1
   const virtualRows = useMemo(() => {
@@ -595,7 +594,7 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
     highlighted ? 'is-target-highlight' : '',
   ].filter(Boolean).join(' ')
 
-  const title = article.title ?? TITLES[article.branchCode]?.[String(article.number)] ?? ''
+  const title = article.title ?? getTitles()[article.branchCode]?.[String(article.number)] ?? ''
   const hasMemo = memo.length > 0
 
   return (
@@ -686,7 +685,7 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
 
 function ArticleCard({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, rating, queued, onQueue, highlighted }) {
   const [memoOpen, setMemoOpen] = useState(false)
-  const title = article.title ?? TITLES[article.branchCode]?.[String(article.number)] ?? ''
+  const title = article.title ?? getTitles()[article.branchCode]?.[String(article.number)] ?? ''
   const hasMemo = memo.length > 0
 
   const cardClass = [

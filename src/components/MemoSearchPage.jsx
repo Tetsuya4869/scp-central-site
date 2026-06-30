@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react'
 import { lookupArticle } from '../utils/lookupArticle.js'
+import { useDataReady } from '../data/dataStore.js'
 
 export default function MemoSearchPage({ memos, onNavigate, onOpenSidebar }) {
   const [query, setQuery] = useState('')
+  const dataReady = useDataReady()
 
   const items = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -14,7 +16,7 @@ export default function MemoSearchPage({ memos, onNavigate, onOpenSidebar }) {
     }
     result.sort((a, b) => a.article.designation.localeCompare(b.article.designation))
     return result
-  }, [memos, query])
+  }, [memos, query, dataReady])
 
   return (
     <>

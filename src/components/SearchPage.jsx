@@ -1,9 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { BRANCHES, BRANCH_MAP } from '../data/branches.js'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
-import TITLES from '../data/titles.json'
-import CHAR_COUNTS from '../data/char_counts.json'
-import RATINGS from '../data/ratings.json'
+import { getTitles, getCharCounts, getRatings, useDataReady } from '../data/dataStore.js'
 
 const MAX_RESULTS = 300
 const JP_BASE = 'http://scp-jp.wikidot.com/'
@@ -27,7 +25,7 @@ function doSearch(query) {
   function add(article, branch, series, title) {
     if (seen.has(article.id)) return
     seen.add(article.id)
-    results.push({ article, branch, series, title: title ?? TITLES[branch.code]?.[String(article.number)] ?? '' })
+    results.push({ article, branch, series, title: title ?? getTitles()[branch.code]?.[String(article.number)] ?? '' })
   }
 
   // 1. Custom series articles
@@ -45,7 +43,7 @@ function doSearch(query) {
   }
 
   // 2. Title search
-  for (const [branchCode, titleMap] of Object.entries(TITLES)) {
+  for (const [branchCode, titleMap] of Object.entries(getTitles())) {
     const branch = BRANCH_MAP[branchCode]
     if (!branch) continue
     for (const [numStr, title] of Object.entries(titleMap)) {
@@ -93,6 +91,7 @@ export default function SearchPage({ onNavigate, onOpenSidebar, isChecked, isFav
   const [highlightIdx, setHighlightIdx] = useState(-1)
   const resultsRef = useRef(null)
   const inputRef = useRef(null)
+  const dataReady = useDataReady() // データ到着後に再検索させる
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query), 300)
@@ -102,7 +101,7 @@ export default function SearchPage({ onNavigate, onOpenSidebar, isChecked, isFav
   // Reset highlight when results change
   useEffect(() => { setHighlightIdx(-1) }, [debounced, branchFilter])
 
-  const allResults = useMemo(() => doSearch(debounced), [debounced])
+  const allResults = useMemo(() => doSearch(debounced), [debounced, dataReady])
 
   const results = useMemo(() => {
     if (!branchFilter) return allResults
@@ -193,8 +192,8 @@ export default function SearchPage({ onNavigate, onOpenSidebar, isChecked, isFav
         )}
         {results.map(({ article, branch, series, title }, idx) => {
           const slug = getSlug(article.url)
-          const charCount = slug ? (CHAR_COUNTS[slug] ?? null) : null
-          const rating    = slug ? (RATINGS[slug]    ?? null) : null
+          const charCount = slug ? (getCharCounts()[slug] ?? null) : null
+          const rating    = slug ? (getRatings()[slug]    ?? null) : null
           return (
             <div
               key={article.id}

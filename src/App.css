@@ -3605,3 +3605,86 @@ html, body, #root {
 @media (prefers-reduced-motion: reduce) {
   .confetti-particle { display: none; }
 }
+
+/* ── Error Boundary fallback ───────────────────────────────────────────── */
+.error-boundary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  background: var(--bg-0);
+}
+
+.error-boundary-card {
+  max-width: 440px;
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  padding: 32px 28px;
+  text-align: center;
+}
+
+.error-boundary-icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+.error-boundary-card h1 {
+  font-size: 18px;
+  color: var(--text-1);
+  margin-bottom: 12px;
+}
+
+.error-boundary-card p {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.error-boundary-detail {
+  font-size: 11px;
+  color: var(--text-3);
+  background: var(--bg-0);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 16px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  text-align: left;
+}
+
+.error-boundary-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.error-boundary-btn {
+  padding: 10px 16px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-3);
+  color: var(--text-1);
+  cursor: pointer;
+  transition: background var(--dur-fast);
+}
+
+.error-boundary-btn:hover {
+  background: var(--bg-4);
+}
+
+.error-boundary-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1a1206;
+  font-weight: 600;
+}
+
+.error-boundary-btn.primary:hover {
+  background: var(--accent-bright);
+}

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { BRANCHES } from '../data/branches.js'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
 import { loadReadDates, lookupArticle } from '../utils/lookupArticle.js'
+import { useDataReady } from '../data/dataStore.js'
 import { useToast } from './Toast.jsx'
 import { useAchievements } from '../hooks/useAchievements.js'
 
@@ -102,6 +103,7 @@ function fmtDate(ts) {
 
 export default function StatsPage({ totalChecked, grandTotal, countChecked, onOpenSidebar, userRatings, goal, setGoal }) {
   const toast = useToast()
+  const dataReady = useDataReady() // データ到着後にタイトルを反映
   const readDatesMap = useMemo(() => loadReadDates(), [])
   const [editingGoal, setEditingGoal] = useState(false)
   const [goalInput, setGoalInput] = useState('')
@@ -137,7 +139,7 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
         return article ? { ...article, ts } : null
       })
       .filter(Boolean)
-  }, [readDatesMap])
+  }, [readDatesMap, dataReady])
 
   const branchStats = useMemo(() => BRANCHES.map(branch => {
     const allIds = branch.series.flatMap(s => {
@@ -189,7 +191,7 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
         return article ? { ...article, myRating: rating } : null
       })
       .filter(Boolean)
-  }, [userRatings])
+  }, [userRatings, dataReady])
 
   return (
     <>

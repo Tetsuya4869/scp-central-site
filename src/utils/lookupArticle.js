@@ -1,6 +1,6 @@
 import { BRANCHES } from '../data/branches.js'
 import { generateSeriesArticles } from './urlGenerator.js'
-import TITLES from '../data/titles.json'
+import { getTitles } from '../data/dataStore.js'
 
 export function lookupArticle(id) {
   for (const branch of BRANCHES) {
@@ -18,7 +18,7 @@ export function lookupArticle(id) {
       if (!isNaN(number)) {
         const [article] = generateSeriesArticles(branch.code, number, number)
         if (article) {
-          const title = TITLES[branch.code]?.[String(number)] ?? ''
+          const title = getTitles()[branch.code]?.[String(number)] ?? ''
           const series = branch.series.find(s => {
             if (s.type === 'custom' || s.type === 'separator') return false
             const min = branch.minNumber ? Math.max(s.min, branch.minNumber) : s.min
