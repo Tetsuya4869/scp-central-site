@@ -1,5 +1,14 @@
 # サイト情報 再取得プラン（Cowork 用指示書）
 
+> **✅ 自動化済み（2026-07）**: 本プランの内容は `.github/workflows/update-data.yml` として実装済み。
+> 週1回（月曜 3:00 JST）に GitHub Actions が自動実行し、差分があれば main へコミット → Pages を再デプロイする。
+> - タイトル: `scripts/fetch-titles.mjs`（全支部・BRANCHES 駆動）
+> - 評価・文字数: `scripts/fetch-details.mjs`（タイトルが付いた＝公開済みの記事のみ増分取得、`--max` で回数制限）
+> - 手動実行: GitHub の Actions タブ → "Update article data" → Run workflow（バックログ消化時は max_detail_pages を 2000 程度に）
+> - 404 は `scripts/detail-misses.json` に記録して以後スキップ
+>
+> 以下は当初の計画書（経緯の記録として保持）。
+
 > このドキュメントは Cowork セッションに渡す実行計画書です。
 > SCP 各支部のタイトル情報を `src/data/titles.json` に再取得・補完するための手順をまとめています。
 

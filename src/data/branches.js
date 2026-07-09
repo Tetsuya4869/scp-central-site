@@ -12,16 +12,17 @@
  *   string = scp-jp.wikidot.com/{jpSlug}
  */
 
-import JP_JOKE     from './articles/jp_joke.json'
-import EN_JOKE     from './articles/en_joke.json'
-import EN_EX       from './articles/en_ex.json'
-import EN_ARC      from './articles/en_arc.json'
-import ANOMALOUS   from './articles/anomalous_jp.json'
-import SCP_FLAVOR  from './articles/scp_flavor.json'
-import EXTRANORMAL from './articles/extranormal_jp.json'
-import LOCATIONS   from './articles/locations_jp.json'
-import TALES_JP    from './articles/tales_jp.json'
-import HUBS_JP     from './articles/hubs_jp.json'
+// with { type: 'json' } は素のNode（scripts/fetch-*.mjs）から import するために必要
+import JP_JOKE     from './articles/jp_joke.json'        with { type: 'json' }
+import EN_JOKE     from './articles/en_joke.json'        with { type: 'json' }
+import EN_EX       from './articles/en_ex.json'          with { type: 'json' }
+import EN_ARC      from './articles/en_arc.json'         with { type: 'json' }
+import ANOMALOUS   from './articles/anomalous_jp.json'   with { type: 'json' }
+import SCP_FLAVOR  from './articles/scp_flavor.json'     with { type: 'json' }
+import EXTRANORMAL from './articles/extranormal_jp.json' with { type: 'json' }
+import LOCATIONS   from './articles/locations_jp.json'   with { type: 'json' }
+import TALES_JP    from './articles/tales_jp.json'       with { type: 'json' }
+import HUBS_JP     from './articles/hubs_jp.json'        with { type: 'json' }
 
 const JP = 'http://scp-jp.wikidot.com'
 
