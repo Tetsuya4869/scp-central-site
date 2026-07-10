@@ -1,9 +1,9 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
-import TITLES from '../data/titles.json'
-import CHAR_COUNTS from '../data/char_counts.json'
-import RATINGS from '../data/ratings.json'
+import { getTitles, getCharCounts, getRatings, useDataReady } from '../data/dataStore.js'
+import { useToast } from './Toast.jsx'
+import Confetti from './Confetti.jsx'
 
 const JP_BASE = 'http://scp-jp.wikidot.com/'
 const CARD_COLS = 2
@@ -15,12 +15,12 @@ function getSlug(article) {
 
 function getCharCount(article) {
   const slug = getSlug(article)
-  return slug ? (CHAR_COUNTS[slug] ?? null) : null
+  return slug ? (getCharCounts()[slug] ?? null) : null
 }
 
 function getRating(article) {
   const slug = getSlug(article)
-  return slug ? (RATINGS[slug] ?? null) : null
+  return slug ? (getRatings()[slug] ?? null) : null
 }
 
 function formatChars(n) {
@@ -33,6 +33,20 @@ function formatDate(date) {
   return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
 }
 
+function computeStreak(datesMap) {
+  const days = new Set()
+  for (const ts of datesMap.values()) {
+    const d = new Date(ts); d.setHours(0, 0, 0, 0); days.add(d.getTime())
+  }
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const yest  = new Date(today); yest.setDate(yest.getDate() - 1)
+  let cur = days.has(today.getTime()) ? today.getTime()
+          : days.has(yest.getTime())  ? yest.getTime() : null
+  if (cur === null) return 0
+  let n = 0; while (days.has(cur)) { n++; cur -= 86400000 }
+  return n
+}
+
 export default function ArticleList({
   branch, series, isChecked, toggle, markAll, onOpenSidebar,
   isFavorite, toggleFavorite, getMemo, setMemo, getReadDate,
@@ -40,7 +54,11 @@ export default function ArticleList({
   isQueued, addToQueue,
   getUserRating, setUserRating, hasUserRating,
   targetId,
+  dates,
 }) {
+  const toast = useToast()
+  const dataReady = useDataReady() // データ到着時に再描画してタイトル/文字数/評価を反映
+  const [confetti, setConfetti] = useState(false)
   const [filter, setFilter] = useState('all')
   const [sortBy, setSortBy] = useState('number')
   const [jumpValue, setJumpValue] = useState('')
@@ -103,7 +121,7 @@ export default function ArticleList({
       })
     }
     return list
-  }, [allArticles, filter, charFilter, ratingFilter, sortBy, isChecked, hasUserRating, getUserRating])
+  }, [allArticles, filter, charFilter, ratingFilter, sortBy, isChecked, hasUserRating, getUserRating, dataReady])
 
   const cols = layoutMode === 'card' ? CARD_COLS : layoutMode === 'matrix' ? MATRIX_COLS : 1
   const virtualRows = useMemo(() => {
@@ -207,6 +225,33 @@ export default function ArticleList({
     rowVirtualizer.scrollToOffset(0)
   }
 
+  const handleToggle = useCallback((id) => {
+    const willBeChecked = !isChecked(id)
+    toggle(id)
+    if (!willBeChecked || !dates) return
+
+    // シリーズ完走チェック
+    const allDoneAfter = allIds.every(aid => aid === id || isChecked(aid))
+    if (allDoneAfter) {
+      setConfetti(true)
+      toast.success(`🎉 ${series.label} 制覇！おめでとうございます！`, 8000)
+    }
+
+    // 今日の初読了チェック
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+    const hadToday = [...dates.values()].some(ts => {
+      const d = new Date(ts); d.setHours(0, 0, 0, 0)
+      return d.getTime() === today.getTime()
+    })
+    if (!hadToday) {
+      const newStreak = computeStreak(dates) + 1
+      toast.info(`🔥 ${newStreak}日連続！`, 3500)
+      const MILESTONES = [3, 7, 30, 100]
+      const hit = MILESTONES.find(m => newStreak >= m && (newStreak - 1) < m)
+      if (hit) setTimeout(() => toast.success(`🏆 ${hit}日連続達成！`, 6000), 1000)
+    }
+  }, [toggle, isChecked, allIds, series, dates, toast])
+
   function handleJump(e) {
     if (e.key !== 'Enter') return
     const val = jumpValue.trim().toLowerCase()
@@ -240,6 +285,7 @@ export default function ArticleList({
 
   return (
     <>
+      <Confetti active={confetti} onDone={() => setConfetti(false)} />
       <div className="content-toolbar">
         <div className="toolbar-row toolbar-row-top">
           <button className="toolbar-back" onClick={onOpenSidebar} aria-label="支部選択">≡</button>
@@ -459,7 +505,7 @@ export default function ArticleList({
                     <ArticleRow
                       article={rowArticles[0]}
                       read={isChecked(rowArticles[0].id)}
-                      onToggle={() => toggle(rowArticles[0].id)}
+                      onToggle={() => handleToggle(rowArticles[0].id)}
                       favorited={isFavorite(rowArticles[0].id)}
                       onFavorite={() => toggleFavorite(rowArticles[0].id)}
                       memo={getMemo(rowArticles[0].id)}
@@ -480,7 +526,7 @@ export default function ArticleList({
                           key={article.id}
                           article={article}
                           read={isChecked(article.id)}
-                          onToggle={() => toggle(article.id)}
+                          onToggle={() => handleToggle(article.id)}
                           favorited={isFavorite(article.id)}
                           onFavorite={() => toggleFavorite(article.id)}
                           memo={getMemo(article.id)}
@@ -501,7 +547,7 @@ export default function ArticleList({
                           key={article.id}
                           article={article}
                           read={isChecked(article.id)}
-                          onToggle={() => toggle(article.id)}
+                          onToggle={() => handleToggle(article.id)}
                           highlighted={highlightedId === article.id}
                         />
                       ))}
@@ -548,7 +594,7 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
     highlighted ? 'is-target-highlight' : '',
   ].filter(Boolean).join(' ')
 
-  const title = article.title ?? TITLES[article.branchCode]?.[String(article.number)] ?? ''
+  const title = article.title ?? getTitles()[article.branchCode]?.[String(article.number)] ?? ''
   const hasMemo = memo.length > 0
 
   return (
@@ -639,7 +685,7 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
 
 function ArticleCard({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, rating, queued, onQueue, highlighted }) {
   const [memoOpen, setMemoOpen] = useState(false)
-  const title = article.title ?? TITLES[article.branchCode]?.[String(article.number)] ?? ''
+  const title = article.title ?? getTitles()[article.branchCode]?.[String(article.number)] ?? ''
   const hasMemo = memo.length > 0
 
   const cardClass = [

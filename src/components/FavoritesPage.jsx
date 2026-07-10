@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react'
 import { lookupArticle } from '../utils/lookupArticle.js'
-import CHAR_COUNTS from '../data/char_counts.json'
-import RATINGS from '../data/ratings.json'
+import { getCharCounts, getRatings, useDataReady } from '../data/dataStore.js'
 
 const JP_BASE = 'http://scp-jp.wikidot.com/'
 
@@ -17,6 +16,7 @@ function fmtChars(n) {
 export default function FavoritesPage({ favorites, toggleFavorite, onOpenSidebar, isChecked, getUserRating }) {
   const [sortBy,     setSortBy]     = useState('branch')   // 'branch' | 'name'
   const [readFilter, setReadFilter] = useState('all')      // 'all' | 'read' | 'unread'
+  const dataReady = useDataReady() // データ到着後にタイトル等を反映
 
   const items = useMemo(() => {
     let list = [...favorites].map(id => lookupArticle(id)).filter(Boolean)
@@ -24,7 +24,7 @@ export default function FavoritesPage({ favorites, toggleFavorite, onOpenSidebar
     if (readFilter === 'unread') list = list.filter(a => !isChecked(a.id))
     if (sortBy === 'name') list = [...list].sort((a, b) => a.designation.localeCompare(b.designation))
     return list
-  }, [favorites, sortBy, readFilter, isChecked])
+  }, [favorites, sortBy, readFilter, isChecked, dataReady])
 
   const byBranch = useMemo(() => {
     if (sortBy === 'name') {
@@ -100,8 +100,8 @@ export default function FavoritesPage({ favorites, toggleFavorite, onOpenSidebar
               <div className="fav-list">
                 {articles.map(article => {
                   const slug      = getSlug(article.url)
-                  const charCount = slug ? (CHAR_COUNTS[slug] ?? null) : null
-                  const rating    = slug ? (RATINGS[slug]    ?? null) : null
+                  const charCount = slug ? (getCharCounts()[slug] ?? null) : null
+                  const rating    = slug ? (getRatings()[slug]    ?? null) : null
                   const read      = isChecked(article.id)
                   return (
                     <div key={article.id} className={`fav-row${read ? ' is-read' : ''}`}>

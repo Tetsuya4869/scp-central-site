@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import { BRANCHES } from './data/branches.js'
 import { generateSeriesArticles } from './utils/urlGenerator.js'
 import { loadReadDates, lookupArticle } from './utils/lookupArticle.js'
+import { useDataReady } from './data/dataStore.js'
 import { parseHash, buildHash, DEFAULT_SELECTED } from './utils/routing.js'
 import { useChecklist } from './hooks/useChecklist.js'
 import { useFavorites } from './hooks/useFavorites.js'
@@ -25,7 +26,7 @@ export default function App() {
   const { toggle, markAll, isChecked, countChecked, totalChecked } = useChecklist()
   const { favorites, toggleFavorite, isFavorite } = useFavorites()
   const { getMemo, setMemo, memos } = useMemos()
-  const { setReadDate, clearReadDate, getReadDate } = useReadDates()
+  const { setReadDate, clearReadDate, getReadDate, dates } = useReadDates()
   const { queue, addToQueue, removeFromQueue, moveUp, moveDown, isQueued } = useQueue()
   const { userRatings, setRating, getRating, hasRating } = useUserRatings()
   const { goal, setGoal } = useGoal()
@@ -232,6 +233,7 @@ export default function App() {
           setUserRating={setRating}
           hasUserRating={hasRating}
           targetId={selected.targetId ?? null}
+          dates={dates}
         />
       )
     }
@@ -327,6 +329,7 @@ function ViewWrapper({ viewKey, children }) {
 }
 
 function Welcome({ onSelect, countChecked, onOpenSidebar }) {
+  const dataReady = useDataReady()
   const recentlyRead = useMemo(() => {
     const map = loadReadDates()
     return [...map.entries()]
@@ -337,7 +340,7 @@ function Welcome({ onSelect, countChecked, onOpenSidebar }) {
         return article ? { ...article, ts } : null
       })
       .filter(Boolean)
-  }, [])
+  }, [dataReady])
 
   const branchCards = useMemo(() => BRANCHES.map(branch => {
     const allIds = branch.series.flatMap(s => {
