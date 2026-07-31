@@ -353,15 +353,43 @@ function Welcome({ onSelect, countChecked, onOpenSidebar }) {
     return { branch, done, total, pct: total > 0 ? Math.round((done / total) * 100) : 0 }
   }), [countChecked])
 
+  const totalArticles = branchCards.reduce((sum, card) => sum + card.total, 0)
+  const totalRead = branchCards.reduce((sum, card) => sum + card.done, 0)
+  const overallPct = totalArticles > 0 ? Math.round((totalRead / totalArticles) * 100) : 0
+  const topBranch = branchCards.reduce((best, card) => card.pct > best.pct ? card : best, branchCards[0])
+
   return (
     <div className="welcome">
-      <div className="welcome-logo">📋</div>
-      <div className="welcome-title">SCP全支部 読破チェックリスト</div>
-      <div className="welcome-sub">
-        16支部・SCP記事・依談・ハブを網羅。<br />
-        支部を選んでSCP番号一覧またはハブページへ。<br />
-        <span className="welcome-hint" onClick={onOpenSidebar}>≡ メニューから支部を選択</span>
-      </div>
+      <section className="welcome-hero">
+        <div className="welcome-hero-copy">
+          <div className="welcome-logo" aria-hidden="true">📋</div>
+          <div>
+            <div className="welcome-kicker">SCP FOUNDATION READING TRACKER</div>
+            <div className="welcome-title">SCP全支部 読破チェックリスト</div>
+            <div className="welcome-sub">
+              16支部・SCP記事・依談・ハブを網羅。支部ごとの進捗を見ながら、次に読む記事へすぐ移動できます。
+            </div>
+          </div>
+        </div>
+
+        <div className="welcome-hero-panel" aria-label="全体進捗">
+          <div className="welcome-progress-ring" style={{ '--progress': `${overallPct}%` }}>
+            <span>{overallPct}%</span>
+          </div>
+          <div className="welcome-hero-stats">
+            <span>読了 <strong>{totalRead.toLocaleString()}</strong> / {totalArticles.toLocaleString()}</span>
+            {topBranch && <span>最進行支部 <strong>{topBranch.branch.code}</strong> · {topBranch.pct}%</span>}
+          </div>
+        </div>
+
+        <div className="welcome-actions">
+          <button className="welcome-primary-action" onClick={onOpenSidebar}>≡ 支部を選ぶ</button>
+          <button
+            className="welcome-secondary-action"
+            onClick={() => onSelect({ view: 'stats' })}
+          >進捗を見る</button>
+        </div>
+      </section>
 
       {recentlyRead.length > 0 && (
         <div className="welcome-recent">
