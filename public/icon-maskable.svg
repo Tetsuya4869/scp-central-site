@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">SCP Reading Atlas</title>
+  <desc id="desc">琥珀色の三重円と三方向の読書経路</desc>
+  <rect width="512" height="512" fill="#191713"/>
+  <circle cx="256" cy="256" r="156" fill="none" stroke="#e9a923" stroke-width="28"/>
+  <circle cx="256" cy="256" r="72" fill="none" stroke="#f0e9dc" stroke-width="24"/>
+  <path d="M256 60v108M86 354l94-54M426 354l-94-54" fill="none" stroke="#e9a923" stroke-width="32" stroke-linecap="round"/>
+  <circle cx="256" cy="256" r="18" fill="#e9a923"/>
+</svg>

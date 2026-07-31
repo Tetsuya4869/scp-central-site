@@ -18,6 +18,14 @@ describe('parseHash', () => {
       branchCode: 'EN', view: 'series', seriesId: 1, targetId: null,
     })
   })
+  it('preserves string IDs for custom series', () => {
+    expect(parseHash('#/EN/series/en-joke')).toEqual({
+      branchCode: 'EN', view: 'series', seriesId: 'en-joke', targetId: null,
+    })
+    expect(parseHash('#/JP/series/tales-jp')).toEqual({
+      branchCode: 'JP', view: 'series', seriesId: 'tales-jp', targetId: null,
+    })
+  })
   it('支部コードは大文字に正規化', () => {
     expect(parseHash('#/en/series/1').branchCode).toBe('EN')
   })
@@ -54,6 +62,8 @@ describe('parseHash / buildHash 往復', () => {
     { branchCode: null, view: 'favorites', seriesId: null, targetId: null },
     { branchCode: 'EN', view: 'hubs', seriesId: null, targetId: null },
     { branchCode: 'EN', view: 'series', seriesId: 1, targetId: null },
+    { branchCode: 'EN', view: 'series', seriesId: 'en-joke', targetId: null },
+    { branchCode: 'JP', view: 'series', seriesId: 'tales-jp', targetId: null },
   ]) {
     it(`${buildHash(sel)}`, () => {
       expect(parseHash(buildHash(sel))).toEqual(sel)

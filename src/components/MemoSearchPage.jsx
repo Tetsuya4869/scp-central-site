@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { lookupArticle } from '../utils/lookupArticle.js'
 import { useDataReady } from '../data/dataStore.js'
+import Icon from './Icon.jsx'
 
 export default function MemoSearchPage({ memos, onNavigate, onOpenSidebar }) {
   const [query, setQuery] = useState('')
@@ -22,33 +23,41 @@ export default function MemoSearchPage({ memos, onNavigate, onOpenSidebar }) {
     <>
       <div className="content-toolbar">
         <div className="toolbar-row toolbar-row-top">
-          <button className="toolbar-back" onClick={onOpenSidebar} aria-label="メニュー">≡</button>
-          <span className="toolbar-title">✎ メモ一覧</span>
+          <button className="toolbar-back" onClick={onOpenSidebar} aria-label="メニューを開く">
+            <Icon name="menu" />
+          </button>
+          <h1 className="toolbar-title" data-view-heading tabIndex={-1}>
+            <Icon name="note" />
+            <span>メモ一覧</span>
+          </h1>
           <div className="toolbar-spacer" />
-          <span className="progress-text" style={{ marginRight: 8 }}>{items.length} 件</span>
+          <span className="progress-text toolbar-count">{items.length} 件</span>
         </div>
         <div className="toolbar-row toolbar-row-bottom">
           <input
             className="search-input"
             type="search"
             placeholder="メモ内容で絞り込み…"
+            aria-label="メモ内容で絞り込み"
             value={query}
             onChange={e => setQuery(e.target.value)}
             autoFocus
+            data-route-autofocus
           />
         </div>
       </div>
 
       <div className="memo-search-page">
         {memos.size === 0 && (
-          <p className="hub-empty">メモはまだありません。<br />記事一覧の ✎ ボタンで追加できます。</p>
+          <p className="hub-empty">メモはまだありません。<br />記事一覧の「メモ」ボタンで追加できます。</p>
         )}
         {memos.size > 0 && items.length === 0 && (
           <p className="hub-empty">「{query}」に一致するメモはありません</p>
         )}
 
         {items.map(({ article, text }) => (
-          <div
+          <button
+            type="button"
             key={article.id}
             className="memo-search-row"
             onClick={() => onNavigate({
@@ -58,18 +67,15 @@ export default function MemoSearchPage({ memos, onNavigate, onOpenSidebar }) {
               targetId: article.id,
             })}
           >
-            <span
-              className="memo-search-badge"
-              style={{ background: article.branch.accent }}
-            >
+            <span className="memo-search-badge">
               {article.branch.code}
             </span>
-            <div className="memo-search-info">
+            <span className="memo-search-info">
               <span className="memo-search-desg">{article.designation}</span>
               {article.title && <span className="memo-search-title">{article.title}</span>}
-              <span className="memo-search-text">✎ {text}</span>
-            </div>
-          </div>
+              <span className="memo-search-text">{text}</span>
+            </span>
+          </button>
         ))}
       </div>
     </>

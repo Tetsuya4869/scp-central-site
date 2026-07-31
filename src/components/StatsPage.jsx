@@ -1,64 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { BRANCHES } from '../data/branches.js'
-import { generateSeriesArticles } from '../utils/urlGenerator.js'
 import { loadReadDates, lookupArticle } from '../utils/lookupArticle.js'
 import { useDataReady } from '../data/dataStore.js'
 import { useToast } from './Toast.jsx'
 import { useAchievements } from '../hooks/useAchievements.js'
-
-function computeStreak(map) {
-  const days = new Set()
-  for (const ts of map.values()) {
-    const d = new Date(ts)
-    d.setHours(0, 0, 0, 0)
-    days.add(d.getTime())
-  }
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1)
-  let cur = days.has(today.getTime())
-    ? today.getTime()
-    : days.has(yesterday.getTime()) ? yesterday.getTime() : null
-  if (cur === null) return 0
-  let streak = 0
-  while (days.has(cur)) { streak++; cur -= 86400000 }
-  return streak
-}
-
-function computeLongestStreak(map) {
-  if (map.size === 0) return 0
-  const days = new Set()
-  for (const ts of map.values()) {
-    const d = new Date(ts)
-    d.setHours(0, 0, 0, 0)
-    days.add(d.getTime())
-  }
-  const sorted = [...days].sort((a, b) => a - b)
-  let max = 1, cur = 1
-  for (let i = 1; i < sorted.length; i++) {
-    if (sorted[i] - sorted[i - 1] === 86400000) {
-      cur++
-      if (cur > max) max = cur
-    } else {
-      cur = 1
-    }
-  }
-  return max
-}
-
-function computeWeeklyAvg(map) {
-  if (map.size === 0) return 0
-  const days = new Set()
-  for (const ts of map.values()) {
-    const d = new Date(ts)
-    d.setHours(0, 0, 0, 0)
-    days.add(d.getTime())
-  }
-  const sorted = [...days].sort((a, b) => a - b)
-  if (sorted.length === 0) return 0
-  const spanDays = Math.max(1, Math.round((sorted[sorted.length - 1] - sorted[0]) / 86400000) + 1)
-  const weeks = spanDays / 7
-  return Math.round((map.size / Math.max(weeks, 1)) * 10) / 10
-}
+import Icon from './Icon.jsx'
+import { computeLongestStreak, computeStreak, computeWeeklyAvg } from '../utils/readingStats.js'
+import { getCatalogIdsForBranch, isCatalogArticle } from '../utils/catalog.js'
 
 function computeProjection(totalChecked, grandTotal, map) {
   if (map.size === 0 || totalChecked >= grandTotal) return null
@@ -101,12 +49,35 @@ function fmtDate(ts) {
   return `${d.getMonth() + 1}/${d.getDate()}`
 }
 
-export default function StatsPage({ totalChecked, grandTotal, countChecked, onOpenSidebar, userRatings, goal, setGoal }) {
+function getGoalValidationError(value) {
+  const normalized = String(value ?? '').trim()
+  const n = Number(normalized)
+  return !normalized || !Number.isInteger(n) || n < 1 || n > 9999
+    ? '1〜9999の整数で入力してください。'
+    : ''
+}
+
+export default function StatsPage({ totalChecked, grandTotal, countChecked, onOpenSidebar, userRatings, goal, setGoal, onArticleOpen, dates }) {
   const toast = useToast()
   const dataReady = useDataReady() // データ到着後にタイトルを反映
-  const readDatesMap = useMemo(() => loadReadDates(), [])
+  const readDatesMap = useMemo(() => {
+    const source = dates ?? loadReadDates()
+    return new Map([...source].filter(([id]) => isCatalogArticle(id)))
+  }, [dates, dataReady])
   const [editingGoal, setEditingGoal] = useState(false)
   const [goalInput, setGoalInput] = useState('')
+  const [goalError, setGoalError] = useState('')
+  const goalEditTriggerRef = useRef(null)
+  const wasEditingGoalRef = useRef(false)
+
+  useEffect(() => {
+    const wasEditing = wasEditingGoalRef.current
+    wasEditingGoalRef.current = editingGoal
+    if (!wasEditing || editingGoal) return undefined
+
+    const frame = requestAnimationFrame(() => goalEditTriggerRef.current?.focus())
+    return () => cancelAnimationFrame(frame)
+  }, [editingGoal])
 
   const streak        = useMemo(() => computeStreak(readDatesMap),              [readDatesMap])
   const longestStreak = useMemo(() => computeLongestStreak(readDatesMap),       [readDatesMap])
@@ -142,11 +113,7 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
   }, [readDatesMap, dataReady])
 
   const branchStats = useMemo(() => BRANCHES.map(branch => {
-    const allIds = branch.series.flatMap(s => {
-      if (s.type === 'separator') return []
-      if (s.type === 'custom') return s.articles.map(a => a.id)
-      return generateSeriesArticles(branch.code, s.min, s.max).map(a => a.id)
-    })
+    const allIds = getCatalogIdsForBranch(branch.code)
     const total = allIds.length
     const done  = countChecked(allIds)
     return { branch, done, total, pct: total > 0 ? Math.round((done / total) * 100) : 0 }
@@ -173,17 +140,47 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
   }
 
   function handleSetGoal(value) {
-    const n = parseInt(value, 10) || null
+    const normalized = String(value ?? '').trim()
+    const error = getGoalValidationError(normalized)
+    if (error) {
+      setGoalError(error)
+      return
+    }
+
+    const n = Number(normalized)
     setGoal({ monthly: n })
+    setGoalError('')
     setEditingGoal(false)
-    if (n) toast.success(`今月の目標を${n}記事に設定しました`)
-    else toast.info('目標を削除しました')
+  }
+
+  function handleGoalInputChange(event) {
+    const value = event.target.value
+    setGoalInput(value)
+    if (goalError) setGoalError(getGoalValidationError(value))
+  }
+
+  function cancelGoalEdit() {
+    setGoalError('')
+    setEditingGoal(false)
+  }
+
+  function handleDeleteGoal() {
+    setGoal({ monthly: null })
+    setGoalInput('')
+    setGoalError('')
+    setEditingGoal(false)
+  }
+
+  function beginGoalEdit(value = '') {
+    setGoalInput(value)
+    setGoalError('')
+    setEditingGoal(true)
   }
 
   const topRated = useMemo(() => {
     if (!userRatings || userRatings.size === 0) return []
     return [...userRatings.entries()]
-      .filter(([, r]) => r >= 4)
+      .filter(([id, r]) => isCatalogArticle(id) && r >= 4)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
       .map(([id, rating]) => {
@@ -197,11 +194,16 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
     <>
       <div className="content-toolbar">
         <div className="toolbar-row toolbar-row-top">
-          <button className="toolbar-back" onClick={onOpenSidebar} aria-label="メニュー">≡</button>
-          <span className="toolbar-title">📊 統計</span>
+          <button className="toolbar-back" onClick={onOpenSidebar} aria-label="メニューを開く">
+            <Icon name="menu" />
+          </button>
+          <h1 className="toolbar-title" data-view-heading tabIndex={-1}>
+            <Icon name="chart" />
+            <span>統計</span>
+          </h1>
           <div className="toolbar-spacer" />
           <button className="stats-csv-btn" onClick={exportCSV} title="読書履歴をCSVでダウンロード">
-            📥 CSV
+            CSVを書き出す
           </button>
         </div>
       </div>
@@ -210,50 +212,76 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
 
         {/* 合計進捗 */}
         <div className="stats-card">
-          <div className="stats-card-title">合計進捗</div>
+          <h2 className="stats-card-title">合計進捗</h2>
           <div className="stats-hero">
             <span className="stats-hero-num">{totalChecked.toLocaleString()}</span>
             <span className="stats-hero-denom"> / {grandTotal.toLocaleString()} 記事</span>
             <span className="stats-hero-pct">{totalPct}%</span>
           </div>
-          <div className="stats-total-bar">
+          <div
+            className="stats-total-bar"
+            role="progressbar"
+            aria-label="全記事の読了進捗"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow={totalPct}
+          >
             <div className="stats-total-fill" style={{ width: `${totalPct}%` }} />
           </div>
         </div>
 
         {/* 今月の目標 */}
         <div className="stats-card stats-goal-card">
-          <div className="stats-card-title">今月の読書目標</div>
+          <h2 className="stats-card-title">今月の読書目標</h2>
           {goal?.monthly ? (
             <div className="stats-goal-body">
               <div className="stats-goal-nums">
-                <span className="stats-hero-num" style={{ fontSize: '1.6rem' }}>{thisMonthCount}</span>
+                <span className="stats-hero-num stats-goal-current">{thisMonthCount}</span>
                 <span className="stats-hero-denom"> / {goal.monthly} 記事</span>
-                {thisMonthCount >= goal.monthly && <span className="stats-goal-achieved">達成！🎉</span>}
+                {thisMonthCount >= goal.monthly && <span className="stats-goal-achieved">達成</span>}
               </div>
-              <div className="stats-goal-bar">
+              <div
+                className="stats-goal-bar"
+                role="progressbar"
+                aria-label="今月の読書目標"
+                aria-valuemin="0"
+                aria-valuemax={goal.monthly}
+                aria-valuenow={Math.min(thisMonthCount, goal.monthly)}
+              >
                 <div className="stats-goal-fill" style={{ width: `${Math.min(100, Math.round((thisMonthCount / goal.monthly) * 100))}%` }} />
               </div>
               {editingGoal ? (
                 <div className="stats-goal-edit">
-                  <input
-                    className="stats-goal-input"
-                    type="number"
-                    min="1"
-                    max="9999"
-                    value={goalInput}
-                    onChange={e => setGoalInput(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') handleSetGoal(goalInput)
-                      if (e.key === 'Escape') setEditingGoal(false)
-                    }}
-                    autoFocus
-                  />
+                  <div className="stats-goal-field">
+                    <label className="stats-goal-label" htmlFor="monthly-goal-input">月間目標（記事数）</label>
+                    <input
+                      id="monthly-goal-input"
+                      className="stats-goal-input"
+                      type="number"
+                      min="1"
+                      max="9999"
+                      step="1"
+                      value={goalInput}
+                      required
+                      aria-invalid={goalError ? 'true' : undefined}
+                      aria-describedby="goal-help goal-error"
+                      aria-errormessage={goalError ? 'goal-error' : undefined}
+                      onChange={handleGoalInputChange}
+                      onBlur={() => setGoalError(getGoalValidationError(goalInput))}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') handleSetGoal(goalInput)
+                        if (e.key === 'Escape') cancelGoalEdit()
+                      }}
+                      autoFocus
+                    />
+                    <span className="field-helper stats-goal-help" id="goal-help">1〜9999件の整数で入力</span>
+                  </div>
                   <button className="stats-goal-btn" onClick={() => handleSetGoal(goalInput)}>設定</button>
-                  <button className="stats-goal-btn stats-goal-btn-del" onClick={() => handleSetGoal(null)}>削除</button>
+                  <button className="stats-goal-btn stats-goal-btn-del" onClick={handleDeleteGoal}>削除</button>
+                  <p className="stats-goal-error" id="goal-error" role={goalError ? 'alert' : undefined}>{goalError}</p>
                 </div>
               ) : (
-                <button className="stats-goal-btn stats-goal-btn-edit" onClick={() => { setGoalInput(String(goal.monthly)); setEditingGoal(true) }}>目標を変更</button>
+                <button ref={goalEditTriggerRef} className="stats-goal-btn stats-goal-btn-edit" onClick={() => beginGoalEdit(String(goal.monthly))}>目標を変更</button>
               )}
             </div>
           ) : (
@@ -261,24 +289,36 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
               <div className="stats-zero-hint">今月の目標件数を設定しましょう</div>
               {editingGoal ? (
                 <div className="stats-goal-edit">
-                  <input
-                    className="stats-goal-input"
-                    type="number"
-                    min="1"
-                    max="9999"
-                    value={goalInput}
-                    placeholder="例: 30"
-                    onChange={e => setGoalInput(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') handleSetGoal(goalInput)
-                      if (e.key === 'Escape') setEditingGoal(false)
-                    }}
-                    autoFocus
-                  />
+                  <div className="stats-goal-field">
+                    <label className="stats-goal-label" htmlFor="monthly-goal-input">月間目標（記事数）</label>
+                    <input
+                      id="monthly-goal-input"
+                      className="stats-goal-input"
+                      type="number"
+                      min="1"
+                      max="9999"
+                      step="1"
+                      value={goalInput}
+                      placeholder="例: 30"
+                      required
+                      aria-invalid={goalError ? 'true' : undefined}
+                      aria-describedby="goal-help goal-error"
+                      aria-errormessage={goalError ? 'goal-error' : undefined}
+                      onChange={handleGoalInputChange}
+                      onBlur={() => setGoalError(getGoalValidationError(goalInput))}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') handleSetGoal(goalInput)
+                        if (e.key === 'Escape') cancelGoalEdit()
+                      }}
+                      autoFocus
+                    />
+                    <span className="field-helper stats-goal-help" id="goal-help">1〜9999件の整数で入力</span>
+                  </div>
                   <button className="stats-goal-btn" onClick={() => handleSetGoal(goalInput)}>設定</button>
+                  <p className="stats-goal-error" id="goal-error" role={goalError ? 'alert' : undefined}>{goalError}</p>
                 </div>
               ) : (
-                <button className="stats-goal-btn stats-goal-btn-edit" onClick={() => { setGoalInput(''); setEditingGoal(true) }}>目標を設定</button>
+                <button ref={goalEditTriggerRef} className="stats-goal-btn stats-goal-btn-edit" onClick={() => beginGoalEdit()}>目標を設定</button>
               )}
             </div>
           )}
@@ -286,7 +326,7 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
 
         {/* 詳細統計 */}
         <div className="stats-card">
-          <div className="stats-card-title">詳細統計</div>
+          <h2 className="stats-card-title">詳細統計</h2>
           <div className="stats-extra-row">
             <div className="stats-mini-card">
               <div className="stats-mini-label">現在の連続</div>
@@ -303,7 +343,7 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
             {projection && (
               <div className="stats-mini-card">
                 <div className="stats-mini-label">全制覇予測</div>
-                <div className="stats-mini-value" style={{ fontSize: 'var(--fs-m)' }}>{projection}</div>
+                <div className="stats-mini-value stats-projection-value">{projection}</div>
               </div>
             )}
           </div>
@@ -312,7 +352,7 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
         {/* ストリーク + 7日グラフ */}
         <div className="stats-row-2">
           <div className="stats-card">
-            <div className="stats-card-title">連続読書日数</div>
+            <h2 className="stats-card-title">連続読書日数</h2>
             <div className="stats-hero">
               <span className="stats-hero-num">{streak}</span>
               <span className="stats-hero-denom"> 日</span>
@@ -321,7 +361,7 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
           </div>
 
           <div className="stats-card stats-card-grow">
-            <div className="stats-card-title">直近7日の読了数</div>
+            <h2 className="stats-card-title">直近7日の読了数</h2>
             <div className="stats-chart">
               {last7.map(({ date, count }) => (
                 <div key={date.getTime()} className="stats-chart-col">
@@ -329,6 +369,7 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
                   <div
                     className="stats-chart-bar"
                     style={{ height: `${Math.max(3, Math.round((count / maxDay) * 52))}px` }}
+                    aria-hidden="true"
                   />
                   <span className="stats-chart-label">{fmtDate(date)}</span>
                 </div>
@@ -339,19 +380,26 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
 
         {/* 活動カレンダー */}
         <div className="stats-card">
-          <div className="stats-card-title">活動カレンダー（直近1年）</div>
+          <h2 className="stats-card-title">活動カレンダー（直近1年）</h2>
           <ActivityHeatmap dayCounts={heatmapData} />
         </div>
 
         {/* 支部別進捗 */}
         <div className="stats-card">
-          <div className="stats-card-title">支部別進捗</div>
+          <h2 className="stats-card-title">支部別進捗</h2>
           <div className="stats-branch-list">
             {branchStats.map(({ branch, done, total, pct }) => (
               <div key={branch.code} className="stats-branch-row">
-                <span className="stats-branch-code" style={{ color: branch.accent }}>{branch.code}</span>
-                <div className="stats-branch-bar-wrap">
-                  <div className="stats-branch-bar-fill" style={{ width: `${pct}%`, background: branch.accent }} />
+                <span className="stats-branch-code">{branch.code}</span>
+                <div
+                  className="stats-branch-bar-wrap"
+                  role="progressbar"
+                  aria-label={`${branch.nativeName}の読了進捗`}
+                  aria-valuemin="0"
+                  aria-valuemax={total}
+                  aria-valuenow={done}
+                >
+                  <div className="stats-branch-bar-fill" style={{ width: `${pct}%` }} />
                 </div>
                 <span className="stats-branch-nums">{done}/{total}</span>
               </div>
@@ -362,7 +410,7 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
         {/* マイ高評価 */}
         {topRated.length > 0 && (
           <div className="stats-card">
-            <div className="stats-card-title">マイ高評価 (4★以上)</div>
+            <h2 className="stats-card-title">マイ高評価（4点以上）</h2>
             <div className="stats-recent-list">
               {topRated.map(article => (
                 <div key={article.id} className="stats-recent-row">
@@ -371,12 +419,13 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
                     href={article.url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => onArticleOpen?.(article, { source: 'stats-top-rated' })}
                   >
                     {article.designation}
                   </a>
                   {article.title && <span className="stats-recent-title">{article.title}</span>}
                   <span className="my-rating-badge" style={{ flexShrink: 0 }}>
-                    {'★'.repeat(article.myRating)}
+                    {article.myRating} / 5
                   </span>
                 </div>
               ))}
@@ -387,7 +436,7 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
         {/* 最近読んだ */}
         {recentlyRead.length > 0 && (
           <div className="stats-card">
-            <div className="stats-card-title">最近読んだ記事</div>
+            <h2 className="stats-card-title">最近読んだ記事</h2>
             <div className="stats-recent-list">
               {recentlyRead.map(article => (
                 <div key={article.id} className="stats-recent-row">
@@ -396,6 +445,7 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
                     href={article.url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => onArticleOpen?.(article, { source: 'stats-recent' })}
                   >
                     {article.designation}
                   </a>
@@ -409,7 +459,7 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
 
         {/* 実績・バッジ */}
         <div className="stats-card">
-          <div className="stats-card-title">実績・バッジ</div>
+          <h2 className="stats-card-title">実績・バッジ</h2>
           <div className="achievements-grid">
             {achievements.map(a => (
               <div
@@ -417,7 +467,8 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
                 className={`achievement-badge${a.achieved ? ' achieved' : ''}`}
                 title={a.desc}
               >
-                <span className="achievement-icon">{a.icon}</span>
+                <span className="achievement-icon" aria-hidden="true"><Icon name={a.icon} size={22} /></span>
+                <span className="sr-only">{a.achieved ? '達成済み: ' : '未達成: '}</span>
                 <span className="achievement-label">{a.label}</span>
                 <span className="achievement-desc">{a.desc}</span>
               </div>
@@ -433,7 +484,7 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
 const MONTHS_JP = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
 
 function ActivityHeatmap({ dayCounts }) {
-  const { cells, monthLabels } = useMemo(() => {
+  const { cells, monthLabels, summary, accessibleRows } = useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
@@ -468,19 +519,28 @@ function ActivityHeatmap({ dayCounts }) {
       }
     }
 
-    return { cells, monthLabels }
+    const elapsedCells = cells.filter(cell => !cell.isFuture)
+    const totalReads = elapsedCells.reduce((total, cell) => total + cell.count, 0)
+    const activeDays = elapsedCells.reduce((total, cell) => total + (cell.count > 0 ? 1 : 0), 0)
+
+    return {
+      cells,
+      monthLabels,
+      summary: `直近1年の活動カレンダー。読了${totalReads}件、活動日${activeDays}日。`,
+      accessibleRows: [...elapsedCells].reverse(),
+    }
   }, [dayCounts])
 
   return (
     <div className="heatmap-wrap">
-      <div className="hm-month-row">
+      <div className="hm-month-row" aria-hidden="true">
         {monthLabels.map((label, i) => (
           <div key={i} className="hm-month-cell">
             {label && <span className="hm-month-label">{label}</span>}
           </div>
         ))}
       </div>
-      <div className="heatmap-grid">
+      <div className="heatmap-grid" role="img" aria-label={summary}>
         {cells.map(({ date, key, count, isFuture }) => {
           const level = isFuture ? 0 : count === 0 ? 0 : count <= 2 ? 1 : count <= 4 ? 2 : 3
           const title = isFuture ? '' : `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} · ${count}件`
@@ -489,10 +549,35 @@ function ActivityHeatmap({ dayCounts }) {
               key={key}
               className={`hm-cell hm-level-${level}${isFuture ? ' hm-future' : ''}`}
               title={title}
+              aria-hidden="true"
             />
           )
         })}
       </div>
+      <details className="heatmap-data">
+        <summary>日別データを表で見る</summary>
+        <div className="heatmap-table-wrap">
+          <table className="heatmap-table">
+            <caption className="sr-only">直近1年の日別読了件数</caption>
+            <thead>
+              <tr>
+                <th scope="col">日付</th>
+                <th scope="col">読了数</th>
+              </tr>
+            </thead>
+            <tbody>
+              {accessibleRows.map(({ date, key, count }) => (
+                <tr key={key}>
+                  <th scope="row">
+                    <time dateTime={key}>{date.getFullYear()}年{date.getMonth() + 1}月{date.getDate()}日</time>
+                  </th>
+                  <td>{count}件</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
     </div>
   )
 }
