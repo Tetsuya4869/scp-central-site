@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react'
 import { lookupArticle } from '../utils/lookupArticle.js'
 import { getCharCounts, getRatings, useDataReady } from '../data/dataStore.js'
-import Icon from './Icon.jsx'
 
 const JP_BASE = 'http://scp-jp.wikidot.com/'
 
@@ -14,10 +13,9 @@ function fmtChars(n) {
   return n >= 10000 ? `${(n / 10000).toFixed(1)}万字` : `${n.toLocaleString()}字`
 }
 
-export default function FavoritesPage({ favorites, toggleFavorite, onOpenSidebar, isChecked, getUserRating, onArticleOpen }) {
+export default function FavoritesPage({ favorites, toggleFavorite, onOpenSidebar, isChecked, getUserRating }) {
   const [sortBy,     setSortBy]     = useState('branch')   // 'branch' | 'name'
   const [readFilter, setReadFilter] = useState('all')      // 'all' | 'read' | 'unread'
-  const [removalStatus, setRemovalStatus] = useState('')
   const dataReady = useDataReady() // データ到着後にタイトル等を反映
 
   const items = useMemo(() => {
@@ -42,33 +40,14 @@ export default function FavoritesPage({ favorites, toggleFavorite, onOpenSidebar
     return [...map.values()]
   }, [items, sortBy])
 
-  function removeFavorite(article) {
-    const rows = [...document.querySelectorAll('[data-favorite-id]')]
-    const index = rows.findIndex(row => row.dataset.favoriteId === article.id)
-    const focusId = rows[index + 1]?.dataset.favoriteId ?? rows[index - 1]?.dataset.favoriteId
-    toggleFavorite(article.id)
-    setRemovalStatus(`${article.designation}をお気に入りから解除しました。`)
-    requestAnimationFrame(() => {
-      const target = [...document.querySelectorAll('[data-favorite-id]')]
-        .find(row => row.dataset.favoriteId === focusId)
-      target?.querySelector('.fav-remove-btn')?.focus()
-      if (!target) document.querySelector('[data-view-heading]')?.focus()
-    })
-  }
-
   return (
     <>
       <div className="content-toolbar">
         <div className="toolbar-row toolbar-row-top">
-          <button className="toolbar-back" onClick={onOpenSidebar} aria-label="支部を選択">
-            <Icon name="menu" />
-          </button>
-          <h1 className="toolbar-title" data-view-heading tabIndex={-1}>
-            <Icon name="star" />
-            <span>お気に入り</span>
-          </h1>
+          <button className="toolbar-back" onClick={onOpenSidebar} aria-label="支部選択">≡</button>
+          <span className="toolbar-title">⭐ お気に入り</span>
           <div className="toolbar-spacer" />
-          <span className="progress-text toolbar-count">{items.length} 件</span>
+          <span className="progress-text" style={{ marginRight: 8 }}>{items.length} 件</span>
         </div>
         <div className="toolbar-row toolbar-row-bottom">
           <div className="filter-tabs">
@@ -81,7 +60,6 @@ export default function FavoritesPage({ favorites, toggleFavorite, onOpenSidebar
                 key={key}
                 className={`filter-tab${readFilter === key ? ' active' : ''}`}
                 onClick={() => setReadFilter(key)}
-                aria-pressed={readFilter === key}
               >{label}</button>
             ))}
           </div>
@@ -89,24 +67,21 @@ export default function FavoritesPage({ favorites, toggleFavorite, onOpenSidebar
             <button
               className={`mark-btn${sortBy === 'branch' ? ' active' : ''}`}
               onClick={() => setSortBy('branch')}
-              aria-pressed={sortBy === 'branch'}
             >支部順</button>
             <button
               className={`mark-btn${sortBy === 'name' ? ' active' : ''}`}
               onClick={() => setSortBy('name')}
-              aria-pressed={sortBy === 'name'}
             >名前順</button>
           </div>
         </div>
       </div>
 
       <div className="fav-page">
-        <span className="sr-only" aria-live="polite">{removalStatus}</span>
         {byBranch.every(g => g.articles.length === 0) && (
           <p className="hub-empty">
             {readFilter !== 'all'
               ? `該当するお気に入りはありません`
-              : 'お気に入りはまだありません。記事一覧の「お気に入り」ボタンで追加できます。'}
+              : 'お気に入りはまだありません。\n記事一覧の ★ ボタンで追加できます。'}
           </p>
         )}
 
@@ -116,7 +91,7 @@ export default function FavoritesPage({ favorites, toggleFavorite, onOpenSidebar
             <section key={branch?.code ?? gi} className="fav-section">
               {branch && (
                 <h2 className="fav-section-title">
-                  <span className="fav-branch-badge">
+                  <span className="fav-branch-badge" style={{ background: branch.accent }}>
                     {branch.code}
                   </span>
                   {branch.nativeName}
@@ -129,36 +104,30 @@ export default function FavoritesPage({ favorites, toggleFavorite, onOpenSidebar
                   const rating    = slug ? (getRatings()[slug]    ?? null) : null
                   const read      = isChecked(article.id)
                   return (
-                    <div key={article.id} className={`fav-row${read ? ' is-read' : ''}`} data-favorite-id={article.id}>
-                      <span className={`fav-read-dot${read ? ' is-read' : ''}`} title={read ? '読了' : '未読'} aria-hidden="true" />
+                    <div key={article.id} className={`fav-row${read ? ' is-read' : ''}`}>
+                      <span className={`fav-read-dot${read ? ' is-read' : ''}`} title={read ? '読了' : '未読'} />
                       <a
                         className="fav-link"
                         href={article.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        onClick={() => onArticleOpen?.(article, { source: 'favorites' })}
                       >
-                        <span className="sr-only">{read ? '読了: ' : '未読: '}</span>
                         <span className="fav-designation">{article.designation}</span>
                         {article.title && <span className="fav-title">{article.title}</span>}
                         {charCount != null && <span className="scp-charcount">{fmtChars(charCount)}</span>}
                         {charCount != null && <span className="scp-readmin">約{Math.ceil(charCount / 500)}分</span>}
-                        {rating    != null && <span className="scp-rating">評価 {rating}</span>}
+                        {rating    != null && <span className="scp-rating">👍 {rating}</span>}
                       </a>
                       {getUserRating?.(article.id) && (
                         <span className="my-rating-badge">
-                          マイ評価 {getUserRating(article.id)} / 5
+                          {'★'.repeat(getUserRating(article.id))}
                         </span>
                       )}
                       <button
                         className="fav-remove-btn"
-                        onClick={() => removeFavorite(article)}
+                        onClick={() => toggleFavorite(article.id)}
                         title="お気に入りを解除"
-                        aria-label={`${article.designation}をお気に入りから解除`}
-                        aria-pressed={true}
-                      >
-                        <Icon name="star" size={17} />
-                      </button>
+                      >★</button>
                     </div>
                   )
                 })}

@@ -24,22 +24,10 @@ export function parseHash(hash) {
     return { branchCode, view: 'hubs', seriesId: null, targetId: null }
   }
   if (parts[1] === 'series') {
-    let requestedId = null
-    if (parts[2] != null) {
-      try {
-        requestedId = decodeURIComponent(parts[2])
-      } catch {
-        requestedId = null
-      }
-    }
-    // Route segments are strings, while regular series IDs are numbers and
-    // custom collections use stable string IDs (for example "en-joke").
-    // Match by serialized value, then retain the ID's original data type.
-    const matchedSeries = requestedId == null
-      ? null
-      : branch.series.find(s => s.type !== 'separator' && String(s.id) === requestedId)
-    const validId = matchedSeries?.id
-      ?? (branch.series.find(s => s.type !== 'separator')?.id ?? null)
+    const seriesId = parts[2] != null ? parseInt(parts[2], 10) : null
+    const validId = seriesId != null && !isNaN(seriesId) && branch.series.some(s => s.id === seriesId)
+      ? seriesId
+      : (branch.series.find(s => s.type !== 'separator')?.id ?? null)
     return { branchCode, view: 'series', seriesId: validId, targetId: null }
   }
 
@@ -55,6 +43,6 @@ export function buildHash(selected) {
   if (view === 'queue')     return '#/queue'
   if (view === 'memos')     return '#/memos'
   if (branchCode && view === 'hubs')   return `#/${branchCode}/hubs`
-  if (branchCode && view === 'series') return `#/${branchCode}/series/${seriesId == null ? '' : encodeURIComponent(String(seriesId))}`
+  if (branchCode && view === 'series') return `#/${branchCode}/series/${seriesId ?? ''}`
   return '#/'
 }

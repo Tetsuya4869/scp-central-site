@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 
 const STORAGE_KEY = 'scp-checklist-v1'
 
@@ -22,42 +22,26 @@ function saveChecked(set) {
 export function useChecklist() {
   const [checked, setChecked] = useState(() => loadChecked())
 
-  useEffect(() => {
-    const sync = event => {
-      if (event.key === STORAGE_KEY) setChecked(loadChecked())
-    }
-    window.addEventListener('storage', sync)
-    return () => window.removeEventListener('storage', sync)
-  }, [])
-
   const toggle = useCallback((id) => {
-    const normalizedId = typeof id === 'string' ? id.trim() : ''
-    if (!normalizedId) return
-    const next = loadChecked()
-    let isNowChecked
-    if (next.has(normalizedId)) {
-      next.delete(normalizedId)
-      isNowChecked = false
-    } else {
-      next.add(normalizedId)
-      isNowChecked = true
-    }
-    saveChecked(next)
-    setChecked(next)
-    return isNowChecked
+    setChecked(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      saveChecked(next)
+      return next
+    })
   }, [])
 
   const markAll = useCallback((ids, value) => {
-    if (!ids || typeof ids[Symbol.iterator] !== 'function') return
-    const next = loadChecked()
-    for (const rawId of ids) {
-      const id = typeof rawId === 'string' ? rawId.trim() : ''
-      if (!id) continue
-      if (value) next.add(id)
-      else next.delete(id)
-    }
-    saveChecked(next)
-    setChecked(next)
+    setChecked(prev => {
+      const next = new Set(prev)
+      ids.forEach(id => value ? next.add(id) : next.delete(id))
+      saveChecked(next)
+      return next
+    })
   }, [])
 
   const isChecked = useCallback((id) => checked.has(id), [checked])

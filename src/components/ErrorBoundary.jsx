@@ -1,6 +1,4 @@
 import { Component } from 'react'
-import { clearAppStorage } from '../utils/dataBackup.js'
-import Icon from './Icon.jsx'
 
 /**
  * 予期せぬ例外（localStorage破損・描画エラー等）でアプリ全体が白画面になるのを防ぐ。
@@ -25,10 +23,14 @@ export default class ErrorBoundary extends Component {
   }
 
   handleReset = () => {
-    if (!window.confirm('このアプリの読了状況・お気に入り・メモ・設定だけを消去します。ほかのサイトデータには影響しません。よろしいですか？')) {
+    if (!window.confirm('保存された読了状況・お気に入り・メモなどの設定データをすべて消去します。よろしいですか？')) {
       return
     }
-    clearAppStorage()
+    try {
+      localStorage.clear()
+    } catch {
+      // ignore
+    }
     window.location.reload()
   }
 
@@ -37,7 +39,7 @@ export default class ErrorBoundary extends Component {
       return (
         <div className="error-boundary">
           <div className="error-boundary-card">
-            <div className="error-boundary-icon" aria-hidden="true"><Icon name="alert" size={28} /></div>
+            <div className="error-boundary-icon">⚠️</div>
             <h1>エラーが発生しました</h1>
             <p>
               画面の表示中に予期せぬエラーが発生しました。
@@ -48,10 +50,10 @@ export default class ErrorBoundary extends Component {
             )}
             <div className="error-boundary-actions">
               <button className="error-boundary-btn primary" onClick={this.handleReload}>
-                データを保持して再読込
+                再読込
               </button>
               <button className="error-boundary-btn" onClick={this.handleReset}>
-                このアプリのデータだけを消去
+                設定データを消去して再読込
               </button>
             </div>
           </div>

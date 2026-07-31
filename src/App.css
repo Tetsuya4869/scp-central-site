@@ -265,6 +265,7 @@ html, body, #root {
 }
 .theme-toggle:hover {
   border-color: var(--accent);
+  transform: scale(1.15);
 }
 
 /* Overlay behind sidebar on mobile */
@@ -645,7 +646,7 @@ html, body, #root {
   border: none;
   cursor: pointer;
   border-radius: 4px;
-  transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+  transition: all 0.15s;
   min-height: 30px;
 }
 
@@ -677,7 +678,7 @@ html, body, #root {
   color: var(--text-2);
   cursor: pointer;
   border-radius: var(--radius-s);
-  transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+  transition: all 0.15s;
   min-height: 32px;
 }
 
@@ -952,6 +953,7 @@ html, body, #root {
   font-family: var(--font-mono);
   font-size: 11px;
   padding: 4px 8px;
+  outline: none;
   width: 110px;
   min-height: 32px;
   flex-shrink: 0;
@@ -980,6 +982,7 @@ html, body, #root {
 }
 .toolbar-dice-btn:hover:not(:disabled) {
   border-color: var(--accent);
+  transform: rotate(20deg) scale(1.1);
 }
 .toolbar-dice-btn:disabled {
   opacity: 0.3;
@@ -1344,7 +1347,7 @@ html, body, #root {
   font-family: var(--font-sans);
   font-size: 12px;
   min-height: 48px;
-  transition: color 0.2s, background-color 0.2s, border-color 0.2s;
+  transition: all 0.2s;
   box-shadow: var(--shadow-1);
 }
 
@@ -1352,6 +1355,8 @@ html, body, #root {
   background: var(--bg-2);
   border-color: var(--accent-dim);
   color: var(--text-1);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-2);
 }
 
 .hub-card:active {
@@ -1438,7 +1443,7 @@ html, body, #root {
   font-family: var(--font-mono);
   font-size: 11px;
   cursor: pointer;
-  transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+  transition: all 0.15s;
   text-align: left;
   width: 100%;
 }
@@ -1502,6 +1507,7 @@ html, body, #root {
 
 .fav-btn:hover {
   color: #f5c518;
+  transform: scale(1.2);
 }
 
 .fav-btn.is-fav {
@@ -1611,6 +1617,7 @@ html, body, #root {
 
 .fav-remove-btn:hover {
   color: var(--text-3);
+  transform: scale(1.1);
 }
 
 /* ── Memo button ── */
@@ -1663,6 +1670,7 @@ html, body, #root {
   font-family: var(--font-mono);
   font-size: 12px;
   padding: 4px 8px;
+  outline: none;
   min-width: 0;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -1682,6 +1690,7 @@ html, body, #root {
   font-family: var(--font-mono);
   font-size: 13px;
   padding: 7px 12px;
+  outline: none;
   width: 100%;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -1978,7 +1987,7 @@ html, body, #root {
   border: 1px solid var(--border);
   border-radius: var(--radius-s);
   cursor: pointer;
-  transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+  transition: all 0.15s;
   color: var(--text-3);
   font-family: var(--font-sans);
   min-height: 48px;
@@ -2037,6 +2046,8 @@ html, body, #root {
 .article-card:hover {
   background: var(--bg-2);
   border-color: var(--border-light);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-2);
 }
 
 .article-card.is-read {
@@ -2151,6 +2162,7 @@ html, body, #root {
 
 .matrix-cell:hover {
   border-color: var(--border-light);
+  box-shadow: var(--shadow-1);
 }
 
 .matrix-cell.is-read {
@@ -2398,6 +2410,7 @@ html, body, #root {
   min-height: 30px;
 }
 .stats-goal-input:focus {
+  outline: none;
   border-color: var(--accent-dim);
   box-shadow: var(--focus-ring);
 }
@@ -2613,7 +2626,7 @@ html, body, #root {
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: color 0.1s, background-color 0.1s, border-color 0.1s;
+  transition: all 0.1s;
 }
 
 .branch-chip:hover {
@@ -2800,7 +2813,7 @@ html, body, #root {
 }
 
 .ur-star:hover {
-  color: var(--text-2);
+  transform: scale(1.2);
 }
 
 /* My rating badge (favorites / stats) */
@@ -3030,7 +3043,7 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.1s, background-color 0.1s, border-color 0.1s;
+  transition: all 0.1s;
 }
 
 .queue-move-btn:hover:not(:disabled) {
@@ -3055,7 +3068,7 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.1s, background-color 0.1s, border-color 0.1s;
+  transition: all 0.1s;
 }
 
 .queue-remove-btn:hover {
@@ -3382,6 +3395,7 @@ html, body, #root {
   flex: 1;
   background: none;
   border: none;
+  outline: none;
   color: var(--text-1);
   font-family: var(--font-sans);
   font-size: var(--fs-m);
