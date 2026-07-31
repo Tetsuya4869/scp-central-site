@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 
 const STORAGE_KEY = 'scp-favorites-v1'
 
@@ -20,13 +20,21 @@ function saveFavorites(set) {
 export function useFavorites() {
   const [favorites, setFavorites] = useState(() => loadFavorites())
 
+  useEffect(() => {
+    const sync = event => {
+      if (event.key === STORAGE_KEY) setFavorites(loadFavorites())
+    }
+    window.addEventListener('storage', sync)
+    return () => window.removeEventListener('storage', sync)
+  }, [])
+
   const toggleFavorite = useCallback((id) => {
-    setFavorites(prev => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      saveFavorites(next)
-      return next
-    })
+    const normalizedId = typeof id === 'string' ? id.trim() : ''
+    if (!normalizedId) return
+    const next = loadFavorites()
+    next.has(normalizedId) ? next.delete(normalizedId) : next.add(normalizedId)
+    saveFavorites(next)
+    setFavorites(next)
   }, [])
 
   const isFavorite = useCallback((id) => favorites.has(id), [favorites])

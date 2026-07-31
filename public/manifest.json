@@ -1,19 +1,24 @@
 {
-  "name": "SCP全支部 読破チェックリスト",
-  "short_name": "SCP読破",
-  "description": "16支部のSCP記事をすべて追跡する読書チェックリスト",
+  "name": "SCP Reading Atlas",
+  "short_name": "SCP Atlas",
+  "description": "16支部のSCP記事を横断して探し、読了・評価・メモ・読むキューを管理する読書アトラス",
   "start_url": "/scp-central-site/#/",
   "scope": "/scp-central-site/",
   "display": "standalone",
-  "background_color": "#0b0c0e",
-  "theme_color": "#d49520",
-  "orientation": "portrait-primary",
+  "background_color": "#191713",
+  "theme_color": "#191713",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>",
+      "src": "/scp-central-site/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/scp-central-site/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ]
 }

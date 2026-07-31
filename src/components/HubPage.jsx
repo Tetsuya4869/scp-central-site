@@ -1,10 +1,14 @@
+import Icon from './Icon.jsx'
+
 export default function HubPage({ branch, onOpenSidebar, onNavigate }) {
   return (
     <>
       <div className="content-toolbar">
         <div className="toolbar-row toolbar-row-top">
-          <button className="toolbar-back" onClick={onOpenSidebar} aria-label="支部選択">≡</button>
-          <span className="toolbar-title">ハブ・特殊ページ</span>
+          <button className="toolbar-back" onClick={onOpenSidebar} aria-label="支部を選択">
+            <Icon name="menu" />
+          </button>
+          <h1 className="toolbar-title" data-view-heading tabIndex={-1}>ハブ・特殊ページ</h1>
           <span className="toolbar-sub"> · {branch.nativeName}</span>
         </div>
       </div>
@@ -22,7 +26,7 @@ export default function HubPage({ branch, onOpenSidebar, onNavigate }) {
                     onClick={() => onNavigate({ branchCode: branch.code, view: 'series', seriesId: item.seriesId })}
                   >
                     <span className="hub-card-label">{item.label}</span>
-                    <span className="hub-card-icon">📋</span>
+                    <span className="hub-card-icon"><Icon name="library" size={18} /></span>
                   </button>
                 ) : (
                   <a
@@ -33,7 +37,7 @@ export default function HubPage({ branch, onOpenSidebar, onNavigate }) {
                     className="hub-card"
                   >
                     <span className="hub-card-label">{item.label}</span>
-                    <span className="hub-card-icon">↗</span>
+                    <span className="hub-card-icon"><Icon name="external" size={18} /></span>
                   </a>
                 )
               )}

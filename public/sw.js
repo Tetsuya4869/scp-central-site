@@ -1,46 +1,131 @@
-const CACHE = 'scp-v1'
-const BASE = '/scp-central-site'
+const CACHE_PREFIX = 'scp-reading-atlas-'
+const CACHE = `${CACHE_PREFIX}v3`
+const LEGACY_CACHES = new Set(['scp-v1'])
+const SCOPE_URL = new URL(self.registration.scope)
+const BASE_PATH = SCOPE_URL.pathname.replace(/\/$/, '')
+const scopeAsset = path => new URL(path.replace(/^\//, ''), SCOPE_URL).href
 
-// キャッシュするアセット（ビルド後のファイル名はハッシュ付きなのでパターンで判断）
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll([BASE + '/', BASE + '/index.html']))
+function manifestAssets(manifest) {
+  const paths = new Set()
+
+  for (const entry of Object.values(manifest)) {
+    if (!entry || typeof entry !== 'object') continue
+    if (typeof entry.file === 'string') paths.add(entry.file)
+    for (const key of ['css', 'assets']) {
+      if (!Array.isArray(entry[key])) continue
+      for (const path of entry[key]) {
+        if (typeof path === 'string') paths.add(path)
+      }
+    }
+  }
+
+  return [...paths].map(scopeAsset)
+}
+
+async function fetchForPrecache(url, cacheMode = 'default') {
+  const response = await fetch(url, { cache: cacheMode })
+  if (!response.ok) {
+    throw new Error(`Precache request failed (${response.status}): ${url}`)
+  }
+  return response
+}
+
+async function precacheBuild() {
+  const manifestUrl = scopeAsset('asset-manifest.json')
+  const manifestResponse = await fetchForPrecache(manifestUrl, 'no-store')
+  const manifest = await manifestResponse.clone().json()
+  const urls = new Set([
+    SCOPE_URL.href,
+    scopeAsset('index.html'),
+    manifestUrl,
+    scopeAsset('manifest.json'),
+    scopeAsset('icon.svg'),
+    scopeAsset('icon-maskable.svg'),
+    ...manifestAssets(manifest),
+  ])
+  const cache = await caches.open(CACHE)
+
+  // Fetch every required response before committing it to the cache. A failed
+  // asset rejects installation, keeping an older complete worker active rather
+  // than activating a partially-offline release.
+  const responses = await Promise.all(
+    [...urls].map(async url => [
+      url,
+      url === manifestUrl ? manifestResponse : await fetchForPrecache(url),
+    ])
   )
-  self.skipWaiting()
+  await Promise.all(responses.map(([url, response]) => cache.put(url, response)))
+}
+
+self.addEventListener('install', event => {
+  event.waitUntil(precacheBuild().then(() => self.skipWaiting()))
 })
 
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    )
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(
+        keys
+          .filter(key => (
+            (key.startsWith(CACHE_PREFIX) && key !== CACHE)
+            || LEGACY_CACHES.has(key)
+          ))
+          .map(key => caches.delete(key))
+      ))
+      .then(() => self.clients.claim())
   )
-  self.clients.claim()
 })
 
-self.addEventListener('fetch', e => {
-  const { request } = e
-  // POST などは無視
-  if (request.method !== 'GET') return
+function isInAppScope(url) {
+  if (url.origin !== SCOPE_URL.origin) return false
+  if (!BASE_PATH) return true
+  return url.pathname === BASE_PATH || url.pathname.startsWith(`${BASE_PATH}/`)
+}
 
-  // HTML リクエスト: ネットワーク優先、失敗時キャッシュ
-  if (request.headers.get('accept')?.includes('text/html')) {
-    e.respondWith(
+self.addEventListener('fetch', event => {
+  const { request } = event
+  if (request.method !== 'GET' || !isInAppScope(new URL(request.url))) return
+
+  if (request.mode === 'navigate' || request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(
       fetch(request)
-        .then(r => { caches.open(CACHE).then(c => c.put(request, r.clone())); return r })
-        .catch(() => caches.match(request).then(r => r ?? caches.match(BASE + '/index.html')))
+        .then(async response => {
+          if (response.ok) {
+            const cache = await caches.open(CACHE)
+            await cache.put(request, response.clone())
+          }
+          return response
+        })
+        .catch(async () => (
+          await caches.match(request)
+          ?? await caches.match(scopeAsset('index.html'))
+          ?? await caches.match(SCOPE_URL.href)
+          ?? new Response('Offline', {
+            status: 503,
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+          })
+        ))
     )
     return
   }
 
-  // JS/CSS/JSON アセット: キャッシュ優先、なければネットワーク取得 & キャッシュ保存
-  e.respondWith(
-    caches.match(request).then(cached => {
+  event.respondWith(
+    caches.match(request).then(async cached => {
       if (cached) return cached
-      return fetch(request).then(r => {
-        if (r.ok) caches.open(CACHE).then(c => c.put(request, r.clone()))
-        return r
-      })
+
+      try {
+        const response = await fetch(request)
+        if (response.ok) {
+          const cache = await caches.open(CACHE)
+          await cache.put(request, response.clone())
+        }
+        return response
+      } catch {
+        return new Response('Offline', {
+          status: 503,
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+        })
+      }
     })
   )
 })

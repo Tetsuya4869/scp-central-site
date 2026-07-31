@@ -1,0 +1,20 @@
+{
+  "date": "2026-08-01",
+  "scope": "full application redesign",
+  "framework": "React 18 + Vite 6",
+  "entrypoints": ["src/main.jsx", "src/App.jsx", "src/App.css", "src/styles/redesign.css", "tokens.css"],
+  "existingDesign": {
+    "theme": "dark bureaucratic charcoal and amber",
+    "navigation": "sticky header plus branch sidebar",
+    "pages": ["welcome", "series", "hubs", "search", "favorites", "queue", "memos", "stats"],
+    "constraints": ["hash routing", "localStorage persistence", "external Wikidot reading", "PWA shell"]
+  },
+  "risks": [
+    "monolithic legacy stylesheet",
+    "external reading loses workflow context",
+    "mobile drawer remains focusable while closed",
+    "inconsistent article-open behavior",
+    "duplicate catalog identifiers"
+  ],
+  "strategy": "token-backed compatibility layer, semantic paginated article lists, shared cross-view article behavior, and a persistent Reading Dock"
+}
