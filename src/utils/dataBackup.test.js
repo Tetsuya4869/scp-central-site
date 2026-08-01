@@ -30,7 +30,7 @@ describe('data backup', () => {
     const storage = new MemoryStorage({
       'scp-checklist-v1': JSON.stringify(['EN-1', null, 'EN-1']),
       'scp-queue-v1': JSON.stringify(['JP-2', 'JP-2', 42]),
-      'scp-user-ratings-v1': JSON.stringify({ 'EN-1': 5, 'JP-2': 99 }),
+      'scp-user-ratings-v1': JSON.stringify({ 'EN-1': 5 }),
       'scp-goal-v1': JSON.stringify({ monthly: 12 }),
       'scp-layout': 'card',
       'scp-theme': 'light',
@@ -44,12 +44,12 @@ describe('data backup', () => {
       exportedAt: '2026-08-01T00:00:00.000Z',
       checklist: ['EN-1'],
       queue: ['JP-2'],
-      userRatings: { 'EN-1': 5 },
       goal: { monthly: 12 },
       layout: 'card',
       theme: 'light',
       lastView: { branchCode: 'JP', view: 'series', seriesId: 'tales-jp', targetId: null },
     })
+    expect(data).not.toHaveProperty('userRatings')
   })
 
   it('sanitizes imported IDs and map values before merging', () => {
@@ -69,7 +69,7 @@ describe('data backup', () => {
         'EN-173': 1e308,
       },
       queue: ['JP-2', null, 'EN-1'],
-      userRatings: { 'JP-2': '4', 'CN-3': 7 },
+      userRatings: { 'JP-2': 4 },
       goal: { monthly: 20 },
       layout: 'matrix',
       theme: 'dark',
@@ -83,7 +83,7 @@ describe('data backup', () => {
     expect(JSON.parse(storage.getItem('scp-memos-v1'))).toEqual({ 'EN-1': 'existing', 'JP-2': 'memo' })
     expect(JSON.parse(storage.getItem('scp-readdates-v1'))).toEqual({ 'JP-2': 1722470400000 })
     expect(JSON.parse(storage.getItem('scp-queue-v1'))).toEqual(['EN-1', 'JP-2'])
-    expect(JSON.parse(storage.getItem('scp-user-ratings-v1'))).toEqual({ 'JP-2': 4 })
+    expect(storage.getItem('scp-user-ratings-v1')).toBeNull()
     expect(JSON.parse(storage.getItem('scp-goal-v1'))).toEqual({ monthly: 20 })
     expect(storage.getItem('scp-layout')).toBe('matrix')
     expect(storage.getItem('scp-theme')).toBe('dark')

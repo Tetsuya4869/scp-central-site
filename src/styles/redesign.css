@@ -236,7 +236,6 @@ a {
 .reading-dock-head-actions,
 .reading-dock-links,
 .reading-dock-actions,
-.reading-dock-stars,
 .bottom-nav-item,
 .button,
 .text-link,
@@ -268,7 +267,6 @@ a {
 .reading-dock-head-actions,
 .reading-dock-links,
 .reading-dock-actions,
-.reading-dock-stars,
 .home-actions,
 .section-heading-row,
 .home-next-article,
@@ -878,7 +876,6 @@ a {
 .fav-remove-btn,
 .memo-btn,
 .fav-btn,
-.ur-star,
 .hub-card {
   transition-property: color, background-color, border-color, box-shadow, transform;
   transition-duration: var(--duration-fast);
@@ -895,8 +892,6 @@ a {
   color: var(--color-accent);
 }
 
-.ur-star.filled,
-.my-rating-badge,
 .search-fav-mark {
   color: var(--color-accent);
 }
@@ -1557,46 +1552,10 @@ input[aria-invalid="true"] {
   color: var(--color-accent);
 }
 
-.reading-dock-rating {
-  margin: var(--space-md) 0 0;
-  padding: var(--space-sm) 0 0;
-  border: 0;
-  border-block-start: 1px solid var(--color-rule);
-}
-
-.reading-dock-rating legend,
 .reading-dock-memo label {
   color: var(--color-ink-2);
   font-size: var(--text-sm);
   font-weight: 600;
-}
-
-.reading-dock-stars {
-  margin-block-start: var(--space-2xs);
-  gap: var(--space-3xs);
-}
-
-.reading-dock-stars button {
-  display: grid;
-  place-items: center;
-  inline-size: var(--control-height);
-  block-size: var(--control-height);
-  padding: 0;
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius-sm);
-  background: var(--color-paper-2);
-  color: var(--color-muted);
-  cursor: pointer;
-}
-
-.reading-dock-stars button:hover {
-  background: var(--color-paper-3);
-}
-
-.reading-dock-stars button.active {
-  border-color: var(--color-accent-strong);
-  background: var(--color-paper-3);
-  color: var(--color-accent);
 }
 
 .reading-dock-memo {
@@ -2724,35 +2683,8 @@ input[aria-invalid="true"] {
     display: none;
   }
 
-  .article-row .col-myrating {
-    grid-row: 2;
-    grid-column: 1 / -1;
-    display: flex;
-    min-block-size: var(--control-height);
-    padding: 0;
-    overflow: visible;
-    border-block-start: 1px solid var(--color-rule);
-  }
-
-  .article-row .user-rating-stars {
-    inline-size: 100%;
-    gap: 0;
-  }
-
-  .article-row .ur-star {
-    flex: 1 1 20%;
-    min-block-size: var(--control-height);
-    border: 0;
-    border-inline-end: 1px solid var(--color-rule);
-    background: transparent;
-  }
-
-  .article-row .ur-star:last-child {
-    border-inline-end: 0;
-  }
-
   .article-row :is(.col-fav, .col-queue, .col-memo, .col-check) {
-    grid-row: 3;
+    grid-row: 2;
     min-block-size: var(--control-height);
     padding: 0;
     justify-content: center;
@@ -2986,7 +2918,7 @@ input[aria-invalid="true"] {
     min-block-size: var(--control-height);
   }
 
-  :is(.fav-btn, .queue-btn, .memo-btn, .read-toggle-btn, .matrix-toggle-btn, .ur-star, .queue-move-btn, .queue-remove-btn, .fav-remove-btn, .toast-close) {
+  :is(.fav-btn, .queue-btn, .memo-btn, .read-toggle-btn, .matrix-toggle-btn, .queue-move-btn, .queue-remove-btn, .fav-remove-btn, .toast-close) {
     min-inline-size: var(--control-height);
   }
 }
@@ -2994,7 +2926,7 @@ input[aria-invalid="true"] {
 @media (pointer: coarse) and (min-width: 60.01rem) {
   .article-header-row,
   .article-row {
-    grid-template-columns: minmax(10rem, 1fr) 4rem repeat(3, var(--control-height)) 13.75rem 3.25rem;
+    grid-template-columns: minmax(10rem, 1fr) 4rem repeat(3, var(--control-height)) 3.25rem;
   }
 }
 
@@ -3119,31 +3051,8 @@ input[aria-invalid="true"] {
     display: none;
   }
 
-  .article-row .col-myrating {
-    grid-row: 2;
-    grid-column: 1 / -1;
-    display: flex;
-    min-block-size: var(--control-height);
-    padding: 0;
-    overflow: visible;
-    border-block-start: 1px solid var(--color-rule);
-  }
-
-  .article-row .user-rating-stars {
-    inline-size: 100%;
-    gap: 0;
-  }
-
-  .article-row .ur-star {
-    flex: 1 1 20%;
-    min-block-size: var(--control-height);
-    border: 0;
-    border-inline-end: 1px solid var(--color-rule);
-    background: transparent;
-  }
-
   .article-row :is(.col-fav, .col-queue, .col-memo, .col-check) {
-    grid-row: 3;
+    grid-row: 2;
     justify-content: center;
     min-block-size: var(--control-height);
     padding: 0;

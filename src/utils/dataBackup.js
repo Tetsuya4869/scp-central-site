@@ -6,7 +6,6 @@ const KEYS = Object.freeze({
   memos:       'scp-memos-v1',
   readDates:   'scp-readdates-v1',
   queue:       'scp-queue-v1',
-  userRatings: 'scp-user-ratings-v1',
   goal:        'scp-goal-v1',
   layout:      'scp-layout',
   theme:       'scp-theme',
@@ -24,7 +23,6 @@ const BACKUP_FIELDS = Object.freeze([
   'memos',
   'readDates',
   'queue',
-  'userRatings',
   'goal',
   'layout',
   'theme',
@@ -34,7 +32,9 @@ const BACKUP_FIELDS = Object.freeze([
 const LAYOUTS = new Set(['list', 'card', 'matrix'])
 const THEMES = new Set(['dark', 'light'])
 
-export const APP_LOCAL_STORAGE_KEYS = Object.freeze(Object.values(KEYS))
+// Keep retired app keys here so "all data" cleanup also removes orphaned data
+// without restoring the removed feature to backup/import flows.
+export const APP_LOCAL_STORAGE_KEYS = Object.freeze([...Object.values(KEYS), 'scp-user-ratings-v1'])
 export const APP_SESSION_STORAGE_KEYS = Object.freeze(Object.values(SESSION_KEYS))
 
 function isRecord(value) {
@@ -90,11 +90,6 @@ function sanitizeMemo(value) {
 
 function sanitizeReadDate(value) {
   return normalizeTimestamp(value)
-}
-
-function sanitizeRating(value) {
-  const rating = Number(value)
-  return Number.isInteger(rating) && rating >= 1 && rating <= 5 ? rating : undefined
 }
 
 function sanitizeGoal(value) {
@@ -174,7 +169,6 @@ function parseBackup(jsonText) {
   requireFieldType(data, 'queue', 'array')
   requireFieldType(data, 'memos', 'record')
   requireFieldType(data, 'readDates', 'record')
-  requireFieldType(data, 'userRatings', 'record')
   requireFieldType(data, 'goal', 'record')
   requireFieldType(data, 'layout', 'string')
   requireFieldType(data, 'theme', 'string')
@@ -186,7 +180,6 @@ function parseBackup(jsonText) {
     memos: 'memos' in data ? sanitizeIdMap(data.memos, sanitizeMemo) : null,
     readDates: 'readDates' in data ? sanitizeIdMap(data.readDates, sanitizeReadDate) : null,
     queue: 'queue' in data ? sanitizeIdArray(data.queue) : null,
-    userRatings: 'userRatings' in data ? sanitizeIdMap(data.userRatings, sanitizeRating) : null,
     goal: 'goal' in data ? sanitizeGoal(data.goal) : null,
     layout: 'layout' in data && LAYOUTS.has(data.layout) ? data.layout : null,
     theme: 'theme' in data && THEMES.has(data.theme) ? data.theme : null,
@@ -220,7 +213,6 @@ export function createBackupData(storage = localStorage, now = new Date()) {
     memos: sanitizeIdMap(parseStoredJson(storage, KEYS.memos, {}), sanitizeMemo),
     readDates: sanitizeIdMap(parseStoredJson(storage, KEYS.readDates, {}), sanitizeReadDate),
     queue: sanitizeIdArray(parseStoredJson(storage, KEYS.queue, [])),
-    userRatings: sanitizeIdMap(parseStoredJson(storage, KEYS.userRatings, {}), sanitizeRating),
     goal: goal ?? { monthly: null },
     layout: LAYOUTS.has(layout) ? layout : 'list',
     theme: THEMES.has(theme) ? theme : 'dark',
@@ -268,10 +260,6 @@ export function importData(jsonText, storage = localStorage) {
   if (data.queue) {
     const existing = parseStoredJson(storage, KEYS.queue, [])
     storage.setItem(KEYS.queue, JSON.stringify(mergeArrays(existing, data.queue)))
-  }
-  if (data.userRatings) {
-    const existing = parseStoredJson(storage, KEYS.userRatings, {})
-    storage.setItem(KEYS.userRatings, JSON.stringify(mergeMaps(existing, data.userRatings, sanitizeRating)))
   }
   if (data.goal) storage.setItem(KEYS.goal, JSON.stringify(data.goal))
   if (data.layout) storage.setItem(KEYS.layout, data.layout)

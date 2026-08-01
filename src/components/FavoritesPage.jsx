@@ -14,7 +14,7 @@ function fmtChars(n) {
   return n >= 10000 ? `${(n / 10000).toFixed(1)}万字` : `${n.toLocaleString()}字`
 }
 
-export default function FavoritesPage({ favorites, toggleFavorite, onOpenSidebar, isChecked, getUserRating, onArticleOpen }) {
+export default function FavoritesPage({ favorites, toggleFavorite, onOpenSidebar, isChecked, onArticleOpen }) {
   const [sortBy,     setSortBy]     = useState('branch')   // 'branch' | 'name'
   const [readFilter, setReadFilter] = useState('all')      // 'all' | 'read' | 'unread'
   const [removalStatus, setRemovalStatus] = useState('')
@@ -145,11 +145,6 @@ export default function FavoritesPage({ favorites, toggleFavorite, onOpenSidebar
                         {charCount != null && <span className="scp-readmin">約{Math.ceil(charCount / 500)}分</span>}
                         {rating    != null && <span className="scp-rating">評価 {rating}</span>}
                       </a>
-                      {getUserRating?.(article.id) && (
-                        <span className="my-rating-badge">
-                          マイ評価 {getUserRating(article.id)} / 5
-                        </span>
-                      )}
                       <button
                         className="fav-remove-btn"
                         onClick={() => removeFavorite(article)}

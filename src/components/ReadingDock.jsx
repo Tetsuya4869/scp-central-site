@@ -11,8 +11,6 @@ export default function ReadingDock({
   onToggleQueue,
   memo,
   onMemoChange,
-  rating,
-  onRatingChange,
   nextArticle,
   onOpenNext,
   onClose,
@@ -120,7 +118,7 @@ export default function ReadingDock({
           {article.title && <p className="reading-dock-title">{article.title}</p>}
           {article.predicted && (
             <p className="reading-dock-predicted" role="note">
-              公開前の予測リンクです。公開されるまで読了・保存・評価・メモは記録できません。
+              公開前の予測リンクです。公開されるまで読了・保存・メモは記録できません。
             </p>
           )}
 
@@ -164,24 +162,6 @@ export default function ReadingDock({
               <Icon name="queue" size={17} /> {isQueued ? 'キュー済み' : 'あとで読む'}
             </button>
           </div>
-
-          <fieldset className="reading-dock-rating" disabled={article.predicted}>
-            <legend>自分の評価</legend>
-            <div className="reading-dock-stars">
-              {[1, 2, 3, 4, 5].map(value => (
-                <button
-                  key={value}
-                  type="button"
-                  aria-label={`${value}つ星`}
-                  aria-pressed={rating === value}
-                  className={value <= (rating || 0) ? 'active' : ''}
-                  onClick={() => onRatingChange(rating === value ? null : value)}
-                >
-                  <Icon name="star" size={19} />
-                </button>
-              ))}
-            </div>
-          </fieldset>
 
           <div className="reading-dock-memo">
             <label htmlFor={memoId}>読後メモ</label>

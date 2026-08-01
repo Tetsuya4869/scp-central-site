@@ -9,7 +9,6 @@ import { useFavorites } from './hooks/useFavorites.js'
 import { useMemos } from './hooks/useMemos.js'
 import { useReadDates } from './hooks/useReadDates.js'
 import { useQueue } from './hooks/useQueue.js'
-import { useUserRatings } from './hooks/useUserRatings.js'
 import { useGoal } from './hooks/useGoal.js'
 import Sidebar from './components/Sidebar.jsx'
 import ArticleList from './components/ArticleList.jsx'
@@ -57,7 +56,6 @@ export default function App() {
     dates,
   } = useReadDates()
   const { queue, removeFromQueue, toggleQueue, moveUp, moveDown, pruneQueue, isQueued } = useQueue()
-  const { userRatings, setRating, getRating, hasRating } = useUserRatings()
   const { goal, setGoal } = useGoal()
   const dataReady = useDataReady()
   const dataStatus = useDataStatus()
@@ -408,7 +406,6 @@ export default function App() {
           toggleFavorite={toggleFavorite}
           onOpenSidebar={openSidebar}
           isChecked={isChecked}
-          getUserRating={getRating}
           onArticleOpen={handleArticleOpen}
         />
       )
@@ -435,7 +432,6 @@ export default function App() {
           grandTotal={grandTotal}
           countChecked={countChecked}
           onOpenSidebar={openSidebar}
-          userRatings={userRatings}
           goal={goal}
           setGoal={setGoal}
           onArticleOpen={handleArticleOpen}
@@ -472,9 +468,6 @@ export default function App() {
           setLayoutMode={setLayoutMode}
           isQueued={isQueued}
           addToQueue={toggleQueue}
-          getUserRating={getRating}
-          setUserRating={setRating}
-          hasUserRating={hasRating}
           targetId={selected.targetId ?? null}
           dates={dates}
           onArticleOpen={handleArticleOpen}
@@ -621,8 +614,6 @@ export default function App() {
           }}
           memo={activeArticle ? getMemo(activeArticle.id) : ''}
           onMemoChange={value => activeArticle && !activeArticle.predicted && setMemo(activeArticle.id, value)}
-          rating={activeArticle ? getRating(activeArticle.id) : null}
-          onRatingChange={value => activeArticle && !activeArticle.predicted && setRating(activeArticle.id, value)}
           nextArticle={nextArticle}
           onOpenNext={openNextArticle}
           onClose={closeReadingDock}
@@ -730,7 +721,7 @@ function Welcome({
           <p className="home-kicker">16 BRANCHES · ONE READING TRAIL</p>
           <h1 id="home-heading" data-view-heading tabIndex={-1}>次の一篇を、<br />迷わず読む。</h1>
           <p className="home-lede">
-            SCP、Tale、ハブを支部横断で探し、外部Wikiへ移動したあとも読了・評価・メモをひとつの流れで残せます。
+            SCP、Tale、ハブを支部横断で探し、外部Wikiへ移動したあとも読了・メモをひとつの流れで残せます。
           </p>
           <div className="home-actions">
             <button className="button button-primary" onClick={() => onSelect({ branchCode: null, view: 'search', seriesId: null })}>

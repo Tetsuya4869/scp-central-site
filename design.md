@@ -2,7 +2,7 @@
 
 ## Product position
 
-This is a cross-branch reading instrument, not a checklist dashboard. Its primary job is to help a reader choose the next article, leave for the source wiki, and return without losing the read/rate/memo flow.
+This is a cross-branch reading instrument, not a checklist dashboard. Its primary job is to help a reader choose the next article, leave for the source wiki, and return without losing the read/memo flow.
 
 - Audience: readers moving among the 16 SCP branches, translations, tales, hubs, and special series.
 - Tone: technical, austere, quietly ominous.
@@ -16,7 +16,7 @@ This is a cross-branch reading instrument, not a checklist dashboard. Its primar
 1. Home answers “what should I read next?” before exposing the full catalog.
 2. Find exposes global search and a branch browser; branch identity is data, not decorative colour.
 3. Article lists keep layout and reading-state filters visible; sorting, bulk changes, direct jump, random selection, and detailed filters live behind one secondary “操作” disclosure.
-4. Opening an external article creates a Reading Dock session. Read state, rating, memo, queue, JP/original, and return context stay together.
+4. Opening an external article creates a Reading Dock session. Read state, memo, queue, JP/original, and return context stay together.
 5. Saved combines favorites, queue, and memos through consistent article-row semantics.
 6. Progress explains totals, goals, streaks, and branch drill-down without nested cards.
 

@@ -716,7 +716,7 @@ html, body, #root {
 /* Sticky column header row */
 .article-header-row {
   display: grid;
-  grid-template-columns: 1fr 60px 40px 36px 36px 72px 52px;
+  grid-template-columns: 1fr 60px 40px 36px 36px 52px;
   background: var(--bg-1);
   border-bottom: 1px solid var(--border-light);
   flex-shrink: 0;
@@ -742,7 +742,7 @@ html, body, #root {
 
 .article-row {
   display: grid;
-  grid-template-columns: 1fr 60px 40px 36px 36px 72px 52px;
+  grid-template-columns: 1fr 60px 40px 36px 36px 52px;
   min-height: 44px;
   border-bottom: 1px solid var(--border-row);
   transition: background 0.1s;
@@ -1869,8 +1869,7 @@ html, body, #root {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .col-badges,
-  .col-myrating {
+  .col-badges {
     display: none;
   }
 
@@ -2738,16 +2737,15 @@ html, body, #root {
 }
 
 /* ══════════════════════════════════════════
-   ARTICLE LIST: extended grid columns (queue + myrating)
+   ARTICLE LIST: extended grid columns (queue)
    ══════════════════════════════════════════ */
 
 .article-header-row,
 .article-row {
-  grid-template-columns: 1fr 60px 40px 36px 36px 72px 52px;
+  grid-template-columns: 1fr 60px 40px 36px 36px 52px;
 }
 
-.col-queue,
-.col-myrating {
+.col-queue {
   justify-content: center;
 }
 
@@ -2779,48 +2777,14 @@ html, body, #root {
   color: var(--accent);
 }
 
-/* ── User rating stars (inline) ── */
-.user-rating-stars {
-  display: flex;
-  align-items: center;
-  gap: 1px;
-  cursor: pointer;
-}
-
-.ur-star {
-  font-size: 12px;
-  color: var(--border-light);
-  transition: color 0.1s, transform 0.1s;
-  line-height: 1;
-  user-select: none;
-}
-
-.ur-star.filled {
-  color: #f5c518;
-}
-
-.ur-star:hover {
-  color: var(--text-2);
-}
-
-/* My rating badge (favorites / stats) */
-.my-rating-badge {
-  font-size: 11px;
-  color: #f5c518;
-  letter-spacing: -1px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-/* Mobile: hide rating and queue columns */
+/* Mobile: hide the status column */
 @media (max-width: 768px) {
   .article-header-row,
   .article-row {
     grid-template-columns: 1fr 40px 36px 36px 52px;
   }
 
-  .col-badges,
-  .col-myrating {
+  .col-badges {
     display: none;
   }
 

@@ -57,7 +57,7 @@ function getGoalValidationError(value) {
     : ''
 }
 
-export default function StatsPage({ totalChecked, grandTotal, countChecked, onOpenSidebar, userRatings, goal, setGoal, onArticleOpen, dates }) {
+export default function StatsPage({ totalChecked, grandTotal, countChecked, onOpenSidebar, goal, setGoal, onArticleOpen, dates }) {
   const toast = useToast()
   const dataReady = useDataReady() // データ到着後にタイトルを反映
   const readDatesMap = useMemo(() => {
@@ -176,19 +176,6 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
     setGoalError('')
     setEditingGoal(true)
   }
-
-  const topRated = useMemo(() => {
-    if (!userRatings || userRatings.size === 0) return []
-    return [...userRatings.entries()]
-      .filter(([id, r]) => isCatalogArticle(id) && r >= 4)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([id, rating]) => {
-        const article = lookupArticle(id)
-        return article ? { ...article, myRating: rating } : null
-      })
-      .filter(Boolean)
-  }, [userRatings, dataReady])
 
   return (
     <>
@@ -406,32 +393,6 @@ export default function StatsPage({ totalChecked, grandTotal, countChecked, onOp
             ))}
           </div>
         </div>
-
-        {/* マイ高評価 */}
-        {topRated.length > 0 && (
-          <div className="stats-card">
-            <h2 className="stats-card-title">マイ高評価（4点以上）</h2>
-            <div className="stats-recent-list">
-              {topRated.map(article => (
-                <div key={article.id} className="stats-recent-row">
-                  <a
-                    className="stats-recent-link"
-                    href={article.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => onArticleOpen?.(article, { source: 'stats-top-rated' })}
-                  >
-                    {article.designation}
-                  </a>
-                  {article.title && <span className="stats-recent-title">{article.title}</span>}
-                  <span className="my-rating-badge" style={{ flexShrink: 0 }}>
-                    {article.myRating} / 5
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* 最近読んだ */}
         {recentlyRead.length > 0 && (

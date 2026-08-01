@@ -42,7 +42,6 @@ export default function ArticleList({
   isFavorite, toggleFavorite, getMemo, setMemo, getReadDate,
   layoutMode, setLayoutMode,
   isQueued, addToQueue,
-  getUserRating, setUserRating, hasUserRating,
   targetId,
   dates,
   onArticleOpen,
@@ -87,7 +86,6 @@ export default function ArticleList({
     let list = filter === 'all' ? allArticles : availableArticles
     if (filter === 'read')   list = list.filter(a => isChecked(a.id))
     if (filter === 'unread') list = list.filter(a => !isChecked(a.id))
-    if (filter === 'rated')  list = list.filter(a => hasUserRating?.(a.id))
 
     if (charFilter !== 'all') {
       list = list.filter(a => {
@@ -105,15 +103,12 @@ export default function ArticleList({
 
     const isCharsSort    = sortBy === 'chars-asc'    || sortBy === 'chars-desc'
     const isRatingSort   = sortBy === 'rating-asc'   || sortBy === 'rating-desc'
-    const isMyRatingSort = sortBy === 'myrating-asc' || sortBy === 'myrating-desc'
 
-    if (isCharsSort || isRatingSort || isMyRatingSort) {
+    if (isCharsSort || isRatingSort) {
       const dir = sortBy.endsWith('-asc') ? 1 : -1
       const getter = isCharsSort
         ? getCharCount
-        : isRatingSort
-          ? getRating
-          : (a) => getUserRating?.(a.id) ?? null
+        : getRating
       list = [...list].sort((a, b) => {
         const ca = getter(a)
         const cb = getter(b)
@@ -124,7 +119,7 @@ export default function ArticleList({
       })
     }
     return list
-  }, [allArticles, availableArticles, filter, charFilter, ratingFilter, sortBy, isChecked, hasUserRating, getUserRating, dataReady])
+  }, [allArticles, availableArticles, filter, charFilter, ratingFilter, sortBy, isChecked, dataReady])
 
   const cols = layoutMode === 'card' ? CARD_COLS : layoutMode === 'matrix' ? MATRIX_COLS : 1
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
@@ -232,13 +227,6 @@ export default function ArticleList({
 
   function cycleRatingSort() {
     const next = sortBy === 'rating-asc' ? 'rating-desc' : sortBy === 'rating-desc' ? 'number' : 'rating-asc'
-    setSortBy(next)
-    setPage(0)
-    if (parentRef.current) parentRef.current.scrollTop = 0
-  }
-
-  function cycleMyRatingSort() {
-    const next = sortBy === 'myrating-asc' ? 'myrating-desc' : sortBy === 'myrating-desc' ? 'number' : 'myrating-asc'
     setSortBy(next)
     setPage(0)
     if (parentRef.current) parentRef.current.scrollTop = 0
@@ -356,7 +344,6 @@ export default function ArticleList({
               { key: 'all',    label: '全て' },
               { key: 'read',   label: '読了' },
               { key: 'unread', label: '未読' },
-              { key: 'rated',  label: '評価済' },
             ].map(({ key, label }) => (
               <button
                 key={key}
@@ -392,9 +379,6 @@ export default function ArticleList({
                 </button>
                 <button className={`mark-btn${sortBy.startsWith('rating') ? ' active' : ''}`} onClick={cycleRatingSort}>
                   {sortBy === 'rating-asc' ? '評価・昇順' : sortBy === 'rating-desc' ? '評価・降順' : '評価順'}
-                </button>
-                <button className={`mark-btn${sortBy.startsWith('myrating') ? ' active' : ''}`} onClick={cycleMyRatingSort}>
-                  {sortBy === 'myrating-asc' ? 'マイ評価・昇順' : sortBy === 'myrating-desc' ? 'マイ評価・降順' : 'マイ評価順'}
                 </button>
               </div>
             )}
@@ -489,7 +473,6 @@ export default function ArticleList({
           <div className="article-th col-fav">保存</div>
           <div className="article-th col-queue">後で</div>
           <div className="article-th col-memo">メモ</div>
-          <div className="article-th col-myrating">マイ評価</div>
           <div className="article-th col-check">読了</div>
         </div>
       )}
@@ -498,14 +481,13 @@ export default function ArticleList({
         {displayRows.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon">
-              <Icon name={filter === 'rated' ? 'star' : filter === 'read' ? 'library' : 'search'} size={24} />
+              <Icon name={filter === 'read' ? 'library' : 'search'} size={24} />
             </div>
             <div className="empty-state-title">
-              {filter === 'read' ? '読了記事なし' : filter === 'rated' ? '評価済み記事なし' : '未読記事なし'}
+              {filter === 'read' ? '読了記事なし' : '未読記事なし'}
             </div>
             <div className="empty-state-hint">
               {filter === 'read' ? '記事を読んでチェックを入れると、ここに表示されます。' :
-               filter === 'rated' ? '記事に星評価をつけると、ここに表示されます。' :
                '現在のフィルター条件に一致する未読記事がありません。'}
             </div>
           </div>
@@ -533,8 +515,6 @@ export default function ArticleList({
                       rating={getRating(rowArticles[0])}
                       queued={isQueued?.(rowArticles[0].id)}
                       onQueue={() => addToQueue?.(rowArticles[0].id)}
-                      userRating={getUserRating?.(rowArticles[0].id)}
-                      onUserRating={(id, val) => setUserRating?.(id, val)}
                       highlighted={highlightedId === rowArticles[0].id}
                       position={pageStart + rowIndex + 1}
                       totalItems={filtered.length}
@@ -561,8 +541,6 @@ export default function ArticleList({
                           rating={getRating(article)}
                           queued={isQueued?.(article.id)}
                           onQueue={() => addToQueue?.(article.id)}
-                          userRating={getUserRating?.(article.id)}
-                          onUserRating={(id, val) => setUserRating?.(id, val)}
                           highlighted={highlightedId === article.id}
                           position={pageStart + (rowIndex * cols) + articleIndex + 1}
                           totalItems={filtered.length}
@@ -620,35 +598,7 @@ export default function ArticleList({
   )
 }
 
-function UserRatingStars({ id, rating, onSet, disabled = false }) {
-  const [hovered, setHovered] = useState(0)
-  return (
-    <div
-      className="user-rating-stars"
-      onMouseLeave={() => setHovered(0)}
-      role="group"
-      aria-label="マイ評価"
-    >
-      {[1, 2, 3, 4, 5].map(n => (
-        <button
-          type="button"
-          key={n}
-          className={`ur-star${(hovered || rating || 0) >= n ? ' filled' : ''}`}
-          onMouseEnter={() => setHovered(n)}
-          onClick={() => onSet?.(id, rating === n ? null : n)}
-          title={disabled ? '公開前の記事には評価できません' : `${n}つ星`}
-          aria-label={disabled ? `${n}つ星（公開前のため評価不可）` : `${n}つ星`}
-          aria-pressed={rating === n}
-          disabled={disabled}
-        >
-          <Icon name="star" size={15} />
-        </button>
-      ))}
-    </div>
-  )
-}
-
-function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, rating, queued, onQueue, userRating, onUserRating, highlighted, onArticleOpen, position, totalItems }) {
+function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, rating, queued, onQueue, highlighted, onArticleOpen, position, totalItems }) {
   const [memoOpen, setMemoOpen] = useState(false)
 
   const rowClass = [
@@ -725,9 +675,6 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
             <Icon name="note" size={17} />
           </button>
         </div>
-        <div className="article-td col-myrating">
-          <UserRatingStars id={article.id} rating={userRating} onSet={onUserRating} disabled={article.predicted} />
-        </div>
         <div className="article-td col-check">
           <button
             className={`read-toggle-btn${read ? ' is-read' : ''}`}
@@ -759,7 +706,7 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
   )
 }
 
-function ArticleCard({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, rating, queued, onQueue, userRating, onUserRating, highlighted, onArticleOpen, position, totalItems }) {
+function ArticleCard({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, rating, queued, onQueue, highlighted, onArticleOpen, position, totalItems }) {
   const [memoOpen, setMemoOpen] = useState(false)
   const title = article.title ?? getTitles()[article.branchCode]?.[String(article.number)] ?? ''
   const hasMemo = memo.length > 0
@@ -828,7 +775,6 @@ function ArticleCard({ article, read, onToggle, favorited, onFavorite, memo, onM
         {charCount != null && <span className="scp-readmin">約{Math.ceil(charCount / 500)}分</span>}
         {rating != null && <span className="scp-rating">評価 {rating}</span>}
         {article.predicted && <span className="badge badge-predicted">予測</span>}
-        <UserRatingStars id={article.id} rating={userRating} onSet={onUserRating} disabled={article.predicted} />
         <span className="card-meta-spacer" />
         <button
           className={`card-read-btn${read ? ' is-read' : ''}`}
