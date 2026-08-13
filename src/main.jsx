@@ -7,6 +7,7 @@ import './App.css'
 import './styles/redesign.css'
 import './styles/atlas-terminal.css'
 import './styles/mobile-atlas.css'
+import './styles/branch-matrix.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
