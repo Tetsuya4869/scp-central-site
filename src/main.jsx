@@ -8,6 +8,7 @@ import './styles/redesign.css'
 import './styles/atlas-terminal.css'
 import './styles/mobile-atlas.css'
 import './styles/branch-matrix.css'
+import './styles/mobile-stability.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
