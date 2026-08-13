@@ -1,0 +1,78 @@
+/*
+ * Mobile scrolling policy
+ *
+ * Desktop uses an application-shell scroll container. On iOS Safari the same
+ * nested-scroll model becomes fragile once Home is allowed to size naturally.
+ * Phones therefore use the browser's native document scroll and keep fixed UI
+ * (bottom nav / reading dock) layered above it.
+ */
+
+@media (max-width: 48rem) {
+  html {
+    block-size: auto !important;
+    min-block-size: 100%;
+    overflow-x: clip !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: auto;
+  }
+
+  body {
+    block-size: auto !important;
+    min-block-size: 100dvh;
+    overflow-x: clip !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: auto;
+    touch-action: pan-y pinch-zoom;
+  }
+
+  #root {
+    block-size: auto !important;
+    min-block-size: 100dvh;
+    overflow: visible !important;
+  }
+
+  .app {
+    block-size: auto !important;
+    min-block-size: 100dvh;
+    grid-template-rows: auto auto !important;
+    overflow: visible !important;
+  }
+
+  .app-header {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: var(--z-sticky-nav);
+  }
+
+  .body-wrap {
+    grid-template-columns: minmax(0, 1fr) !important;
+    block-size: auto !important;
+    min-block-size: 0 !important;
+    overflow: visible !important;
+  }
+
+  .main-content,
+  .app--reading .main-content {
+    block-size: auto !important;
+    min-block-size: calc(100dvh - var(--mobile-header-height));
+    overflow-x: clip !important;
+    overflow-y: visible !important;
+    overscroll-behavior: auto;
+    touch-action: pan-y pinch-zoom;
+    -webkit-overflow-scrolling: auto;
+  }
+
+  .view-wrap,
+  .home-page {
+    block-size: auto !important;
+    min-block-size: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Fixed overlays must never become the gesture target for the full page. */
+  .bottom-nav,
+  .reading-dock,
+  .sidebar {
+    overscroll-behavior: contain;
+  }
+}
