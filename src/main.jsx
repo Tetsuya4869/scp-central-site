@@ -5,6 +5,7 @@ import ErrorBoundary from './components/ErrorBoundary.jsx'
 import '../tokens.css'
 import './App.css'
 import './styles/redesign.css'
+import './styles/atlas-terminal.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
