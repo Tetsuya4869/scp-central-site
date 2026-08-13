@@ -16,22 +16,34 @@ export default function ReadingDock({
   onClose,
   onModalChange,
 }) {
-  const [collapsed, setCollapsed] = useState(false)
+  const isPhoneAtStart = typeof window !== 'undefined' && window.matchMedia('(max-width: 48rem)').matches
+  const [collapsed, setCollapsed] = useState(isPhoneAtStart)
   const [isCompact, setIsCompact] = useState(() => (
     typeof window !== 'undefined' && window.matchMedia('(max-width: 75rem)').matches
   ))
+  const [isPhone, setIsPhone] = useState(isPhoneAtStart)
   const memoId = useId()
   const dockRef = useRef(null)
   const collapseButtonRef = useRef(null)
   const previousFocusRef = useRef(null)
 
-  useEffect(() => setCollapsed(false), [article?.id])
+  useEffect(() => setCollapsed(isPhone), [article?.id, isPhone])
+
   useEffect(() => {
-    const media = window.matchMedia('(max-width: 75rem)')
-    const update = event => setIsCompact(event.matches)
-    setIsCompact(media.matches)
-    media.addEventListener?.('change', update)
-    return () => media.removeEventListener?.('change', update)
+    const compactMedia = window.matchMedia('(max-width: 75rem)')
+    const phoneMedia = window.matchMedia('(max-width: 48rem)')
+    const updateCompact = event => setIsCompact(event.matches)
+    const updatePhone = event => setIsPhone(event.matches)
+
+    setIsCompact(compactMedia.matches)
+    setIsPhone(phoneMedia.matches)
+    compactMedia.addEventListener?.('change', updateCompact)
+    phoneMedia.addEventListener?.('change', updatePhone)
+
+    return () => {
+      compactMedia.removeEventListener?.('change', updateCompact)
+      phoneMedia.removeEventListener?.('change', updatePhone)
+    }
   }, [])
 
   const isModal = Boolean(article && isCompact && !collapsed)
@@ -92,10 +104,17 @@ export default function ReadingDock({
       aria-modal={isModal ? 'true' : undefined}
     >
       <div className="reading-dock-head">
-        <div className="reading-dock-heading">
+        <button
+          type="button"
+          className="reading-dock-heading"
+          aria-expanded={!collapsed}
+          aria-label={`${designation} の読書セッションを${collapsed ? '開く' : '折りたたむ'}`}
+          onClick={() => setCollapsed(value => !value)}
+        >
           <span className="reading-dock-kicker">READING SESSION{branchCode ? ` · ${branchCode}` : ''}</span>
           <strong>{designation}</strong>
-        </div>
+          {article.title && <span className="reading-dock-heading-title">{article.title}</span>}
+        </button>
         <div className="reading-dock-head-actions">
           <button
             type="button"
