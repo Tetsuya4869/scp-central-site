@@ -1,0 +1,223 @@
+/*
+ * Mobile layout stability layer.
+ *
+ * Keep the phone home screen in normal document flow and let available width,
+ * rather than device-specific breakpoints, determine how dense the UI becomes.
+ */
+
+@media (max-width: 48rem) {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  .home-page {
+    inline-size: 100%;
+    max-inline-size: none;
+    min-inline-size: 0;
+    overflow: visible;
+  }
+
+  /* Every home section owns its height. This prevents grid/flex remnants from
+     letting content visually spill into the next section on narrow Safari. */
+  .home-workbench,
+  .home-lead,
+  .home-recent {
+    position: relative;
+    inline-size: 100%;
+    max-inline-size: none;
+    min-inline-size: 0;
+    block-size: auto;
+    min-block-size: 0;
+    margin-inline: 0;
+    overflow: visible;
+    flex: 0 0 auto;
+  }
+
+  .home-workbench {
+    display: block;
+  }
+
+  .home-next,
+  .home-month {
+    position: relative;
+    inline-size: 100%;
+    max-inline-size: none;
+    min-inline-size: 0;
+    block-size: auto;
+    min-block-size: 0;
+  }
+
+  /* Reading status: explicit named areas are considerably more robust than
+     row-spans when Dynamic Type / Japanese line wrapping changes row heights. */
+  .home-lead {
+    display: block;
+    contain: layout;
+  }
+
+  .home-progress-ledger {
+    display: grid;
+    grid-template-columns: minmax(4.4rem, auto) minmax(0, 1fr);
+    grid-template-areas:
+      "label label"
+      "figure meter"
+      "figure meta"
+      "figure link";
+    align-items: center;
+    inline-size: 100%;
+    max-inline-size: none;
+    min-inline-size: 0;
+    block-size: auto;
+    min-block-size: 0;
+    margin: 0;
+    padding: 0.9rem 0;
+    gap: 0.55rem 0.85rem;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .home-progress-ledger::before {
+    grid-area: label;
+    display: block;
+    margin: 0 0 0.05rem;
+  }
+
+  .home-progress-figure {
+    grid-area: figure;
+    align-self: center;
+    min-inline-size: 0;
+  }
+
+  .home-progress-figure span {
+    font-size: clamp(2.35rem, 11vw, 3.05rem);
+    line-height: 0.95;
+  }
+
+  .home-progress-ledger > .home-meter {
+    grid-area: meter;
+    inline-size: 100%;
+    min-inline-size: 0;
+  }
+
+  .home-progress-meta {
+    grid-area: meta;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(4.6rem, 1fr));
+    inline-size: 100%;
+    min-inline-size: 0;
+    margin: 0;
+    gap: 0.35rem 0.55rem;
+  }
+
+  .home-progress-meta > div {
+    min-inline-size: 0;
+  }
+
+  .home-progress-meta dt,
+  .home-progress-meta dd {
+    overflow-wrap: anywhere;
+  }
+
+  .home-progress-ledger > .text-link {
+    grid-area: link;
+    justify-self: start;
+    min-inline-size: 0;
+  }
+
+  /* Recent items must always start below the status ledger, regardless of
+     content height or font scaling. */
+  .home-recent {
+    clear: both;
+    isolation: isolate;
+    padding-block: 1.05rem;
+  }
+
+  .home-recent-list,
+  .home-recent-item {
+    inline-size: 100%;
+    max-inline-size: none;
+    min-inline-size: 0;
+  }
+
+  .home-recent-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .home-recent-title,
+  .home-recent-item .article-designation {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+
+  /* Branch matrix: CSS chooses the number of columns from the space actually
+     available. Typical phones resolve to two columns; wider mobile layouts
+     naturally become three without a hard device-width switch. */
+  .home-branches {
+    position: relative;
+    inline-size: auto;
+    max-inline-size: none;
+    min-inline-size: 0;
+    block-size: auto;
+    min-block-size: 0;
+    margin-inline: calc(-1 * var(--mobile-edge));
+    overflow: visible;
+    flex: 0 0 auto;
+  }
+
+  .home-branch-index {
+    display: grid !important;
+    grid-template-columns: repeat(
+      auto-fit,
+      minmax(clamp(9rem, 43vw, 13rem), 1fr)
+    ) !important;
+    inline-size: 100% !important;
+    max-inline-size: none !important;
+    min-inline-size: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    overflow: visible !important;
+  }
+
+  .home-branch-row {
+    inline-size: 100%;
+    max-inline-size: none;
+    min-inline-size: 0;
+    block-size: auto;
+    min-block-size: clamp(5.6rem, 24vw, 6.5rem);
+    overflow: hidden;
+  }
+
+  .home-branch-name,
+  .home-branch-name strong,
+  .home-branch-name small,
+  .home-branch-stats {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* Very narrow phones: the status ledger becomes a simple single-column stack
+   instead of squeezing labels into unusable widths. */
+@media (max-width: 21.5rem) {
+  .home-progress-ledger {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "label"
+      "figure"
+      "meter"
+      "meta"
+      "link";
+  }
+
+  .home-progress-figure {
+    display: flex;
+    align-items: baseline;
+    gap: 0.15rem;
+  }
+
+  .home-branch-index {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
