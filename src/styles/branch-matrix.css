@@ -1,0 +1,148 @@
+/* Mobile home branch matrix — full-bleed, information-dense branch navigation. */
+
+@media (max-width: 48rem) {
+  .home-branches {
+    margin-inline: calc(-1 * var(--mobile-edge));
+    padding-block: 1.15rem 0;
+    border-block-end: 1px solid var(--color-rule-strong);
+  }
+
+  .home-branches > .section-heading-row {
+    padding-inline: var(--mobile-edge);
+    margin-block-end: 0.7rem;
+  }
+
+  .home-branches .section-heading-stack::before {
+    content: "BRANCH MATRIX / 16";
+    display: block;
+    margin-block-end: 0.18rem;
+    color: var(--color-quiet);
+    font-family: var(--font-mono);
+    font-size: 0.56rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+  }
+
+  .home-branch-index {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-block-start: 1px solid var(--color-rule) !important;
+    border-inline-start: 1px solid var(--color-rule) !important;
+    scroll-snap-type: none !important;
+  }
+
+  .home-branch-row {
+    position: relative;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-rows: auto auto 1fr auto;
+    align-content: start;
+    flex: none !important;
+    inline-size: 100%;
+    min-inline-size: 0;
+    min-block-size: 6.25rem;
+    padding: 0.72rem 0.65rem 0.62rem 0.78rem !important;
+    gap: 0.15rem 0.35rem !important;
+    border: 0 !important;
+    border-inline-end: 1px solid var(--color-rule) !important;
+    border-block-end: 1px solid var(--color-rule) !important;
+    border-radius: 0 !important;
+    background: transparent;
+    scroll-snap-align: none !important;
+  }
+
+  .home-branch-row:hover,
+  .home-branch-row:focus-visible {
+    background: var(--color-paper-2);
+  }
+
+  .home-branch-row::before {
+    inset-block: 0.65rem !important;
+    inset-inline-start: 0 !important;
+    inline-size: 2px !important;
+  }
+
+  .home-branch-code {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+    font-size: 0.78rem;
+    line-height: 1.15;
+  }
+
+  .home-branch-name {
+    grid-column: 1 / -1;
+    grid-row: 2 / span 2;
+    align-self: start;
+    min-inline-size: 0;
+    margin-block-start: 0.22rem;
+  }
+
+  .home-branch-name strong {
+    font-size: 0.78rem;
+    line-height: 1.2;
+  }
+
+  .home-branch-name small {
+    margin-block-start: 0.12rem;
+    font-size: 0.6rem;
+    line-height: 1.25;
+  }
+
+  .home-branch-stats {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+    justify-self: end;
+    font-size: 0.62rem;
+    line-height: 1.15;
+  }
+
+  .home-branch-stats small {
+    font-size: 0.56rem;
+  }
+
+  .home-branch-progress {
+    grid-column: 1 / -1 !important;
+    grid-row: 4;
+    align-self: end;
+    inline-size: 100% !important;
+    block-size: 2px;
+    margin-block-start: 0.48rem;
+    border-radius: 0;
+  }
+
+  .home-branch-row > .app-icon {
+    display: none;
+  }
+}
+
+@media (min-width: 36rem) and (max-width: 48rem) {
+  .home-branch-index {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 30rem) {
+  .home-branch-row {
+    min-block-size: 5.7rem;
+    padding-inline: 0.68rem 0.55rem !important;
+  }
+
+  .home-branch-name small {
+    display: none;
+  }
+
+  .home-branch-name strong {
+    font-size: 0.73rem;
+  }
+
+  .home-branch-code {
+    font-size: 0.73rem;
+  }
+}
