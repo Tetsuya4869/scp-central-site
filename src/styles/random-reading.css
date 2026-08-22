@@ -1,0 +1,223 @@
+/* Reading section: keep the existing five-item shell and add a lightweight
+   queue/random choice inside the Read destination. */
+
+.read-section-toolbar .toolbar-title {
+  gap: var(--space-2xs);
+}
+
+.read-mode-tabs {
+  min-block-size: 2.75rem;
+  padding-block: 0;
+  gap: 0;
+}
+
+.read-mode-tab {
+  position: relative;
+  align-self: stretch;
+  min-inline-size: 7rem;
+  padding-inline: var(--space-md);
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.read-mode-tab::after {
+  content: "";
+  position: absolute;
+  inset-inline: var(--space-sm);
+  inset-block-end: 0;
+  block-size: 2px;
+  background: transparent;
+}
+
+.read-mode-tab:hover {
+  background: var(--color-paper-3);
+  color: var(--color-ink);
+}
+
+.read-mode-tab.active {
+  color: var(--color-ink);
+}
+
+.read-mode-tab.active::after {
+  background: var(--color-accent);
+}
+
+.random-refresh-btn {
+  flex: 0 0 auto;
+  min-block-size: 2.35rem;
+  padding-inline: var(--space-xs);
+}
+
+.random-page {
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.random-reading-note {
+  padding: var(--space-sm) var(--space-md);
+  border-block-end: 1px solid var(--color-rule);
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.random-article-header {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.random-article-header .col-num {
+  min-inline-size: 0;
+}
+
+.random-article-list {
+  min-inline-size: 0;
+}
+
+.random-article-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 2.75rem !important;
+  align-items: stretch;
+  min-inline-size: 0;
+}
+
+.random-article-row .article-link-zone {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  grid-column: 1 !important;
+  align-items: center;
+  min-inline-size: 0;
+  inline-size: 100%;
+}
+
+.random-article-row .article-td.col-num {
+  min-inline-size: 0;
+}
+
+.random-article-row .article-td.col-badges {
+  inline-size: auto;
+  min-inline-size: 0;
+  padding-inline: var(--space-xs);
+}
+
+.random-open-mark {
+  display: grid;
+  grid-column: 2;
+  place-items: center;
+  border-inline-start: 1px solid var(--color-rule);
+  color: var(--color-muted);
+  pointer-events: none;
+}
+
+.random-article-row:hover .random-open-mark {
+  color: var(--color-accent);
+}
+
+@media (max-width: 48rem) {
+  .read-section-toolbar {
+    position: sticky;
+    inset-block-start: var(--banner-height);
+    z-index: var(--z-sticky);
+  }
+
+  .read-section-toolbar .toolbar-row-top {
+    min-block-size: 3.25rem;
+  }
+
+  .read-section-toolbar .toolbar-title {
+    min-inline-size: 0;
+  }
+
+  .read-section-toolbar .toolbar-title > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .read-mode-tabs {
+    min-block-size: 2.65rem;
+    padding-inline: var(--mobile-edge);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .read-mode-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .read-mode-tab {
+    flex: 1 0 auto;
+    min-inline-size: 7.5rem;
+    min-block-size: 2.65rem;
+    padding-inline: var(--space-sm);
+  }
+
+  .random-refresh-btn {
+    min-inline-size: 4.8rem;
+  }
+
+  .random-reading-note {
+    padding: 0.8rem var(--mobile-edge);
+    font-size: 0.76rem;
+  }
+
+  .random-article-header {
+    display: none !important;
+  }
+
+  .random-article-row {
+    grid-template-columns: minmax(0, 1fr) 2.75rem !important;
+  }
+
+  .random-article-row .article-link-zone {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    padding-inline-start: var(--mobile-edge);
+  }
+
+  .random-article-row .article-td.col-num {
+    padding-inline: 0 var(--space-xs) !important;
+  }
+
+  .random-article-row .article-td.col-badges {
+    display: flex !important;
+    align-items: center;
+    padding-inline: 0 var(--space-xs) !important;
+  }
+
+  .random-open-mark {
+    inline-size: 2.75rem;
+  }
+}
+
+@media (max-width: 23rem) {
+  .read-section-toolbar .toolbar-count {
+    display: none;
+  }
+
+  .random-refresh-btn {
+    min-inline-size: 2.75rem;
+    inline-size: 2.75rem;
+    padding: 0;
+  }
+
+  .random-refresh-btn > span {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .random-article-row {
+    grid-template-columns: minmax(0, 1fr) 2.5rem !important;
+  }
+
+  .random-open-mark {
+    inline-size: 2.5rem;
+  }
+}
