@@ -3,6 +3,26 @@
     "date": "2026-07-12",
     "reason": "no_rating"
   },
+  "scp-001-cs": {
+    "date": "2026-10-04",
+    "reason": "no_rating"
+  },
+  "scp-001-de": {
+    "date": "2026-10-04",
+    "reason": "no_rating"
+  },
+  "scp-001-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-001-fr": {
+    "date": "2026-10-04",
+    "reason": "no_rating"
+  },
+  "scp-001-it": {
+    "date": "2026-10-04",
+    "reason": "no_rating"
+  },
   "scp-001-jp": {
     "date": "2026-09-06",
     "reason": "no_rating"
@@ -11,13 +31,97 @@
     "date": "2026-09-27",
     "reason": "no_rating"
   },
+  "scp-001-pt": {
+    "date": "2026-10-04",
+    "reason": "no_rating"
+  },
   "scp-001-ru": {
     "date": "2026-09-27",
     "reason": "no_rating"
   },
+  "scp-001-th": {
+    "date": "2026-10-04",
+    "reason": "no_rating"
+  },
+  "scp-001-vn": {
+    "date": "2026-10-04",
+    "reason": "no_rating"
+  },
+  "scp-002-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-003-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-004-cs": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-004-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-005-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-007-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-022-cs": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-026-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-028-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-030-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-032-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-041-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-047-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
   "scp-049-ko": {
     "date": "2026-09-27",
     "reason": "no_rating"
+  },
+  "scp-061-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-095-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-097-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-099-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-100-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
   },
   "scp-1001-ko": {
     "date": "2026-09-27",
@@ -53,6 +157,10 @@
   },
   "scp-1009-ko": {
     "date": "2026-09-27",
+    "reason": "not_found"
+  },
+  "scp-101-es": {
+    "date": "2026-10-04",
     "reason": "not_found"
   },
   "scp-1010-ko": {
@@ -127,20 +235,328 @@
     "date": "2026-09-27",
     "reason": "not_found"
   },
+  "scp-1028-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1029-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
   "scp-103": {
     "date": "2026-07-12",
+    "reason": "not_found"
+  },
+  "scp-103-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1030-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1031-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1032-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1033-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1034-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1035-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1036-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1037-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1038-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1039-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1040-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1041-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1042-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1043-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1044-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1045-ko": {
+    "date": "2026-10-04",
     "reason": "not_found"
   },
   "scp-1046": {
     "date": "2026-07-12",
     "reason": "not_found"
   },
+  "scp-1046-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1047-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1048-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1049-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
   "scp-105-jp": {
     "date": "2026-09-06",
     "reason": "no_content"
   },
+  "scp-1050-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1051-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1052-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1053-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1054-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1055-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1056-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1057-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1058-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1059-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1060-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1061-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1062-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1064-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1065-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1066-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1067-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1068-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1069-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1070-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1071-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1072-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1073-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1075-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1076-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1077-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1078-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1079-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1080-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1081-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1082-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1083-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1084-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1085-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1086-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1087-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1088-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1089-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1090-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1091-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1092-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1093-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1094-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1095-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1096-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1097-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1098-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1099-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-112-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
   "scp-1166": {
     "date": "2026-07-12",
+    "reason": "not_found"
+  },
+  "scp-117-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-119-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-122-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-1234-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-125-es": {
+    "date": "2026-10-04",
     "reason": "not_found"
   },
   "scp-1392": {
@@ -159,8 +575,20 @@
     "date": "2026-07-12",
     "reason": "not_found"
   },
+  "scp-156-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-157-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
   "scp-1573": {
     "date": "2026-07-12",
+    "reason": "not_found"
+  },
+  "scp-160-es": {
+    "date": "2026-10-04",
     "reason": "not_found"
   },
   "scp-1611": {
@@ -179,9 +607,17 @@
     "date": "2026-07-12",
     "reason": "not_found"
   },
+  "scp-169-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
   "scp-172-ko": {
     "date": "2026-09-27",
     "reason": "no_content"
+  },
+  "scp-173-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
   },
   "scp-1767": {
     "date": "2026-07-12",
@@ -193,6 +629,14 @@
   },
   "scp-1822": {
     "date": "2026-07-12",
+    "reason": "not_found"
+  },
+  "scp-1890-ko": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-191-es": {
+    "date": "2026-10-04",
     "reason": "not_found"
   },
   "scp-1926": {
@@ -207,8 +651,20 @@
     "date": "2026-07-12",
     "reason": "not_found"
   },
+  "scp-194-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
   "scp-1984": {
     "date": "2026-07-12",
+    "reason": "not_found"
+  },
+  "scp-199-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-200-es": {
+    "date": "2026-10-04",
     "reason": "not_found"
   },
   "scp-2068": {
@@ -459,6 +915,10 @@
     "date": "2026-07-12",
     "reason": "not_found"
   },
+  "scp-2316-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
   "scp-2318-jp": {
     "date": "2026-09-06",
     "reason": "not_found"
@@ -521,6 +981,10 @@
   },
   "scp-2356-jp": {
     "date": "2026-09-06",
+    "reason": "not_found"
+  },
+  "scp-2357-es": {
+    "date": "2026-10-04",
     "reason": "not_found"
   },
   "scp-2357-jp": {
@@ -849,6 +1313,10 @@
   },
   "scp-2539-jp": {
     "date": "2026-09-06",
+    "reason": "not_found"
+  },
+  "scp-254-es": {
+    "date": "2026-10-04",
     "reason": "not_found"
   },
   "scp-2541-jp": {
@@ -1837,6 +2305,10 @@
   },
   "scp-2958-jp": {
     "date": "2026-09-13",
+    "reason": "not_found"
+  },
+  "scp-296-es": {
+    "date": "2026-10-04",
     "reason": "not_found"
   },
   "scp-2961": {
@@ -3345,6 +3817,10 @@
   },
   "scp-3569": {
     "date": "2026-07-12",
+    "reason": "not_found"
+  },
+  "scp-357-es": {
+    "date": "2026-10-04",
     "reason": "not_found"
   },
   "scp-3570-jp": {
@@ -4877,6 +5353,10 @@
   },
   "scp-3987": {
     "date": "2026-07-19",
+    "reason": "not_found"
+  },
+  "scp-399-de": {
+    "date": "2026-10-04",
     "reason": "not_found"
   },
   "scp-3991": {
@@ -8954,6 +9434,10 @@
   "scp-4839-jp": {
     "date": "2026-09-27",
     "reason": "not_found"
+  },
+  "scp-484-fr": {
+    "date": "2026-10-04",
+    "reason": "no_content"
   },
   "scp-4841-jp": {
     "date": "2026-09-27",
@@ -14081,6 +14565,10 @@
   },
   "scp-6943": {
     "date": "2026-08-09",
+    "reason": "not_found"
+  },
+  "scp-6944": {
+    "date": "2026-10-04",
     "reason": "not_found"
   },
   "scp-6945": {
@@ -22911,6 +23399,10 @@
     "date": "2026-09-06",
     "reason": "not_found"
   },
+  "scp-9999-es": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
   "scp-cn-001": {
     "date": "2026-09-27",
     "reason": "no_rating"
@@ -23007,6 +23499,10 @@
     "date": "2026-09-27",
     "reason": "not_found"
   },
+  "scp-cn-4444": {
+    "date": "2026-10-04",
+    "reason": "no_rating"
+  },
   "scp-cn-555": {
     "date": "2026-09-27",
     "reason": "not_found"
@@ -23053,6 +23549,98 @@
   },
   "scp-cn-963": {
     "date": "2026-09-27",
+    "reason": "not_found"
+  },
+  "scp-pl-000": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-pl-001": {
+    "date": "2026-10-04",
+    "reason": "no_rating"
+  },
+  "scp-pl-005": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-pl-120": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-pl-2021": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-pl-6470": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-zh-001": {
+    "date": "2026-10-04",
+    "reason": "no_rating"
+  },
+  "scp-zh-022": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-zh-060": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-zh-087": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-zh-1766": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-zh-2005": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-zh-2154": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-zh-222": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-zh-229": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-zh-2588": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-zh-472": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-zh-587": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-zh-60053": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-zh-601": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-zh-719": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-zh-9288": {
+    "date": "2026-10-04",
+    "reason": "not_found"
+  },
+  "scp-zh-935": {
+    "date": "2026-10-04",
     "reason": "not_found"
   }
 }
