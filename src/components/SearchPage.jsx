@@ -1,10 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
-import { BRANCHES, BRANCH_MAP } from '../data/branches.js'
-import { generateSeriesArticles } from '../utils/urlGenerator.js'
 import { getTitles, getCharCounts, getRatings, useDataReady } from '../data/dataStore.js'
+import { MAX_SEARCH_RESULTS as MAX_RESULTS, searchArticles } from '../utils/search.js'
 import Icon from './Icon.jsx'
 
-const MAX_RESULTS = 300
 const JP_BASE = 'http://scp-jp.wikidot.com/'
 
 function getSlug(url) {
@@ -14,79 +12,6 @@ function getSlug(url) {
 function fmtChars(n) {
   if (n == null) return null
   return n >= 10000 ? `${(n / 10000).toFixed(1)}万字` : `${n.toLocaleString()}字`
-}
-
-function doSearch(query, branchFilter = null, maxResults = MAX_RESULTS) {
-  const q = query.trim()
-  if (q.length < 2) return []
-  const qLower = q.toLowerCase()
-  const results = []
-  const seen = new Set()
-  const branches = branchFilter
-    ? BRANCHES.filter(branch => branch.code === branchFilter)
-    : BRANCHES
-
-  function add(article, branch, series, title) {
-    if (article.predicted || seen.has(article.id)) return
-    seen.add(article.id)
-    results.push({ article, branch, series, title: title ?? getTitles()[branch.code]?.[String(article.number)] ?? '' })
-  }
-
-  // 1. Custom series articles
-  for (const branch of branches) {
-    for (const series of branch.series) {
-      if (series.type !== 'custom') continue
-      for (const article of series.articles) {
-        const titleStr = article.title ?? ''
-        if (article.designation.toLowerCase().includes(qLower) || titleStr.toLowerCase().includes(qLower)) {
-          add({ ...article, predicted: Boolean(article.predicted) }, branch, series, titleStr)
-          if (results.length >= maxResults) return results
-        }
-      }
-    }
-  }
-
-  // 2. Title search
-  for (const [branchCode, titleMap] of Object.entries(getTitles())) {
-    if (branchFilter && branchCode !== branchFilter) continue
-    const branch = BRANCH_MAP[branchCode]
-    if (!branch) continue
-    for (const [numStr, title] of Object.entries(titleMap)) {
-      if (!title.toLowerCase().includes(qLower)) continue
-      const num = parseInt(numStr, 10)
-      if (isNaN(num)) continue
-      const series = branch.series.find(s => {
-        if (s.type === 'custom') return false
-        const min = branch.minNumber ? Math.max(s.min, branch.minNumber) : s.min
-        return num >= min && num <= s.max
-      })
-      if (!series) continue
-      const [article] = generateSeriesArticles(branchCode, num, num)
-      if (article) {
-        add(article, branch, series, title)
-        if (results.length >= maxResults) return results
-      }
-    }
-  }
-
-  // 3. SCP number search
-  const numMatch = q.match(/(\d+)/)
-  if (numMatch) {
-    const num = parseInt(numMatch[1], 10)
-    for (const branch of branches) {
-      for (const series of branch.series) {
-        if (series.type === 'custom') continue
-        const min = branch.minNumber ? Math.max(series.min, branch.minNumber) : series.min
-        if (num >= min && num <= series.max) {
-          const [article] = generateSeriesArticles(branch.code, num, num)
-          if (article) add(article, branch, series)
-        }
-      }
-      if (results.length >= maxResults) return results
-    }
-  }
-
-  return results
 }
 
 export default function SearchPage({ onNavigate, onOpenSidebar, isChecked, isFavorite }) {
@@ -100,22 +25,10 @@ export default function SearchPage({ onNavigate, onOpenSidebar, isChecked, isFav
     return () => clearTimeout(t)
   }, [query])
 
-  const allResults = useMemo(() => doSearch(debounced), [debounced, dataReady])
-
-  // Re-run a scoped search before applying the result cap. Filtering an
-  // already-capped global list can otherwise hide valid later matches.
-  const results = useMemo(
-    () => branchFilter ? doSearch(debounced, branchFilter) : allResults,
-    [allResults, branchFilter, debounced, dataReady],
+  const { results, branches: activeBranches } = useMemo(
+    () => searchArticles(debounced, getTitles(), branchFilter),
+    [debounced, branchFilter, dataReady],
   )
-
-  // Active branch codes that have results
-  const activeBranches = useMemo(() => {
-    if (debounced.trim().length < 2) return []
-    // Probe each branch with a one-result cap so branches that occur after the
-    // global 300-result window still remain selectable.
-    return BRANCHES.filter(branch => doSearch(debounced, branch.code, 1).length > 0)
-  }, [debounced, dataReady])
 
   return (
     <>

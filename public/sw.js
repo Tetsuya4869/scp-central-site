@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'scp-reading-atlas-'
-const CACHE = `${CACHE_PREFIX}v6`
+const CACHE = `${CACHE_PREFIX}__SCP_BUILD_REVISION__`
 const LEGACY_CACHES = new Set(['scp-v1'])
 const SCOPE_URL = new URL(self.registration.scope)
 const BASE_PATH = SCOPE_URL.pathname.replace(/\/$/, '')

@@ -1,4 +1,13 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+// Keep the eager startup fetch in flight until the test explicitly completes
+// it. Real JSON imports can finish before Vitest starts running this file.
+const titlesLoad = vi.hoisted(() => {
+  let resolve
+  const promise = new Promise(done => { resolve = done })
+  return { promise, resolve }
+})
+vi.mock('./titles.json', async () => ({ default: await titlesLoad.promise }))
 
 import {
   DATA_AUTO_RETRY_DELAYS_MS,
@@ -13,7 +22,8 @@ describe('dataStore', () => {
     const second = loadData()
 
     expect(second).toBe(first)
-    expect(getDataStatus().loading || getDataStatus().ready).toBe(true)
+    expect(getDataStatus()).toMatchObject({ ready: false, loading: true, attempt: 1 })
+    titlesLoad.resolve({ EN: { 173: 'The Sculpture' } })
     await expect(first).resolves.toBe(true)
     expect(getDataStatus()).toMatchObject({
       ready: true,
@@ -22,6 +32,7 @@ describe('dataStore', () => {
       retryAt: null,
       canRetry: false,
     })
+    expect(getDataStatus()).toBe(getDataStatus())
   })
 
   it('makes retry idempotent after data is ready', async () => {
