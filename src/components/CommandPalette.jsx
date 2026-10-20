@@ -124,6 +124,7 @@ export default function CommandPalette({ isOpen, onClose, onNavigate, onToggleTh
   }, [filtered, selectedIdx, onClose])
 
   const handleSearchKeyDown = useCallback((e) => {
+    if (e.isComposing || e.nativeEvent?.isComposing || e.keyCode === 229) return
     if (e.key === 'ArrowDown') {
       e.preventDefault()
       if (filtered.length === 0) return
@@ -145,6 +146,7 @@ export default function CommandPalette({ isOpen, onClose, onNavigate, onToggleTh
   }, [filtered, runSelected])
 
   const handleDialogKeyDown = useCallback((event) => {
+    if (event.isComposing || event.nativeEvent?.isComposing || event.keyCode === 229) return
     if (event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import Icon from './Icon.jsx'
 
 const ToastContext = createContext(null)
@@ -34,7 +34,7 @@ export function ToastProvider({ children }) {
     return id
   }, [])
 
-  const toast = {
+  const toast = useMemo(() => ({
     info:    (msg, dur)         => show(msg, 'info',    dur ?? 3000),
     success: (msg, dur)         => show(msg, 'success', dur ?? 3000),
     error:   msg                => show(msg, 'error'),
@@ -42,7 +42,7 @@ export function ToastProvider({ children }) {
     pending: (msg, type = 'success') => {
       try { localStorage.setItem('scp-toast-pending', JSON.stringify({ msg, type })) } catch {}
     },
-  }
+  }), [show])
 
   return (
     <ToastContext.Provider value={toast}>

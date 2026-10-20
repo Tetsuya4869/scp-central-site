@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { memo, useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
 import { getTitles, getCharCounts, getRatings, useDataReady } from '../data/dataStore.js'
 import Icon from './Icon.jsx'
@@ -232,9 +232,8 @@ export default function ArticleList({
     if (parentRef.current) parentRef.current.scrollTop = 0
   }
 
-  const handleToggle = useCallback((id) => toggle(id), [toggle])
-
   function handleJump(e) {
+    if (e.isComposing || e.nativeEvent?.isComposing || e.keyCode === 229) return
     if (e.key !== 'Enter') return
     const val = jumpValue.trim().toLowerCase()
     if (!val) {
@@ -494,6 +493,33 @@ export default function ArticleList({
         ) : (
           <div className="article-display-rows" role="presentation">
             {displayRows.map((rowArticles, rowIndex) => {
+              const items = rowArticles.map((article, articleIndex) => (
+                <ArticleItem
+                  key={article.id}
+                  layoutMode={layoutMode}
+                  article={article}
+                  title={article.title ?? getTitles()[article.branchCode]?.[String(article.number)] ?? ''}
+                  read={isChecked(article.id)}
+                  onToggle={toggle}
+                  favorited={isFavorite(article.id)}
+                  onFavorite={toggleFavorite}
+                  memo={getMemo(article.id)}
+                  onMemoChange={setMemo}
+                  readDateTimestamp={dates
+                    ? dates.get(article.id) ?? null
+                    : getReadDate?.(article.id)?.getTime() ?? null}
+                  charCount={getCharCount(article)}
+                  rating={getRating(article)}
+                  queued={isQueued?.(article.id)}
+                  onQueue={addToQueue}
+                  highlighted={highlightedId === article.id}
+                  position={pageStart + (rowIndex * cols) + articleIndex + 1}
+                  totalItems={filtered.length}
+                  onArticleOpen={onArticleOpen}
+                  branchCode={branch.code}
+                  seriesId={series.id}
+                />
+              ))
               return (
                 <div
                   key={rowArticles.map(article => article.id).join('|')}
@@ -502,74 +528,10 @@ export default function ArticleList({
                   role="presentation"
                 >
                   {layoutMode === 'list' ? (
-                    <ArticleRow
-                      article={rowArticles[0]}
-                      read={isChecked(rowArticles[0].id)}
-                      onToggle={() => handleToggle(rowArticles[0].id)}
-                      favorited={isFavorite(rowArticles[0].id)}
-                      onFavorite={() => toggleFavorite(rowArticles[0].id)}
-                      memo={getMemo(rowArticles[0].id)}
-                      onMemoChange={setMemo}
-                      readDate={getReadDate(rowArticles[0].id)}
-                      charCount={getCharCount(rowArticles[0])}
-                      rating={getRating(rowArticles[0])}
-                      queued={isQueued?.(rowArticles[0].id)}
-                      onQueue={() => addToQueue?.(rowArticles[0].id)}
-                      highlighted={highlightedId === rowArticles[0].id}
-                      position={pageStart + rowIndex + 1}
-                      totalItems={filtered.length}
-                      onArticleOpen={() => onArticleOpen?.(rowArticles[0], {
-                        source: 'series',
-                        branchCode: branch.code,
-                        seriesId: series.id,
-                      })}
-                    />
-                  ) : layoutMode === 'card' ? (
-                    <div className="card-row">
-                      {rowArticles.map((article, articleIndex) => (
-                        <ArticleCard
-                          key={article.id}
-                          article={article}
-                          read={isChecked(article.id)}
-                          onToggle={() => handleToggle(article.id)}
-                          favorited={isFavorite(article.id)}
-                          onFavorite={() => toggleFavorite(article.id)}
-                          memo={getMemo(article.id)}
-                          onMemoChange={setMemo}
-                          readDate={getReadDate(article.id)}
-                          charCount={getCharCount(article)}
-                          rating={getRating(article)}
-                          queued={isQueued?.(article.id)}
-                          onQueue={() => addToQueue?.(article.id)}
-                          highlighted={highlightedId === article.id}
-                          position={pageStart + (rowIndex * cols) + articleIndex + 1}
-                          totalItems={filtered.length}
-                          onArticleOpen={() => onArticleOpen?.(article, {
-                            source: 'series',
-                            branchCode: branch.code,
-                            seriesId: series.id,
-                          })}
-                        />
-                      ))}
-                    </div>
+                    items
                   ) : (
-                    <div className="matrix-row">
-                      {rowArticles.map((article, articleIndex) => (
-                        <MatrixCell
-                          key={article.id}
-                          article={article}
-                          read={isChecked(article.id)}
-                          onToggle={() => handleToggle(article.id)}
-                          highlighted={highlightedId === article.id}
-                          position={pageStart + (rowIndex * cols) + articleIndex + 1}
-                          totalItems={filtered.length}
-                          onArticleOpen={() => onArticleOpen?.(article, {
-                            source: 'series',
-                            branchCode: branch.code,
-                            seriesId: series.id,
-                          })}
-                        />
-                      ))}
+                    <div className={layoutMode === 'card' ? 'card-row' : 'matrix-row'}>
+                      {items}
                     </div>
                   )}
                 </div>
@@ -598,7 +560,38 @@ export default function ArticleList({
   )
 }
 
-function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, rating, queued, onQueue, highlighted, onArticleOpen, position, totalItems }) {
+// Keep handlers shared and dates/titles primitive at this boundary so editing
+// one memo or toggling one article leaves the other visible items untouched.
+const ArticleItem = memo(function ArticleItem({
+  layoutMode, article, title, read, onToggle, favorited, onFavorite, memo,
+  onMemoChange, readDateTimestamp, charCount, rating, queued, onQueue,
+  highlighted, onArticleOpen, position, totalItems, branchCode, seriesId,
+}) {
+  const Component = layoutMode === 'list' ? ArticleRow : layoutMode === 'card' ? ArticleCard : MatrixCell
+  return (
+    <Component
+      article={article}
+      title={title}
+      read={read}
+      onToggle={() => onToggle(article.id)}
+      favorited={favorited}
+      onFavorite={() => onFavorite(article.id)}
+      memo={memo}
+      onMemoChange={onMemoChange}
+      readDate={readDateTimestamp ? new Date(readDateTimestamp) : null}
+      charCount={charCount}
+      rating={rating}
+      queued={queued}
+      onQueue={() => onQueue?.(article.id)}
+      highlighted={highlighted}
+      onArticleOpen={() => onArticleOpen?.(article, { source: 'series', branchCode, seriesId })}
+      position={position}
+      totalItems={totalItems}
+    />
+  )
+})
+
+function ArticleRow({ article, title, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, rating, queued, onQueue, highlighted, onArticleOpen, position, totalItems }) {
   const [memoOpen, setMemoOpen] = useState(false)
 
   const rowClass = [
@@ -608,7 +601,6 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
     highlighted ? 'is-target-highlight' : '',
   ].filter(Boolean).join(' ')
 
-  const title = article.title ?? getTitles()[article.branchCode]?.[String(article.number)] ?? ''
   const hasMemo = memo.length > 0
 
   return (
@@ -706,9 +698,8 @@ function ArticleRow({ article, read, onToggle, favorited, onFavorite, memo, onMe
   )
 }
 
-function ArticleCard({ article, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, rating, queued, onQueue, highlighted, onArticleOpen, position, totalItems }) {
+function ArticleCard({ article, title, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, rating, queued, onQueue, highlighted, onArticleOpen, position, totalItems }) {
   const [memoOpen, setMemoOpen] = useState(false)
-  const title = article.title ?? getTitles()[article.branchCode]?.[String(article.number)] ?? ''
   const hasMemo = memo.length > 0
 
   const cardClass = [

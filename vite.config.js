@@ -1,8 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { serviceWorkerBuildRevision } from './scripts/build-service-worker.mjs'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), serviceWorkerBuildRevision()],
   base: '/scp-central-site/',
   build: {
     // The service worker consumes this manifest during installation so every
