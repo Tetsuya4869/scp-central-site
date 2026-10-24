@@ -1,839 +1,190 @@
-import { memo, useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
-import { getTitles, getCharCounts, getRatings, useDataReady } from '../data/dataStore.js'
-import Icon from './Icon.jsx'
+import { getTitles, useDataReady } from '../data/dataStore.js'
+import { isCatalogArticle } from '../utils/catalog.js'
 
-const JP_BASE = 'http://scp-jp.wikidot.com/'
-const CARD_COLS = 2
-const MATRIX_COLS = 8
-const PAGE_SIZE = 120
-
-function preferredScrollBehavior() {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return 'auto'
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
-}
-
-function getSlug(article) {
-  return article.url.startsWith(JP_BASE) ? article.url.slice(JP_BASE.length) : null
-}
-
-function getCharCount(article) {
-  const slug = getSlug(article)
-  return slug ? (getCharCounts()[slug] ?? null) : null
-}
-
-function getRating(article) {
-  const slug = getSlug(article)
-  return slug ? (getRatings()[slug] ?? null) : null
-}
-
-function formatChars(n) {
-  if (n == null) return null
-  return n >= 10000 ? `${(n / 10000).toFixed(1)}万字` : `${n.toLocaleString()}字`
-}
-
-function formatDate(date) {
-  if (!date) return null
-  return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
-}
+const CUSTOM_PAGE_SIZE = 1000
 
 export default function ArticleList({
-  branch, series, isChecked, toggle, markAll, onOpenSidebar,
-  isFavorite, toggleFavorite, getMemo, setMemo, getReadDate,
-  layoutMode, setLayoutMode,
-  isQueued, addToQueue,
-  targetId,
-  dates,
-  onArticleOpen,
+  branch, series, isChecked, toggle, isFavorite, toggleFavorite,
+  getMemo, setMemo, getReadDate, targetId,
 }) {
-  const dataReady = useDataReady() // データ到着時に再描画してタイトル/文字数/評価を反映
+  const dataReady = useDataReady()
   const [filter, setFilter] = useState('all')
-  const [sortBy, setSortBy] = useState('number')
-  const [jumpValue, setJumpValue] = useState('')
-  const [jumpStatus, setJumpStatus] = useState('')
-  const [highlightedId, setHighlightedId] = useState(null)
-  const [confirmUnmark, setConfirmUnmark] = useState(false)
-  const [charFilter, setCharFilter] = useState('all')
-  const [ratingFilter, setRatingFilter] = useState('all')
-  const [filterPanelOpen, setFilterPanelOpen] = useState(false)
+  const [query, setQuery] = useState('')
   const [page, setPage] = useState(0)
-  const confirmUnmarkTimerRef = useRef(null)
-  const parentRef = useRef(null)
-  const highlightTimerRef = useRef(null)
+  const [highlightedId, setHighlightedId] = useState(targetId)
+  const [pendingScrollId, setPendingScrollId] = useState(null)
 
-  const allArticles = useMemo(() => {
+  const articles = useMemo(() => {
     const source = series.type === 'custom'
-      ? series.articles.map(article => ({ ...article, predicted: Boolean(article.predicted) }))
+      ? series.articles
       : generateSeriesArticles(branch.code, series.min, series.max)
     const unique = new Map()
     for (const article of source) {
-      if (article?.id && !unique.has(article.id)) unique.set(article.id, article)
+      if (!article?.id || unique.has(article.id)) continue
+      unique.set(article.id, {
+        ...article,
+        title: article.title ?? getTitles()[branch.code]?.[String(article.number)] ?? '',
+        predicted: Boolean(article.predicted) || !isCatalogArticle(article.id),
+      })
     }
     return [...unique.values()]
-  }, [branch.code, series])
+  }, [branch.code, series, dataReady])
 
-  // Predicted rows stay discoverable, but do not count as readable catalogue entries.
-  const availableArticles = useMemo(
-    () => allArticles.filter(article => !article.predicted),
-    [allArticles]
-  )
-  const availableIds = useMemo(
-    () => availableArticles.map(article => article.id),
-    [availableArticles]
-  )
+  const availableArticles = useMemo(() => articles.filter(article => !article.predicted), [articles])
+  const readCount = availableArticles.filter(article => isChecked(article.id)).length
+  const total = availableArticles.length
+  const percent = total ? readCount / total * 100 : 0
+  const percentText = percent > 0 && percent < 0.1 ? '0.1%未満' : `${Math.round(percent * 10) / 10}%`
+  const normalizedQuery = query.trim().toLocaleLowerCase()
+  const visibleArticles = useMemo(() => articles.filter(article => {
+    if (filter !== 'all' && article.predicted) return false
+    if (filter === 'read' && !isChecked(article.id)) return false
+    if (filter === 'unread' && isChecked(article.id)) return false
+    if (!normalizedQuery) return true
+    return `${article.designation} ${article.title}`.toLocaleLowerCase().includes(normalizedQuery)
+  }), [articles, filter, isChecked, normalizedQuery])
 
-  const filtered = useMemo(() => {
-    let list = filter === 'all' ? allArticles : availableArticles
-    if (filter === 'read')   list = list.filter(a => isChecked(a.id))
-    if (filter === 'unread') list = list.filter(a => !isChecked(a.id))
-
-    if (charFilter !== 'all') {
-      list = list.filter(a => {
-        const c = getCharCount(a)
-        if (charFilter === 'short')  return c != null && c <= 5000
-        if (charFilter === 'medium') return c != null && c > 5000 && c <= 30000
-        if (charFilter === 'long')   return c != null && c > 30000
-        return true
-      })
-    }
-    if (ratingFilter !== 'all') {
-      const min = ratingFilter === 'popular' ? 50 : ratingFilter === 'high' ? 100 : 200
-      list = list.filter(a => { const r = getRating(a); return r != null && r >= min })
-    }
-
-    const isCharsSort    = sortBy === 'chars-asc'    || sortBy === 'chars-desc'
-    const isRatingSort   = sortBy === 'rating-asc'   || sortBy === 'rating-desc'
-
-    if (isCharsSort || isRatingSort) {
-      const dir = sortBy.endsWith('-asc') ? 1 : -1
-      const getter = isCharsSort
-        ? getCharCount
-        : getRating
-      list = [...list].sort((a, b) => {
-        const ca = getter(a)
-        const cb = getter(b)
-        if (ca == null && cb == null) return 0
-        if (ca == null) return 1
-        if (cb == null) return -1
-        return dir * (ca - cb)
-      })
-    }
-    return list
-  }, [allArticles, availableArticles, filter, charFilter, ratingFilter, sortBy, isChecked, dataReady])
-
-  const cols = layoutMode === 'card' ? CARD_COLS : layoutMode === 'matrix' ? MATRIX_COLS : 1
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  // Numbered SCP series remain a single list. Large custom collections use
+  // 1000-row pages so tales and anomalous-item lists stay practical as well.
+  const pageCount = series.type === 'custom'
+    ? Math.max(1, Math.ceil(visibleArticles.length / CUSTOM_PAGE_SIZE))
+    : 1
   const currentPage = Math.min(page, pageCount - 1)
-  const pageStart = currentPage * PAGE_SIZE
-  const pagedArticles = useMemo(
-    () => filtered.slice(pageStart, pageStart + PAGE_SIZE),
-    [filtered, pageStart]
-  )
+  const pageStart = currentPage * CUSTOM_PAGE_SIZE
+  const displayedArticles = pageCount > 1
+    ? visibleArticles.slice(pageStart, pageStart + CUSTOM_PAGE_SIZE)
+    : visibleArticles
 
   useEffect(() => {
-    if (page >= pageCount) setPage(pageCount - 1)
-  }, [page, pageCount])
+    if (page !== currentPage) setPage(currentPage)
+  }, [page, currentPage])
 
-  const displayRows = useMemo(() => {
-    const rows = []
-    for (let i = 0; i < pagedArticles.length; i += cols) {
-      rows.push(pagedArticles.slice(i, i + cols))
-    }
-    return rows
-  }, [pagedArticles, cols])
-
-  // Jump to targetId on mount (from search navigation)
   useEffect(() => {
-    if (!targetId) return
-    const idx = filtered.findIndex(a => a.id === targetId)
-    if (idx === -1) return
-    setPage(Math.floor(idx / PAGE_SIZE))
-    const t = setTimeout(() => {
-      document.getElementById(`article-${targetId}`)?.scrollIntoView({ block: 'center', behavior: preferredScrollBehavior() })
-      setHighlightedId(targetId)
-      highlightTimerRef.current = setTimeout(() => setHighlightedId(null), 2000)
-    }, 80)
-    return () => {
-      clearTimeout(t)
-      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current)
-    }
-  }, []) // run once on mount
-
-  const scrollToAndHighlight = useCallback((id) => {
-    const idx = filtered.findIndex(a => a.id === id)
-    if (idx === -1) return
-    setPage(Math.floor(idx / PAGE_SIZE))
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      document.getElementById(`article-${id}`)?.scrollIntoView({ block: 'center', behavior: preferredScrollBehavior() })
-    }))
-    clearTimeout(highlightTimerRef.current)
-    setHighlightedId(id)
-    highlightTimerRef.current = setTimeout(() => setHighlightedId(null), 2000)
-  }, [filtered])
-
-  // pickRandom はフィルター変更後の再レンダーを待ってからスクロールする
-  // （古い filtered のインデックスで誤った行に飛ぶのを防ぐ）
-  const [pendingScrollId, setPendingScrollId] = useState(null)
-  useEffect(() => {
-    if (!pendingScrollId) return
-    scrollToAndHighlight(pendingScrollId)
-    setPendingScrollId(null)
-  }, [pendingScrollId, scrollToAndHighlight])
-
-  const pickRandom = useCallback(() => {
-    const unread = availableArticles.filter(a => !isChecked(a.id))
-    if (!unread.length) return
-    const pick = unread[Math.floor(Math.random() * unread.length)]
-    // show all articles so the pick is always visible
+    if (!targetId) return undefined
     setFilter('all')
-    setCharFilter('all')
-    setRatingFilter('all')
-    setJumpStatus(`${pick.designation}を選びました。`)
-    setPendingScrollId(pick.id)
-  }, [availableArticles, isChecked])
+    setQuery('')
+    const targetIndex = articles.findIndex(article => article.id === targetId)
+    setPage(series.type === 'custom' && targetIndex >= 0 ? Math.floor(targetIndex / CUSTOM_PAGE_SIZE) : 0)
+    setHighlightedId(targetId)
+    setPendingScrollId(targetIndex >= 0 ? targetId : null)
+    const timer = setTimeout(() => setHighlightedId(null), 2500)
+    return () => clearTimeout(timer)
+  }, [targetId, articles, series.type])
 
-  // unmount時に保留中のタイマーを破棄
-  useEffect(() => () => {
-    clearTimeout(confirmUnmarkTimerRef.current)
-    clearTimeout(highlightTimerRef.current)
-  }, [])
+  const scrollTargetIsDisplayed = pendingScrollId != null
+    && displayedArticles.some(article => article.id === pendingScrollId)
+  useEffect(() => {
+    if (!pendingScrollId || !scrollTargetIsDisplayed) return undefined
+    // Wait for the selected page to commit before looking up the target row.
+    // A second alignment after painting also settles content-visibility sizing.
+    let settledFrame
+    const frame = requestAnimationFrame(() => {
+      const row = document.getElementById(`article-${pendingScrollId}`)
+      if (!row) return
+      row.scrollIntoView({ block: 'center', behavior: 'auto' })
+      row.querySelector('a')?.focus({ preventScroll: true })
+      settledFrame = requestAnimationFrame(() => {
+        row.scrollIntoView({ block: 'center', behavior: 'auto' })
+        setPendingScrollId(null)
+      })
+    })
+    return () => {
+      cancelAnimationFrame(frame)
+      if (settledFrame) cancelAnimationFrame(settledFrame)
+    }
+  }, [pendingScrollId, scrollTargetIsDisplayed, currentPage])
 
-  const readCount = useMemo(
-    () => availableArticles.filter(a => isChecked(a.id)).length,
-    [availableArticles, isChecked]
+  function changePage(nextPage) {
+    setPage(nextPage)
+    document.getElementById('checklist-heading')?.scrollIntoView({ block: 'start' })
+  }
+
+  const pagination = position => pageCount > 1 && (
+    <nav className="tracker-pagination" aria-label={`記事一覧のページ切り替え（${position}）`}>
+      <button type="button" disabled={currentPage === 0} onClick={() => changePage(currentPage - 1)} aria-controls="checklist-articles">前へ</button>
+      <span>{currentPage + 1} / {pageCount} ページ</span>
+      <button type="button" disabled={currentPage === pageCount - 1} onClick={() => changePage(currentPage + 1)} aria-controls="checklist-articles">次へ</button>
+    </nav>
   )
-  const pct = availableArticles.length > 0
-    ? Math.round((readCount / availableArticles.length) * 100)
-    : 0
-
-  function changeLayout(newMode) {
-    setLayoutMode(newMode)
-    setPage(0)
-    if (parentRef.current) parentRef.current.scrollTop = 0
-  }
-
-  function handleFilter(f) {
-    setFilter(f)
-    setPage(0)
-    if (parentRef.current) parentRef.current.scrollTop = 0
-  }
-
-  function cycleCharsSort() {
-    const next = sortBy === 'chars-asc' ? 'chars-desc' : sortBy === 'chars-desc' ? 'number' : 'chars-asc'
-    setSortBy(next)
-    setPage(0)
-    if (parentRef.current) parentRef.current.scrollTop = 0
-  }
-
-  function cycleRatingSort() {
-    const next = sortBy === 'rating-asc' ? 'rating-desc' : sortBy === 'rating-desc' ? 'number' : 'rating-asc'
-    setSortBy(next)
-    setPage(0)
-    if (parentRef.current) parentRef.current.scrollTop = 0
-  }
-
-  function handleJump(e) {
-    if (e.isComposing || e.nativeEvent?.isComposing || e.keyCode === 229) return
-    if (e.key !== 'Enter') return
-    const val = jumpValue.trim().toLowerCase()
-    if (!val) {
-      setJumpStatus('番号または名前を入力してください。')
-      return
-    }
-
-    const numOnly = val.replace(/[^0-9]/g, '')
-    const numVal = numOnly ? parseInt(numOnly, 10) : NaN
-    let idx = -1
-
-    if (!isNaN(numVal)) {
-      idx = allArticles.findIndex(a => a.number === numVal)
-      if (idx === -1) {
-        const padded = String(numVal).padStart(3, '0')
-        idx = allArticles.findIndex(a => a.designation?.toLowerCase().includes(padded))
-      }
-    }
-    if (idx === -1) {
-      idx = allArticles.findIndex(a =>
-        a.designation?.toLowerCase().includes(val) ||
-        (a.title ?? getTitles()[a.branchCode]?.[String(a.number)] ?? '').toLowerCase().includes(val)
-      )
-    }
-
-    if (idx !== -1) {
-      const article = allArticles[idx]
-      setFilter('all')
-      setCharFilter('all')
-      setRatingFilter('all')
-      setPendingScrollId(article.id)
-      setJumpStatus(`${article.designation}へ移動しました。`)
-      setJumpValue('')
-    } else {
-      setJumpStatus(`「${jumpValue.trim()}」に一致する記事はありません。`)
-    }
-  }
-
-  function goToPage(nextPage) {
-    setPage(Math.max(0, Math.min(nextPage, pageCount - 1)))
-    if (parentRef.current) parentRef.current.scrollTop = 0
-  }
-
-  const hubUrl = branch.domain + series.hub
 
   return (
-    <>
-      <div className="content-toolbar">
-        <div className="toolbar-row toolbar-row-top">
-          <button className="toolbar-back" onClick={onOpenSidebar} aria-label="支部を選択">
-            <Icon name="menu" />
-          </button>
-          <h1 className="toolbar-title" data-view-heading tabIndex={-1}>{series.label}</h1>
-          <span className="toolbar-sub"> · {branch.nativeName}</span>
-          <a className="toolbar-hub-link" href={hubUrl} target="_blank" rel="noopener noreferrer">
-            <span>ハブ</span>
-            <Icon name="external" size={16} />
-          </a>
-          <div className="toolbar-spacer" />
-          <div className="series-progress">
-            <div
-              className="progress-bar-wrap"
-              role="progressbar"
-              aria-label={`${series.label}の読了進捗`}
-              aria-valuemin="0"
-              aria-valuemax={availableArticles.length}
-              aria-valuenow={readCount}
-            >
-              <div
-                className="progress-bar-fill"
-                style={{ width: `${pct}%` }}
-                aria-hidden="true"
-              />
-            </div>
-            <span className="progress-text">{readCount}</span>
-            <span className="progress-denom">/{availableArticles.length} ({pct}%)</span>
-          </div>
-        </div>
+    <section className="checklist-page" aria-labelledby="checklist-heading">
+      <div className="tracker-page-heading">
+        <h1 id="checklist-heading" data-view-heading tabIndex={-1}>{series.label}</h1>
+        <span className="tracker-muted">{branch.nativeName}</span>
+      </div>
 
-        {/* The frequent choices stay visible; secondary operations are disclosed below. */}
-        <div className="toolbar-row toolbar-row-controls">
+      <div className="tracker-series-progress">
+        <span>この一覧の読了 <strong>{readCount.toLocaleString()}</strong> / {total.toLocaleString()} 件 <strong>{percentText}</strong></span>
+        <progress max={total || 1} value={readCount} aria-label={`${series.label}の読了進捗`} />
+      </div>
+
+      <div className="tracker-filters">
+        <div className="tracker-filter-tabs" aria-label="読了状態で絞り込み">
           {[
-            { key: 'list',   label: 'リスト',   description: '行一覧で表示' },
-            { key: 'card',   label: 'カード',   description: '詳細カードで表示' },
-            { key: 'matrix', label: 'グリッド', description: '全体表示（記事を開く・読了のみ）' },
-          ].map(({ key, label, description }) => (
-            <button
-              key={key}
-              className={`layout-tab${layoutMode === key ? ' active' : ''}`}
-              onClick={() => changeLayout(key)}
-              aria-pressed={layoutMode === key}
-              aria-label={description}
-              title={description}
-            >
-              <span className="layout-tab-label">{label}</span>
-            </button>
+            ['all', 'すべて'], ['unread', '未読'], ['read', '読了'],
+          ].map(([value, label]) => (
+            <button key={value} type="button" onClick={() => { setFilter(value); setPage(0) }} aria-pressed={filter === value}>{label}</button>
           ))}
-
-          {layoutMode === 'matrix' && (
-            <span className="layout-mode-note">開く・読了に絞った俯瞰表示</span>
-          )}
-
-          <span className="toolbar-sep" />
-
-          <div className="filter-tabs">
-            {[
-              { key: 'all',    label: '全て' },
-              { key: 'read',   label: '読了' },
-              { key: 'unread', label: '未読' },
-            ].map(({ key, label }) => (
-              <button
-                key={key}
-                className={`filter-tab${filter === key ? ' active' : ''}`}
-                onClick={() => handleFilter(key)}
-                aria-pressed={filter === key}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <button
-            className={`mark-btn${filterPanelOpen ? ' active' : ''}${charFilter !== 'all' || ratingFilter !== 'all' ? ' filter-active' : ''}`}
-            onClick={() => setFilterPanelOpen(v => !v)}
-            title="並べ替え・一括操作・絞り込み"
-            aria-expanded={filterPanelOpen}
-            aria-controls="article-filter-panel"
-          >
-            <span>操作</span>
-            <Icon name={filterPanelOpen ? 'up' : 'down'} size={15} />
-          </button>
-          <span id="article-jump-status" className="sr-only" aria-live="polite">{jumpStatus}</span>
         </div>
-
-        {filterPanelOpen && (
-          <div className="filter-panel" id="article-filter-panel">
-            {layoutMode !== 'matrix' && (
-              <div className="filter-panel-row">
-                <span className="filter-panel-label">並べ替え</span>
-                <button className={`mark-btn${sortBy.startsWith('chars') ? ' active' : ''}`} onClick={cycleCharsSort}>
-                  {sortBy === 'chars-asc' ? '文字数・昇順' : sortBy === 'chars-desc' ? '文字数・降順' : '文字数順'}
-                </button>
-                <button className={`mark-btn${sortBy.startsWith('rating') ? ' active' : ''}`} onClick={cycleRatingSort}>
-                  {sortBy === 'rating-asc' ? '評価・昇順' : sortBy === 'rating-desc' ? '評価・降順' : '評価順'}
-                </button>
-              </div>
-            )}
-            <div className="filter-panel-row">
-              <span className="filter-panel-label">読書操作</span>
-              <button className="mark-btn" onClick={() => markAll(availableIds, true)} disabled={availableIds.length === 0}>
-                公開済みを全て読了
-              </button>
-              <button
-                className={`mark-btn${confirmUnmark ? ' mark-btn-confirm' : ''}`}
-                onClick={() => {
-                  if (confirmUnmark) {
-                    clearTimeout(confirmUnmarkTimerRef.current)
-                    setConfirmUnmark(false)
-                    markAll(availableIds, false)
-                  } else {
-                    setConfirmUnmark(true)
-                    clearTimeout(confirmUnmarkTimerRef.current)
-                    confirmUnmarkTimerRef.current = setTimeout(() => setConfirmUnmark(false), 3000)
-                  }
-                }}
-                disabled={availableIds.length === 0}
-              >{confirmUnmark ? '公開済みの読了を解除' : '読了を全解除'}</button>
-              <button
-                className="toolbar-dice-btn"
-                onClick={pickRandom}
-                disabled={availableArticles.every(a => isChecked(a.id))}
-              >
-                <Icon name="target" size={17} />
-                <span>未読をランダム選択</span>
-              </button>
-            </div>
-            {layoutMode !== 'matrix' && (
-              <div className="filter-panel-row">
-                <label className="filter-panel-label" htmlFor="article-jump-input">記事へ移動</label>
-                <div className="jump-control">
-                  <input
-                    id="article-jump-input"
-                    className="jump-input"
-                    type="text"
-                    inputMode="search"
-                    placeholder="番号/名前を入力して Enter"
-                    aria-describedby="article-jump-status"
-                    value={jumpValue}
-                    onChange={e => { setJumpValue(e.target.value); setJumpStatus('') }}
-                    onKeyDown={handleJump}
-                  />
-                  <span className="field-helper jump-status" aria-hidden="true">{jumpStatus}</span>
-                </div>
-              </div>
-            )}
-            <div className="filter-panel-row">
-              <span className="filter-panel-label">文字数</span>
-              {[
-                { key: 'all', label: '全て' },
-                { key: 'short', label: '〜5千字' },
-                { key: 'medium', label: '5千〜3万字' },
-                { key: 'long', label: '3万字〜' },
-              ].map(({ key, label }) => (
-                <button
-                  key={key}
-                  className={`filter-tab${charFilter === key ? ' active' : ''}`}
-                  onClick={() => { setCharFilter(key); setPage(0) }}
-                  aria-pressed={charFilter === key}
-                >{label}</button>
-              ))}
-            </div>
-            <div className="filter-panel-row">
-              <span className="filter-panel-label">評価</span>
-              {[
-                { key: 'all', label: '全て' },
-                { key: 'popular', label: '+50以上' },
-                { key: 'high', label: '+100以上' },
-                { key: 'top', label: '+200以上' },
-              ].map(({ key, label }) => (
-                <button
-                  key={key}
-                  className={`filter-tab${ratingFilter === key ? ' active' : ''}`}
-                  onClick={() => { setRatingFilter(key); setPage(0) }}
-                  aria-pressed={ratingFilter === key}
-                >{label}</button>
-              ))}
-            </div>
-          </div>
-        )}
+        <label className="tracker-search-label">
+          <span className="sr-only">この一覧を番号・タイトルで検索</span>
+          <input type="search" value={query} onChange={event => { setQuery(event.target.value); setPage(0) }} placeholder="番号・タイトル" />
+        </label>
       </div>
+      <p className="tracker-muted tracker-result-count" role="status">{pageCount > 1 ? `${(pageStart + 1).toLocaleString()}〜${(pageStart + displayedArticles.length).toLocaleString()} / ${visibleArticles.length.toLocaleString()} 件表示` : `${visibleArticles.length.toLocaleString()} 件表示`}</p>
+      {pagination('上')}
 
-      {layoutMode === 'list' && (
-        <div className="article-header-row">
-          <div className="article-th col-num">No.</div>
-          <div className="article-th col-badges">状態</div>
-          <div className="article-th col-fav">保存</div>
-          <div className="article-th col-queue">後で</div>
-          <div className="article-th col-memo">メモ</div>
-          <div className="article-th col-check">読了</div>
-        </div>
-      )}
-
-      <div ref={parentRef} className="article-list-wrap" role="list" aria-label={`${series.label}の記事一覧、${currentPage + 1}/${pageCount}ページ`}>
-        {displayRows.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">
-              <Icon name={filter === 'read' ? 'library' : 'search'} size={24} />
-            </div>
-            <div className="empty-state-title">
-              {filter === 'read' ? '読了記事なし' : '未読記事なし'}
-            </div>
-            <div className="empty-state-hint">
-              {filter === 'read' ? '記事を読んでチェックを入れると、ここに表示されます。' :
-               '現在のフィルター条件に一致する未読記事がありません。'}
-            </div>
-          </div>
-        ) : (
-          <div className="article-display-rows" role="presentation">
-            {displayRows.map((rowArticles, rowIndex) => {
-              const items = rowArticles.map((article, articleIndex) => (
-                <ArticleItem
-                  key={article.id}
-                  layoutMode={layoutMode}
-                  article={article}
-                  title={article.title ?? getTitles()[article.branchCode]?.[String(article.number)] ?? ''}
-                  read={isChecked(article.id)}
-                  onToggle={toggle}
-                  favorited={isFavorite(article.id)}
-                  onFavorite={toggleFavorite}
-                  memo={getMemo(article.id)}
-                  onMemoChange={setMemo}
-                  readDateTimestamp={dates
-                    ? dates.get(article.id) ?? null
-                    : getReadDate?.(article.id)?.getTime() ?? null}
-                  charCount={getCharCount(article)}
-                  rating={getRating(article)}
-                  queued={isQueued?.(article.id)}
-                  onQueue={addToQueue}
-                  highlighted={highlightedId === article.id}
-                  position={pageStart + (rowIndex * cols) + articleIndex + 1}
-                  totalItems={filtered.length}
-                  onArticleOpen={onArticleOpen}
-                  branchCode={branch.code}
-                  seriesId={series.id}
-                />
-              ))
-              return (
-                <div
-                  key={rowArticles.map(article => article.id).join('|')}
-                  className="article-display-row"
-                  data-index={rowIndex}
-                  role="presentation"
-                >
-                  {layoutMode === 'list' ? (
-                    items
-                  ) : (
-                    <div className={layoutMode === 'card' ? 'card-row' : 'matrix-row'}>
-                      {items}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        )}
+      <div id="checklist-articles" className="tracker-list" role="list" aria-label={`${series.label}の記事一覧`}>
+        {visibleArticles.length === 0 && <p className="tracker-empty">条件に一致する記事はありません。</p>}
+        {displayedArticles.map(article => (
+          <ArticleRow
+            key={article.id}
+            article={article}
+            read={isChecked(article.id)}
+            favorite={isFavorite(article.id)}
+            toggle={toggle}
+            toggleFavorite={toggleFavorite}
+            memo={getMemo?.(article.id) ?? ''}
+            setMemo={setMemo}
+            readDate={getReadDate?.(article.id)?.getTime()}
+            highlighted={highlightedId === article.id}
+          />
+        ))}
       </div>
-
-      <div className="list-footer">
-        <span className="list-count">
-          全 <strong>{filtered.length}</strong> 件
-          {filtered.length > 0 && ` · ${pageStart + 1}〜${Math.min(pageStart + PAGE_SIZE, filtered.length)}件を表示`}
-        </span>
-        {pageCount > 1 && (
-          <nav className="article-pagination" aria-label="記事一覧のページ">
-            <button type="button" onClick={() => goToPage(0)} disabled={currentPage === 0} aria-label="先頭ページ">先頭</button>
-            <button type="button" onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 0} aria-label="前のページ">前へ</button>
-            <span aria-live="polite">{currentPage + 1} / {pageCount}ページ</span>
-            <button type="button" onClick={() => goToPage(currentPage + 1)} disabled={currentPage === pageCount - 1} aria-label="次のページ">次へ</button>
-            <button type="button" onClick={() => goToPage(pageCount - 1)} disabled={currentPage === pageCount - 1} aria-label="末尾ページ">末尾</button>
-          </nav>
-        )}
-      </div>
-    </>
+      {pagination('下')}
+    </section>
   )
 }
 
-// Keep handlers shared and dates/titles primitive at this boundary so editing
-// one memo or toggling one article leaves the other visible items untouched.
-const ArticleItem = memo(function ArticleItem({
-  layoutMode, article, title, read, onToggle, favorited, onFavorite, memo,
-  onMemoChange, readDateTimestamp, charCount, rating, queued, onQueue,
-  highlighted, onArticleOpen, position, totalItems, branchCode, seriesId,
-}) {
-  const Component = layoutMode === 'list' ? ArticleRow : layoutMode === 'card' ? ArticleCard : MatrixCell
+const ArticleRow = memo(function ArticleRow({ article, read, favorite, toggle, toggleFavorite, memo, setMemo, readDate, highlighted }) {
+  const [memoOpen, setMemoOpen] = useState(false)
   return (
-    <Component
-      article={article}
-      title={title}
-      read={read}
-      onToggle={() => onToggle(article.id)}
-      favorited={favorited}
-      onFavorite={() => onFavorite(article.id)}
-      memo={memo}
-      onMemoChange={onMemoChange}
-      readDate={readDateTimestamp ? new Date(readDateTimestamp) : null}
-      charCount={charCount}
-      rating={rating}
-      queued={queued}
-      onQueue={() => onQueue?.(article.id)}
-      highlighted={highlighted}
-      onArticleOpen={() => onArticleOpen?.(article, { source: 'series', branchCode, seriesId })}
-      position={position}
-      totalItems={totalItems}
-    />
+    <div id={`article-${article.id}`} role="listitem" className={`checklist-row${read ? ' is-read' : ''}${article.predicted ? ' is-predicted' : ''}${highlighted ? ' is-highlighted' : ''}`}>
+      <label className="checklist-read" title={article.predicted ? '公開未確認の記事です' : read ? '読了済み' : '未読'}>
+        <input type="checkbox" checked={read && !article.predicted} disabled={article.predicted} onChange={() => toggle(article.id)} aria-label={`${article.designation}の読了`} />
+        <span className="sr-only">{read ? '読了' : '未読'}</span>
+      </label>
+      <a className="checklist-article" href={article.url} target="_blank" rel="noopener noreferrer">
+        <strong>{article.designation}</strong>
+        {article.title && <span>{article.title}</span>}
+        {article.predicted && <small>公開未確認</small>}
+        {read && !article.predicted && <small className="checklist-read-status">読了{Number.isFinite(readDate) ? ` ${new Date(readDate).toLocaleDateString('ja-JP')}` : ''}</small>}
+      </a>
+      <button className="checklist-favorite" type="button" disabled={article.predicted} onClick={() => toggleFavorite(article.id)} aria-pressed={favorite} aria-label={`${article.designation}をお気に入り${favorite ? 'から解除' : 'に登録'}`} title={favorite ? 'お気に入りから解除' : 'お気に入りに登録'}>{favorite ? '★' : '☆'}</button>
+      {!article.predicted && setMemo && (
+        <details className="checklist-memo" open={memoOpen} onToggle={event => setMemoOpen(event.currentTarget.open)}>
+          <summary aria-label={`${article.designation}のメモ`}>{memo ? 'メモあり' : 'メモ'}</summary>
+          {memoOpen && (
+            <label>
+              <span>{article.designation}のメモ</span>
+              <textarea value={memo} onChange={event => setMemo(article.id, event.target.value)} rows={3} />
+            </label>
+          )}
+        </details>
+      )}
+    </div>
   )
 })
-
-function ArticleRow({ article, title, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, rating, queued, onQueue, highlighted, onArticleOpen, position, totalItems }) {
-  const [memoOpen, setMemoOpen] = useState(false)
-
-  const rowClass = [
-    'article-row',
-    read ? 'is-read' : '',
-    article.predicted ? 'is-predicted' : '',
-    highlighted ? 'is-target-highlight' : '',
-  ].filter(Boolean).join(' ')
-
-  const hasMemo = memo.length > 0
-
-  return (
-    <>
-      <div className={rowClass} id={`article-${article.id}`} role="listitem" aria-posinset={position} aria-setsize={totalItems}>
-        <a
-          className="article-link-zone"
-          href={article.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={onArticleOpen}
-        >
-          <div className="article-td col-num">
-            <span className="scp-num-cell">
-              <span className="scp-designation">{article.designation}</span>
-              {title && <span className="scp-title">{title}</span>}
-              {charCount != null && <span className="scp-charcount">{formatChars(charCount)}</span>}
-              {charCount != null && <span className="scp-readmin">約{Math.ceil(charCount / 500)}分</span>}
-              {rating != null && <span className="scp-rating">評価 {rating}</span>}
-            </span>
-          </div>
-          <div className="article-td col-badges">
-            {article.predicted
-              ? <span className="badge badge-predicted">予測</span>
-              : read
-                ? <span className="badge badge-read">読了</span>
-                : null
-            }
-          </div>
-        </a>
-        <div className="article-td col-fav">
-          <button
-            className={`fav-btn${favorited ? ' is-favorite' : ''}`}
-            onClick={onFavorite}
-            title={favorited ? 'お気に入り解除' : 'お気に入り追加'}
-            aria-label={`${article.designation}を${favorited ? 'お気に入りから解除' : 'お気に入りに追加'}`}
-            aria-pressed={favorited}
-            disabled={article.predicted}
-          >
-            <Icon name="star" size={17} />
-          </button>
-        </div>
-        <div className="article-td col-queue">
-          <button
-            className={`queue-btn${queued ? ' is-queued' : ''}`}
-            onClick={onQueue}
-            title={queued ? '後で読むから削除' : '後で読むに追加'}
-            aria-label={`${article.designation}を${queued ? '後で読むから削除' : '後で読むに追加'}`}
-            aria-pressed={queued}
-            disabled={article.predicted}
-          >
-            <Icon name={queued ? 'check' : 'plus'} size={17} />
-          </button>
-        </div>
-        <div className="article-td col-memo">
-          <button
-            className={`memo-btn${hasMemo ? ' has-memo' : ''}${memoOpen ? ' is-open' : ''}`}
-            onClick={() => !article.predicted && setMemoOpen(v => !v)}
-            title={hasMemo ? 'メモあり（クリックで編集）' : 'メモを追加'}
-            aria-label={`${article.designation}の${hasMemo ? 'メモを編集' : 'メモを追加'}`}
-            aria-expanded={memoOpen}
-            disabled={article.predicted}
-          >
-            <Icon name="note" size={17} />
-          </button>
-        </div>
-        <div className="article-td col-check">
-          <button
-            className={`read-toggle-btn${read ? ' is-read' : ''}`}
-            onClick={onToggle}
-            aria-label={`${article.designation}を${read ? '未読に戻す' : '読了にする'}`}
-            aria-pressed={read}
-            disabled={article.predicted}
-          >{read && <Icon name="check" size={17} />}</button>
-        </div>
-      </div>
-      {memoOpen && (
-        <div className="memo-expand-row">
-          <div className="memo-expand">
-            {readDate && (
-              <span className="memo-readdate">読了日 {formatDate(readDate)}</span>
-            )}
-            <input
-              className="memo-input"
-              type="text"
-              placeholder="メモを入力..."
-              aria-label={`${article.designation}のメモ`}
-              value={memo}
-              onChange={e => onMemoChange(article.id, e.target.value)}
-            />
-          </div>
-        </div>
-      )}
-    </>
-  )
-}
-
-function ArticleCard({ article, title, read, onToggle, favorited, onFavorite, memo, onMemoChange, readDate, charCount, rating, queued, onQueue, highlighted, onArticleOpen, position, totalItems }) {
-  const [memoOpen, setMemoOpen] = useState(false)
-  const hasMemo = memo.length > 0
-
-  const cardClass = [
-    'article-card',
-    read ? 'is-read' : '',
-    article.predicted ? 'is-predicted' : '',
-    highlighted ? 'is-target-highlight' : '',
-  ].filter(Boolean).join(' ')
-
-  return (
-    <div className={cardClass} id={`article-${article.id}`} role="listitem" aria-posinset={position} aria-setsize={totalItems}>
-      <div className="card-top">
-        <a
-          className="card-desg"
-          href={article.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={onArticleOpen}
-        >
-          {article.designation}
-        </a>
-        <button
-          className={`fav-btn${favorited ? ' is-favorite' : ''}`}
-          onClick={onFavorite}
-          title={favorited ? 'お気に入り解除' : 'お気に入り追加'}
-          aria-label={`${article.designation}を${favorited ? 'お気に入りから解除' : 'お気に入りに追加'}`}
-          aria-pressed={favorited}
-          disabled={article.predicted}
-        >
-          <Icon name="star" size={17} />
-        </button>
-        <button
-          className={`queue-btn${queued ? ' is-queued' : ''}`}
-          onClick={onQueue}
-          title={queued ? '後で読むから削除' : '後で読むに追加'}
-          aria-label={`${article.designation}を${queued ? '後で読むから削除' : '後で読むに追加'}`}
-          aria-pressed={queued}
-          disabled={article.predicted}
-        >
-          <Icon name={queued ? 'check' : 'plus'} size={17} />
-        </button>
-        <button
-          className={`memo-btn${hasMemo ? ' has-memo' : ''}${memoOpen ? ' is-open' : ''}`}
-          onClick={() => !article.predicted && setMemoOpen(v => !v)}
-          title={hasMemo ? 'メモあり' : 'メモを追加'}
-          aria-label={`${article.designation}の${hasMemo ? 'メモを編集' : 'メモを追加'}`}
-          aria-expanded={memoOpen}
-          disabled={article.predicted}
-        >
-          <Icon name="note" size={17} />
-        </button>
-      </div>
-      {title && (
-        <a
-          className="card-title"
-          href={article.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={onArticleOpen}
-        >{title}</a>
-      )}
-      <div className="card-meta">
-        {charCount != null && <span className="scp-charcount">{formatChars(charCount)}</span>}
-        {charCount != null && <span className="scp-readmin">約{Math.ceil(charCount / 500)}分</span>}
-        {rating != null && <span className="scp-rating">評価 {rating}</span>}
-        {article.predicted && <span className="badge badge-predicted">予測</span>}
-        <span className="card-meta-spacer" />
-        <button
-          className={`card-read-btn${read ? ' is-read' : ''}`}
-          onClick={onToggle}
-          aria-label={`${article.designation}を${read ? '未読に戻す' : '読了にする'}`}
-          aria-pressed={read}
-          disabled={article.predicted}
-        >
-          {read && <Icon name="check" size={15} />}
-          <span>{read ? '読了' : '未読'}</span>
-        </button>
-      </div>
-      {memoOpen && (
-        <div className="card-memo">
-          {readDate && <span className="memo-readdate">読了日 {formatDate(readDate)}</span>}
-          <input
-            className="memo-input"
-            type="text"
-            placeholder="メモを入力..."
-            aria-label={`${article.designation}のメモ`}
-            value={memo}
-            onChange={e => onMemoChange(article.id, e.target.value)}
-          />
-        </div>
-      )}
-    </div>
-  )
-}
-
-function MatrixCell({ article, read, onToggle, highlighted, onArticleOpen, position, totalItems }) {
-  const label = article.number != null
-    ? String(article.number).padStart(3, '0')
-    : article.title?.slice(0, 8) ?? article.designation?.slice(0, 8) ?? '---'
-
-  const cellClass = [
-    'matrix-cell',
-    read ? 'is-read' : '',
-    article.predicted ? 'is-predicted' : '',
-    highlighted ? 'is-target-highlight' : '',
-  ].filter(Boolean).join(' ')
-
-  return (
-    <div
-      className={cellClass}
-      id={`article-${article.id}`}
-      role="listitem"
-      aria-posinset={position}
-      aria-setsize={totalItems}
-      title={article.designation + (article.title ? ' — ' + article.title : '')}
-    >
-      <a
-        className="matrix-link-area"
-        href={article.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={onArticleOpen}
-      >
-        {label}
-      </a>
-      <button
-        className="matrix-toggle-btn"
-        onClick={onToggle}
-        aria-label={`${article.designation}を${read ? '未読に戻す' : '読了にする'}`}
-        aria-pressed={read}
-        disabled={article.predicted}
-      >
-        {read && <Icon name="check" size={15} />}
-      </button>
-    </div>
-  )
-}
