@@ -15,6 +15,7 @@ const KEYS = Object.freeze({
 
 const SESSION_KEYS = Object.freeze({
   activeReading: 'scp-active-reading',
+  exploreSearch: 'scp-explore-search-v1',
 })
 
 const BACKUP_FIELDS = Object.freeze([

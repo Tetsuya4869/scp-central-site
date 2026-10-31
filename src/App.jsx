@@ -118,7 +118,7 @@ function ChecklistApp() {
   const browseBranch = currentBranch ?? BRANCHES.find(branch => branch.code === lastList.branchCode)
   const pageLabel = selected.view === 'series'
     ? `${currentBranch.code} ${seriesLabel(currentSeries)}`
-    : ({ favorites: 'お気に入り', stats: '進捗', search: '全体検索', queue: '後で読む', memos: 'メモ', hubs: 'ハブ・特殊ページ' }[selected.view] ?? 'SCP一覧')
+    : ({ favorites: 'お気に入り', stats: '進捗', search: '総合検索', queue: '後で読む', memos: 'メモ', hubs: 'ハブ・特殊ページ' }[selected.view] ?? 'SCP一覧')
   const routeKey = `${buildHash(selected)}:${selected.targetId ?? ''}`
 
   useEffect(() => {
@@ -141,7 +141,7 @@ function ChecklistApp() {
   function renderPage() {
     if (selected.view === 'favorites') return <FavoritesPage favorites={favorites} toggleFavorite={toggleFavorite} isChecked={isChecked} toggle={toggleRead} />
     if (selected.view === 'stats') return <ProgressPage totalChecked={totalChecked} grandTotal={CATALOG_SIZE} countChecked={countChecked} onNavigate={handleSelect} />
-    if (selected.view === 'search') return <SearchPage onNavigate={handleSelect} onOpenSidebar={openBranches} isChecked={isChecked} isFavorite={isFavorite} />
+    if (selected.view === 'search') return <SearchPage onNavigate={handleSelect} isChecked={isChecked} isFavorite={isFavorite} toggle={toggleRead} toggleFavorite={toggleFavorite} />
     if (selected.view === 'queue') return <QueuePage queue={queue} removeFromQueue={removeFromQueue} moveUp={moveUp} moveDown={moveDown} onOpenSidebar={openBranches} isChecked={isChecked} />
     if (selected.view === 'memos') return <MemoSearchPage memos={memos} onNavigate={handleSelect} onOpenSidebar={openBranches} />
     if (selected.view === 'hubs') return <HubPage branch={currentBranch} onNavigate={handleSelect} onOpenSidebar={openBranches} />
@@ -158,9 +158,14 @@ function ChecklistApp() {
       }}>本文へ移動</a>
       <header className="tracker-header">
         <button className="tracker-brand" onClick={() => handleSelect(lastList)}>SCP <span>読了チェックリスト</span></button>
-        <button className="tracker-theme" onClick={() => setTheme(value => value === 'dark' ? 'light' : 'dark')} aria-label={theme === 'dark' ? 'ライトモードに切り替え' : 'ダークモードに切り替え'}>
-          <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} />
-        </button>
+        <div className="tracker-header-actions">
+          <button className="tracker-theme" onClick={() => selectGlobal('search')} aria-label="総合検索を開く" title="総合検索">
+            <Icon name="search" size={18} />
+          </button>
+          <button className="tracker-theme" onClick={() => setTheme(value => value === 'dark' ? 'light' : 'dark')} aria-label={theme === 'dark' ? 'ライトモードに切り替え' : 'ダークモードに切り替え'}>
+            <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} />
+          </button>
+        </div>
       </header>
       <div className="tracker-overall" aria-label={`全体の読了 ${totalChecked} / ${CATALOG_SIZE}件、${progressText}`}>
         <span>全体の読了</span>
@@ -179,7 +184,7 @@ function ChecklistApp() {
         }}>
           <summary>その他</summary>
           <div className="tracker-more-panel">
-            <button onClick={() => selectGlobal('search')}>全体検索</button>
+            <button onClick={() => selectGlobal('search')}>総合検索</button>
             <button onClick={() => selectGlobal('queue')}>後で読む ({queue.length})</button>
             <button onClick={() => selectGlobal('memos')}>メモ ({memos.size})</button>
             <button onClick={() => handleSelect({ branchCode: browseBranch.code, view: 'hubs' })}>ハブ・特殊ページ</button>
@@ -199,7 +204,6 @@ function ChecklistApp() {
           <label>番号帯・記事一覧<select value={String(currentSeries.id)} onChange={event => handleSelect({ branchCode: currentBranch.code, view: 'series', seriesId: currentBranch.series.find(series => String(series.id) === event.target.value).id })}>
             {currentBranch.series.filter(series => series.type !== 'separator').map(series => <option key={series.id} value={String(series.id)}>{seriesLabel(series)}</option>)}
           </select></label>
-          <button className="tracker-search-link" onClick={() => selectGlobal('search')}><Icon name="search" size={16} /> 全体検索</button>
         </div>}
         {renderPage()}
       </main>

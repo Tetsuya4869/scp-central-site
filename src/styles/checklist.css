@@ -44,7 +44,6 @@ button:disabled { cursor: default; opacity: .5; }
 .tracker-browse { display: flex; align-items: flex-end; gap: 12px; padding: 20px 0; border-bottom: 1px solid var(--border); }
 .tracker-browse label { display: grid; gap: 6px; color: var(--text-2); font-size: 12px; min-width: 0; flex: 1; }
 .tracker-browse select { min-height: 44px; width: 100%; padding: 8px 10px; font-size: 14px; }
-.tracker-browse .tracker-search-link { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 8px 14px; }
 .tracker-page-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; padding: 20px 0 12px; }
 .tracker-page-heading h1 { font-size: 19px; font-weight: 650; }
 .tracker-muted, .tracker-result-count { color: var(--text-2); }
@@ -128,7 +127,6 @@ li.checklist-row { grid-template-columns: 44px minmax(0, 1fr) 44px; }
   .tracker-browse { flex-wrap: wrap; gap: 12px 8px; padding: 16px 0; }
   .tracker-browse label:first-child { flex-basis: calc(55% - 4px); }
   .tracker-browse label:nth-child(2) { flex-basis: calc(45% - 4px); }
-  .tracker-browse .tracker-search-link { display: none; }
   .tracker-page-heading { padding-top: 16px; }
   .tracker-page-heading h1 { font-size: 18px; }
   .tracker-series-progress { display: grid; gap: 8px; font-size: 13px; }
@@ -161,3 +159,43 @@ li.checklist-row { grid-template-columns: 44px minmax(0, 1fr) 44px; }
 .tracker-pagination button { min-height: 44px; padding: 8px 14px; }
 
 .tracker-app [data-view-heading], .tracker-main { scroll-margin-top: 80px; }
+
+/* Comprehensive search stays on its own page, outside the numbered checklist. */
+.tracker-header-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.explorer-intro { margin-bottom: 16px; font-size: 13px; }
+.explorer-filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.explorer-field { display: grid; gap: 6px; min-width: 0; }
+.explorer-field > span { color: var(--text-2); font-size: 12px; }
+.explorer-query { grid-column: 1 / -1; }
+.explorer-field input, .explorer-field select { min-width: 0; width: 100%; min-height: 44px; padding: 8px 10px; }
+.explorer-favorite-filter { display: flex; align-items: center; gap: 8px; min-height: 44px; grid-column: 1 / -1; }
+.explorer-favorite-filter input { width: 18px; height: 18px; accent-color: var(--accent); }
+.explorer-results-heading { display: flex; align-items: baseline; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; margin-top: 20px; }
+.explorer-results-heading h2 { font-size: 16px; }
+.explorer-results-heading > span { font-size: 13px; color: var(--text-2); }
+.explorer-pagination { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; padding: 12px 0; color: var(--text-2); font-size: 13px; }
+.explorer-pagination button { min-height: 44px; padding: 8px 14px; }
+.explorer-list { list-style: none; border-top: 1px solid var(--border-light); }
+.explorer-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px 100px; gap: 6px; align-items: center; padding: 6px 0; min-height: 76px; border-bottom: 1px solid var(--border); }
+.explorer-row.is-read { background: var(--read-bg); }
+.explorer-article { display: grid; gap: 4px; padding: 6px; min-width: 0; color: var(--text-1); text-decoration: none; overflow-wrap: anywhere; }
+.explorer-article > strong { font-size: 13px; font-family: var(--font-mono); }
+.explorer-article > span { font-size: 14px; }
+.explorer-article:hover strong, .explorer-article:hover > span { text-decoration: underline; text-underline-offset: 3px; }
+.explorer-article small { color: var(--text-2); font-size: 12px; line-height: 1.7; }
+.tracker-app .explorer-locate { min-height: 44px; padding: 6px; font-size: 12px; background: none; border-color: var(--border); }
+.explorer-loading, .explorer-status, .explorer-empty { margin: 14px 0; color: var(--text-2); font-size: 13px; }
+@media (max-width: 600px) {
+  .tracker-header-actions { gap: 4px; }
+  .tracker-header { gap: 8px; }
+  .explorer-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .explorer-row { grid-template-columns: 36px minmax(0, 1fr) 40px 76px; gap: 2px; }
+  .explorer-article { padding: 6px 2px; }
+  .explorer-article > strong { font-size: 12px; }
+  .explorer-article > span { font-size: 13px; }
+  .explorer-article small { font-size: 11px; }
+  .explorer-pagination { gap: 8px; }
+}
+
+.explorer-results-heading { scroll-margin-top: 80px; }
+.explorer-results-heading:focus { outline: none; box-shadow: none; }
