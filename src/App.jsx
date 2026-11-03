@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef, lazy, Suspense } fro
 import { BRANCHES } from './data/branches.js'
 import { retryDataLoad, useDataStatus } from './data/dataStore.js'
 import { parseHash, buildHash } from './utils/routing.js'
-import { CATALOG_IDS, CATALOG_SIZE, isCatalogArticle } from './utils/catalog.js'
+import { CATALOG_IDS, CATALOG_SIZE, isCatalogArticle, getCatalogEntry } from './utils/catalog.js'
 import { exportData, importData } from './utils/dataBackup.js'
 import { useChecklist } from './hooks/useChecklist.js'
 import { useFavorites } from './hooks/useFavorites.js'
@@ -19,6 +19,10 @@ import HubPage from './components/HubPage.jsx'
 import { ToastProvider, useToast } from './components/Toast.jsx'
 import Icon from './components/Icon.jsx'
 import DemoBoundary from './components/DemoBoundary.jsx'
+import { ArticleLinksProvider } from './components/ArticleLink.jsx'
+import { useReadingPosition } from './hooks/useReadingPosition.js'
+import { getResumeEntry } from './utils/readingPosition.js'
+import { lookupArticle, loadReadDates } from './utils/lookupArticle.js'
 
 const InteractionDemoPage = lazy(() => import('./components/InteractionDemoPage.jsx'))
 
@@ -41,6 +45,13 @@ function initialSelection() {
   }
 }
 
+function storedFlag(key, id, fallback) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(key) ?? '[]')
+    return Array.isArray(saved) ? saved.includes(id) : fallback
+  } catch { return fallback }
+}
+
 function seriesLabel(series) {
   return series.type === 'custom'
     ? series.label
@@ -52,14 +63,22 @@ export default function App() {
 }
 
 function ChecklistApp() {
-  const { checked, toggle, isChecked } = useChecklist()
-  const { favorites, toggleFavorite, isFavorite } = useFavorites()
+  const { checked, toggle, setChecked, isChecked } = useChecklist()
+  const { favorites, toggleFavorite: toggleFavoriteStored, setFavorite, isFavorite } = useFavorites()
   const { getMemo, setMemo, memos } = useMemos()
   const { setReadDate, clearReadDate, getReadDate } = useReadDates()
   const { queue, removeFromQueue, moveUp, moveDown } = useQueue()
   const dataStatus = useDataStatus()
+  const { position, recordArticle } = useReadingPosition()
+  const toast = useToast()
+  const [lastChange, setLastChange] = useState(null)
+  const [resumeVersion, setResumeVersion] = useState(0)
   const [selected, setSelected] = useState(initialSelection)
-  const [lastList, setLastList] = useState(() => selected.view === 'series' ? selected : FIRST_LIST)
+  const [lastList, setLastList] = useState(() => {
+    if (selected.view === 'series') return selected
+    const entry = getCatalogEntry(position?.id)
+    return entry ? { branchCode: entry.branchCode, view: 'series', seriesId: entry.seriesId, targetId: null } : FIRST_LIST
+  })
   const moreRef = useRef(null)
   const branchRef = useRef(null)
   const [theme, setTheme] = useState(() => {
@@ -108,11 +127,83 @@ function ChecklistApp() {
     return () => window.removeEventListener('hashchange', syncRoute)
   }, [])
 
+  const focusAfterRemovedRow = trigger => {
+    requestAnimationFrame(() => {
+      if (trigger && !trigger.isConnected) document.querySelector('[data-reading-undo]')?.focus({ preventScroll: true })
+    })
+  }
+
   const toggleRead = useCallback(id => {
     if (!isCatalogArticle(id)) return
-    if (toggle(id)) setReadDate(id)
-    else clearReadDate(id)
-  }, [toggle, setReadDate, clearReadDate])
+    const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const previousDate = loadReadDates().get(id) ?? null
+    const nextValue = toggle(id)
+    if (typeof nextValue !== 'boolean') return
+    const nextDate = nextValue ? Date.now() : null
+    if (nextValue) {
+      setReadDate(id, nextDate)
+      recordArticle(id)
+    } else clearReadDate(id)
+    setLastChange({ type: 'read', id, previousValue: !nextValue, nextValue, previousDate, nextDate })
+    focusAfterRemovedRow(trigger)
+    return nextValue
+  }, [toggle, setReadDate, clearReadDate, recordArticle])
+
+  const toggleFavorite = useCallback(id => {
+    const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const nextValue = toggleFavoriteStored(id)
+    if (typeof nextValue !== 'boolean') return
+    setLastChange({ type: 'favorite', id, previousValue: !nextValue, nextValue })
+    focusAfterRemovedRow(trigger)
+    return nextValue
+  }, [toggleFavoriteStored])
+
+  const focusChangedArticle = change => {
+    requestAnimationFrame(() => {
+      const row = document.getElementById(`article-${change.id}`)
+        ?? document.getElementById(`explorer-${change.id}`)
+        ?? [...document.querySelectorAll('[data-favorite-id]')].find(element => element.dataset.favoriteId === change.id)
+      const target = row?.querySelector(change.type === 'read' ? 'input[type="checkbox"]' : '.checklist-favorite')
+        ?? document.querySelector('[data-view-heading]')
+      target?.focus({ preventScroll: true })
+    })
+  }
+
+  function undoChange() {
+    if (!lastChange) return
+    const change = lastChange
+    const key = change.type === 'read' ? 'scp-checklist-v1' : 'scp-favorites-v1'
+    const current = storedFlag(key, change.id, change.type === 'read' ? isChecked(change.id) : isFavorite(change.id))
+    const currentDate = loadReadDates().get(change.id) ?? null
+    if (current !== change.nextValue || (change.type === 'read' && currentDate !== change.nextDate)) {
+      setLastChange(null)
+      toast.info('別のタブで記録が更新されたため、直前の変更は元に戻しませんでした。')
+      focusChangedArticle(change)
+      return
+    }
+    if (change.type === 'read') {
+      setChecked(change.id, change.previousValue)
+      if (change.previousDate != null) setReadDate(change.id, change.previousDate)
+      else clearReadDate(change.id)
+    } else setFavorite(change.id, change.previousValue)
+    setLastChange(null)
+    focusChangedArticle(change)
+  }
+
+  const handleArticleOpen = useCallback(article => {
+    if (article?.id) recordArticle(article.id)
+  }, [recordArticle])
+
+  const resumeEntry = useMemo(() => getResumeEntry(position, checked, lastList), [position, checked, lastList])
+  const resumeArticle = useMemo(() => resumeEntry ? lookupArticle(resumeEntry.id) : null, [resumeEntry, dataStatus.ready])
+  const changedArticle = lastChange ? lookupArticle(lastChange.id) : null
+
+  function resumeReading() {
+    if (!resumeEntry) return
+    recordArticle(resumeEntry.id)
+    setResumeVersion(version => version + 1)
+    handleSelect({ branchCode: resumeEntry.branchCode, view: 'series', seriesId: resumeEntry.seriesId, targetId: resumeEntry.id })
+  }
 
   const countChecked = useCallback(ids => [...new Set(ids)].reduce(
     (count, id) => count + (CATALOG_IDS.has(id) && checked.has(id) ? 1 : 0), 0,
@@ -159,11 +250,12 @@ function ChecklistApp() {
     if (selected.view === 'queue') return <QueuePage queue={queue} removeFromQueue={removeFromQueue} moveUp={moveUp} moveDown={moveDown} onOpenSidebar={openBranches} isChecked={isChecked} />
     if (selected.view === 'memos') return <MemoSearchPage memos={memos} onNavigate={handleSelect} onOpenSidebar={openBranches} />
     if (selected.view === 'hubs') return <HubPage branch={currentBranch} onNavigate={handleSelect} onOpenSidebar={openBranches} />
-    return <ArticleList key={`${currentBranch.code}-${currentSeries.id}`} branch={currentBranch} series={currentSeries} isChecked={isChecked} toggle={toggleRead} isFavorite={isFavorite} toggleFavorite={toggleFavorite} getMemo={getMemo} setMemo={setMemo} getReadDate={getReadDate} targetId={selected.targetId} />
+    return <ArticleList key={`${currentBranch.code}-${currentSeries.id}-${resumeVersion}`} branch={currentBranch} series={currentSeries} isChecked={isChecked} toggle={toggleRead} isFavorite={isFavorite} toggleFavorite={toggleFavorite} getMemo={getMemo} setMemo={setMemo} getReadDate={getReadDate} targetId={selected.targetId} />
   }
 
   return (
     <div className="tracker-app">
+      <ArticleLinksProvider onArticleOpen={handleArticleOpen}>
       <a className="skip-link" href="#main" onClick={event => {
         event.preventDefault()
         const main = document.getElementById('main')
@@ -199,6 +291,7 @@ function ChecklistApp() {
           <summary>その他</summary>
           <div className="tracker-more-panel">
             <button onClick={() => selectGlobal('search')}>総合検索</button>
+            <button onClick={resumeReading} disabled={!resumeEntry}>続きから再開</button>
             <button onClick={() => selectGlobal('demo')}>画面操作イメージ</button>
             <button onClick={() => selectGlobal('queue')}>後で読む ({queue.length})</button>
             <button onClick={() => selectGlobal('memos')}>メモ ({memos.size})</button>
@@ -211,6 +304,15 @@ function ChecklistApp() {
         <span>記事の詳細を読み込めませんでした。読了・お気に入りは引き続き記録できます。</span>
         <button disabled={dataStatus.loading} onClick={() => retryDataLoad()}>{dataStatus.loading ? '読込中…' : '再読み込み'}</button>
       </div>}
+      {selected.view !== 'demo' && lastChange && (
+        <div className="reading-undo" role="region" aria-label="直前の変更">
+          <span role="status">{changedArticle?.designation ?? lastChange.id}を{lastChange.type === 'read' ? (lastChange.nextValue ? '読了にしました' : '未読に戻しました') : (lastChange.nextValue ? 'お気に入りに登録しました' : 'お気に入りから解除しました')}。</span>
+          <div>
+            <button type="button" data-reading-undo onClick={undoChange}>元に戻す</button>
+            <button type="button" aria-label="変更の案内を閉じる" onClick={() => { const change = lastChange; setLastChange(null); focusChangedArticle(change) }}>閉じる</button>
+          </div>
+        </div>
+      )}
       <main className="tracker-main" id="main" tabIndex={-1}>
         {selected.view === 'series' && <div className="tracker-browse" aria-label="支部・番号帯の選択">
           <label>支部<select ref={branchRef} value={currentBranch.code} onChange={event => handleSelect({ branchCode: event.target.value, view: 'series', seriesId: BRANCHES.find(branch => branch.code === event.target.value).series.find(series => series.type !== 'separator').id })}>
@@ -220,9 +322,16 @@ function ChecklistApp() {
             {currentBranch.series.filter(series => series.type !== 'separator').map(series => <option key={series.id} value={String(series.id)}>{seriesLabel(series)}</option>)}
           </select></label>
         </div>}
+        {selected.view === 'series' && (
+          <div className="reading-resume">
+            <button type="button" onClick={resumeReading} disabled={!resumeEntry}>{position ? '続きから再開' : '未読から再開'}</button>
+            <span>{resumeArticle ? `${resumeArticle.designation} · ${resumeEntry.branchCode} ${seriesLabel(resumeEntry.series)}` : 'すべての記事を読了しています'}</span>
+          </div>
+        )}
         {renderPage()}
       </main>
       <footer className="tracker-footer">{selected.view === 'demo' ? 'このページの操作はサンプル内だけに反映されます。' : '記録はこのブラウザに保存されます。「その他」からバックアップできます。'}</footer>
+      </ArticleLinksProvider>
     </div>
   )
 }
@@ -237,8 +346,9 @@ function DataManagement() {
     try {
       const text = await file.text()
       window.dispatchEvent(new Event('scp:before-import'))
-      importData(text)
-      toast.pending('データをインポートしました')
+      const result = importData(text)
+      const skipped = result?.savedSearchesSkipped ?? 0
+      toast.pending(skipped > 0 ? `データをインポートしました。検索条件は5件までのため、追加の${skipped}件は反映していません。` : 'データをインポートしました')
       window.location.reload()
     } catch {
       toast.error('インポートに失敗しました。ファイルを確認してください。')

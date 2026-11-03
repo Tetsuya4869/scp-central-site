@@ -2,6 +2,7 @@ import { memo, useEffect, useMemo, useState } from 'react'
 import { generateSeriesArticles } from '../utils/urlGenerator.js'
 import { getTitles, useDataReady } from '../data/dataStore.js'
 import { isCatalogArticle } from '../utils/catalog.js'
+import ArticleLink from './ArticleLink.jsx'
 
 const CUSTOM_PAGE_SIZE = 1000
 
@@ -167,12 +168,12 @@ const ArticleRow = memo(function ArticleRow({ article, read, favorite, toggle, t
         <input type="checkbox" checked={read && !article.predicted} disabled={article.predicted} onChange={() => toggle(article.id)} aria-label={`${article.designation}の読了`} />
         <span className="sr-only">{read ? '読了' : '未読'}</span>
       </label>
-      <a className="checklist-article" href={article.url} target="_blank" rel="noopener noreferrer">
+      <ArticleLink article={article} className="checklist-article">
         <strong>{article.designation}</strong>
         {article.title && <span>{article.title}</span>}
         {article.predicted && <small>公開未確認</small>}
         {read && !article.predicted && <small className="checklist-read-status">読了{Number.isFinite(readDate) ? ` ${new Date(readDate).toLocaleDateString('ja-JP')}` : ''}</small>}
-      </a>
+      </ArticleLink>
       <button className="checklist-favorite" type="button" disabled={article.predicted} onClick={() => toggleFavorite(article.id)} aria-pressed={favorite} aria-label={`${article.designation}をお気に入り${favorite ? 'から解除' : 'に登録'}`} title={favorite ? 'お気に入りから解除' : 'お気に入りに登録'}>{favorite ? '★' : '☆'}</button>
       {!article.predicted && setMemo && (
         <details className="checklist-memo" open={memoOpen} onToggle={event => setMemoOpen(event.currentTarget.open)}>

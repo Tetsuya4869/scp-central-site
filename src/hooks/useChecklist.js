@@ -19,12 +19,21 @@ function saveChecked(set) {
   }
 }
 
+export function withCheckedValue(previous, rawId, value) {
+  const id = typeof rawId === 'string' ? rawId.trim() : ''
+  if (!id || typeof value !== 'boolean' || previous.has(id) === value) return previous
+  const next = new Set(previous)
+  if (value) next.add(id)
+  else next.delete(id)
+  return next
+}
+
 export function useChecklist() {
-  const [checked, setChecked] = useState(() => loadChecked())
+  const [checked, setCheckedState] = useState(() => loadChecked())
 
   useEffect(() => {
     const sync = event => {
-      if (event.key === STORAGE_KEY) setChecked(loadChecked())
+      if (event.key === STORAGE_KEY || event.key === null) setCheckedState(loadChecked())
     }
     window.addEventListener('storage', sync)
     return () => window.removeEventListener('storage', sync)
@@ -43,8 +52,17 @@ export function useChecklist() {
       isNowChecked = true
     }
     saveChecked(next)
-    setChecked(next)
+    setCheckedState(next)
     return isNowChecked
+  }, [])
+
+  const setChecked = useCallback((id, value) => {
+    const normalizedId = typeof id === 'string' ? id.trim() : ''
+    if (!normalizedId || typeof value !== 'boolean') return
+    const next = withCheckedValue(loadChecked(), normalizedId, value)
+    saveChecked(next)
+    setCheckedState(next)
+    return next.has(normalizedId)
   }, [])
 
   const markAll = useCallback((ids, value) => {
@@ -57,7 +75,7 @@ export function useChecklist() {
       else next.delete(id)
     }
     saveChecked(next)
-    setChecked(next)
+    setCheckedState(next)
   }, [])
 
   const isChecked = useCallback((id) => checked.has(id), [checked])
@@ -69,5 +87,5 @@ export function useChecklist() {
 
   const totalChecked = useMemo(() => checked.size, [checked])
 
-  return { checked, toggle, markAll, isChecked, countChecked, totalChecked }
+  return { checked, toggle, setChecked, markAll, isChecked, countChecked, totalChecked }
 }

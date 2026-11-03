@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useDataReady } from '../data/dataStore.js'
 import { isCatalogArticle } from '../utils/catalog.js'
 import { lookupArticle } from '../utils/lookupArticle.js'
+import ArticleLink from './ArticleLink.jsx'
 
 export default function FavoritesPage({ favorites, toggleFavorite, isChecked, toggle }) {
   const dataReady = useDataReady()
@@ -78,11 +79,11 @@ export default function FavoritesPage({ favorites, toggleFavorite, isChecked, to
                   <input type="checkbox" checked={read} disabled={!isCatalogArticle(article.id)} onChange={() => toggle(article.id)} aria-label={`${article.designation}の読了`} />
                   <span className="sr-only">{read ? '読了' : '未読'}</span>
                 </label>
-                <a className="checklist-article" href={article.url} target="_blank" rel="noopener noreferrer">
+                <ArticleLink article={article} className="checklist-article">
                   <strong>{article.designation}</strong>
                   {article.title && <span>{article.title}</span>}
                   {read && <small className="checklist-read-status">読了</small>}
-                </a>
+                </ArticleLink>
                 <button type="button" className="checklist-favorite" aria-label={`${article.designation}をお気に入りから解除`} title="お気に入りを解除" aria-pressed="true" onClick={() => removeFavorite(article)}>
                   ★
                 </button>

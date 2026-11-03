@@ -124,3 +124,54 @@ describe('data backup', () => {
     for (const key of APP_SESSION_STORAGE_KEYS) expect(session.getItem(key)).toBeNull()
   })
 })
+
+describe('reading position and saved searches in compatible backups', () => {
+  const preset = (id, name = id) => ({ id, name, filters: { query: '世界', branchCode: 'JP', seriesId: 'tales-jp', readFilter: 'unread', favoritesOnly: false, sortBy: 'rating-desc' } })
+
+  it('exports and restores real reading position and exact search conditions in version1', () => {
+    const source = new MemoryStorage({
+      'scp-reading-position-v1': JSON.stringify({ id: 'EN-173', url: 'ignored' }),
+      'scp-saved-searches-v1': JSON.stringify([preset('saved-a')]),
+      'scp-checklist-v1': JSON.stringify(['JP-1']),
+    })
+    const backup = createBackupData(source)
+    expect(backup.version).toBe(1)
+    expect(backup.readingPosition).toEqual({ id: 'EN-173' })
+    expect(backup.savedSearches).toEqual([preset('saved-a')])
+    const destination = new MemoryStorage({ 'scp-saved-searches-v1': JSON.stringify([preset('existing')]) })
+    expect(importData(JSON.stringify(backup), destination)).toEqual({ savedSearchesSkipped: 0 })
+    expect(JSON.parse(destination.getItem('scp-reading-position-v1'))).toEqual({ id: 'EN-173' })
+    expect(JSON.parse(destination.getItem('scp-saved-searches-v1')).map(item => item.id)).toEqual(['existing', 'saved-a'])
+  })
+
+  it('keeps new preferences when importing an older backup and rejects malformed additions before writes', () => {
+    const position = JSON.stringify({ id: 'JP-173' })
+    const saved = JSON.stringify([preset('keep')])
+    const storage = new MemoryStorage({ 'scp-reading-position-v1': position, 'scp-saved-searches-v1': saved })
+    importData(JSON.stringify({ version: 1, checklist: ['EN-1'] }), storage)
+    expect(storage.getItem('scp-reading-position-v1')).toBe(position)
+    expect(storage.getItem('scp-saved-searches-v1')).toBe(saved)
+    expect(() => importData(JSON.stringify({ version: 1, checklist: ['JP-2'], savedSearches: {} }), storage)).toThrow('savedSearches')
+    expect(() => importData(JSON.stringify({ version: 1, checklist: ['JP-2'], readingPosition: 'JP-2' }), storage)).toThrow('readingPosition')
+    expect(JSON.parse(storage.getItem('scp-checklist-v1'))).toEqual(['EN-1'])
+    importData(JSON.stringify({ version: 1, readingPosition: { id: 'demo-jp-001' } }), storage)
+    expect(storage.getItem('scp-reading-position-v1')).toBe(position)
+  })
+
+  it('merges preset IDs without duplicating them and reports only actual capacity omissions', () => {
+    const storage = new MemoryStorage({ 'scp-saved-searches-v1': JSON.stringify(['a', 'b', 'c', 'd', 'e'].map(id => preset(id))) })
+    const result = importData(JSON.stringify({ version: 1, savedSearches: [preset('a', 'updated'), preset('f')] }), storage)
+    const saved = JSON.parse(storage.getItem('scp-saved-searches-v1'))
+    expect(saved.map(item => item.id)).toEqual(['a', 'b', 'c', 'd', 'e'])
+    expect(saved[0].name).toBe('updated')
+    expect(result.savedSearchesSkipped).toBe(1)
+  })
+  it('counts capacity omissions after validating all incoming conditions, not before', () => {
+    const storage = new MemoryStorage()
+    const searches = ['a', 'b', 'c', 'd', 'e', 'f'].map(id => preset(id))
+    const result = importData(JSON.stringify({ version: 1, savedSearches: searches }), storage)
+    expect(result.savedSearchesSkipped).toBe(1)
+    expect(JSON.parse(storage.getItem('scp-saved-searches-v1')).map(item => item.id)).toEqual(['a', 'b', 'c', 'd', 'e'])
+  })
+
+})
