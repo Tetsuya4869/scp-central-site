@@ -212,13 +212,13 @@ export default function InteractionDemoPage({ onNavigate }) {
   return (
     <section className="tracker-page demo-page">
       <div className="tracker-page-heading"><h1 ref={headingRef} data-view-heading tabIndex={-1}>画面操作イメージ</h1></div>
-      <p className="demo-intro">読了・お気に入り・検索の流れと、改善候補を試せます。</p>
+      <p className="demo-intro">読了・お気に入り・検索の流れと、便利な機能を試せます。</p>
       <p className="demo-note">架空の記事で試せます。実際の記録は変更しません。数値・リンク状態もサンプルです。</p>
 
 
       <section className="demo-workbench" ref={workbenchRef} aria-labelledby="demo-workbench-heading">
         <div className="demo-workbench-heading"><h2 id="demo-workbench-heading">サンプル画面</h2><button type="button" onClick={reset}>サンプルをリセット</button></div>
-        <div className="demo-summary"><span>サンプルの読了 <strong>{progress.done} / {progress.total} 件</strong> · {progress.percent}%</span><progress value={progress.done} max={progress.total || 1} aria-label="サンプル全体の読了進捗" /><button type="button" onClick={resume} disabled={!resumeArticle}>続きから再開<span className="demo-proposal-tag">改善候補</span></button></div>
+        <div className="demo-summary"><span>サンプルの読了 <strong>{progress.done} / {progress.total} 件</strong> · {progress.percent}%</span><progress value={progress.done} max={progress.total || 1} aria-label="サンプル全体の読了進捗" /><button type="button" onClick={resume} disabled={!resumeArticle}>続きから再開<span className="demo-proposal-tag">操作例</span></button></div>
         <div className="demo-tabs" role="tablist" aria-label="サンプル画面の切り替え">
           {VIEWS.map(([view, label], index) => <button type="button" role="tab" id={`demo-tab-${view}`} key={view} ref={element => { tabRefs.current[index] = element }} aria-selected={state.view === view} aria-controls="demo-panel" tabIndex={state.view === view ? 0 : -1} onClick={() => selectView(view)} onKeyDown={event => handleTabKey(event, index)}>{label}{view === 'favorites' ? ` (${state.favoriteIds.length})` : ''}</button>)}
         </div>
@@ -242,12 +242,12 @@ export default function InteractionDemoPage({ onNavigate }) {
           {state.lastChange && <div className="demo-undo"><span>{lastChangedArticle?.designation}の{state.lastChange.type === 'read' ? '読了状態' : 'お気に入り'}を変更しました。</span><button type="button" ref={undoRef} onClick={undo}>元に戻す</button></div>}
           {state.view === 'progress' ? renderProgress() : <><p className="demo-result-count">{articles.length} 件のサンプル</p>{renderArticleList()}</>}
         </div>
-        <p className="demo-feature-note">読了・お気に入り・進捗・検索は既存機能の操作例です。再開・元に戻す・条件保存・リンク案内は改善候補です。</p>
+        <p className="demo-feature-note">通常の画面でも使える読了・お気に入り・進捗・検索と、再開・元に戻す・条件保存・リンク案内を試せます。</p>
       </section>
       <details className="demo-instructions"><summary>試し方</summary><ol><li>「一覧」で読了チェックと星を押し、「お気に入り」「進捗」で反映を確認します。</li><li>「続きから再開」で次の未読記事を見つけ、記事名から日本語版・原文を選ぶ流れを試します。</li><li>「検索」で条件を変えて保存・呼び出しを試します。変更を間違えたら「元に戻す」で戻せます。</li></ol></details>
 
       <section aria-labelledby="demo-opportunities-heading">
-        <h2 className="demo-section-heading" id="demo-opportunities-heading">改善候補を試す</h2>
+        <h2 className="demo-section-heading" id="demo-opportunities-heading">便利な操作を試す</h2>
         <ol className="demo-opportunities">
           <li><h3>① 続きから再開</h3><p>最後に開いた記事の次にある未読記事へ移動し、探し直す手間を減らします。</p><button type="button" onClick={resume} disabled={!resumeArticle}>次の未読を表示する</button></li>
           <li><h3>② 変更を元に戻す</h3><p>チェックや星を間違えて押しても、直前の変更を1回で戻せます。</p><button type="button" onClick={tryUndo}>読了チェックで試す</button></li>

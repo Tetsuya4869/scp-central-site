@@ -1,4 +1,6 @@
 import { normalizeTimestamp } from './timestamps.js'
+import { normalizeReadingPosition, READING_POSITION_STORAGE_KEY } from './readingPosition.js'
+import { normalizeSavedSearches, SAVED_SEARCH_STORAGE_KEY, MAX_SAVED_SEARCHES } from './savedSearches.js'
 
 const KEYS = Object.freeze({
   checklist:   'scp-checklist-v1',
@@ -11,6 +13,8 @@ const KEYS = Object.freeze({
   theme:       'scp-theme',
   lastView:    'scp-last-view',
   toast:       'scp-toast-pending',
+  readingPosition: READING_POSITION_STORAGE_KEY,
+  savedSearches: SAVED_SEARCH_STORAGE_KEY,
 })
 
 const SESSION_KEYS = Object.freeze({
@@ -28,6 +32,8 @@ const BACKUP_FIELDS = Object.freeze([
   'layout',
   'theme',
   'lastView',
+  'readingPosition',
+  'savedSearches',
 ])
 
 const LAYOUTS = new Set(['list', 'card', 'matrix'])
@@ -174,6 +180,8 @@ function parseBackup(jsonText) {
   requireFieldType(data, 'layout', 'string')
   requireFieldType(data, 'theme', 'string')
   requireFieldType(data, 'lastView', 'record')
+  if (data.readingPosition !== null) requireFieldType(data, 'readingPosition', 'record')
+  requireFieldType(data, 'savedSearches', 'array')
 
   return {
     checklist: 'checklist' in data ? sanitizeIdArray(data.checklist) : null,
@@ -185,6 +193,8 @@ function parseBackup(jsonText) {
     layout: 'layout' in data && LAYOUTS.has(data.layout) ? data.layout : null,
     theme: 'theme' in data && THEMES.has(data.theme) ? data.theme : null,
     lastView: 'lastView' in data ? sanitizeLastView(data.lastView) : null,
+    readingPosition: normalizeReadingPosition(data.readingPosition),
+    savedSearches: 'savedSearches' in data ? normalizeSavedSearches(data.savedSearches, { truncate: false }) : null,
   }
 }
 
@@ -218,6 +228,8 @@ export function createBackupData(storage = localStorage, now = new Date()) {
     layout: LAYOUTS.has(layout) ? layout : 'list',
     theme: THEMES.has(theme) ? theme : 'dark',
     lastView: lastView ?? { branchCode: null, view: null, seriesId: null, targetId: null },
+    readingPosition: normalizeReadingPosition(parseStoredJson(storage, KEYS.readingPosition, null)),
+    savedSearches: normalizeSavedSearches(parseStoredJson(storage, KEYS.savedSearches, []), { truncate: false }),
   }
 }
 
@@ -241,6 +253,18 @@ export function importData(jsonText, storage = localStorage) {
   // Parse, validate, and sanitize every field before performing any write so a
   // malformed late field cannot leave a half-imported backup behind.
   const data = parseBackup(jsonText)
+  // Prepare the preset merge before any write, alongside schema validation.
+  // Keep existing conditions first and report capacity omissions to the UI.
+  let mergedSearches = null
+  let savedSearchesSkipped = 0
+  if (data.savedSearches) {
+    const existing = normalizeSavedSearches(parseStoredJson(storage, KEYS.savedSearches, []), { truncate: false })
+    const byId = new Map(existing.map(item => [item.id, item]))
+    for (const item of data.savedSearches) byId.set(item.id, item)
+    const merged = [...byId.values()]
+    savedSearchesSkipped = Math.max(0, merged.length - MAX_SAVED_SEARCHES)
+    mergedSearches = normalizeSavedSearches(merged)
+  }
 
   if (data.checklist) {
     const existing = parseStoredJson(storage, KEYS.checklist, [])
@@ -266,6 +290,9 @@ export function importData(jsonText, storage = localStorage) {
   if (data.layout) storage.setItem(KEYS.layout, data.layout)
   if (data.theme) storage.setItem(KEYS.theme, data.theme)
   if (data.lastView) storage.setItem(KEYS.lastView, JSON.stringify(data.lastView))
+  if (data.readingPosition) storage.setItem(KEYS.readingPosition, JSON.stringify(data.readingPosition))
+  if (mergedSearches) storage.setItem(KEYS.savedSearches, JSON.stringify(mergedSearches))
+  return { savedSearchesSkipped }
 }
 
 export function clearAppStorage(

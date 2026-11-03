@@ -3,6 +3,7 @@ import { lookupArticle } from '../utils/lookupArticle.js'
 import { CATALOG_IDS } from '../utils/catalog.js'
 import { getCharCounts, getRatings, getTitles, useDataReady } from '../data/dataStore.js'
 import Icon from './Icon.jsx'
+import ArticleLink from './ArticleLink.jsx'
 
 const RANDOM_STORAGE_KEY = 'scp-random-reading-v1'
 const RANDOM_COUNT = 8
@@ -71,7 +72,7 @@ function formatChars(n) {
   return n >= 10000 ? `${(n / 10000).toFixed(1)}万字` : `${n.toLocaleString()}字`
 }
 
-export default function QueuePage({ queue, removeFromQueue, moveUp, moveDown, onOpenSidebar, isChecked, onArticleOpen }) {
+export default function QueuePage({ queue, removeFromQueue, moveUp, moveDown, onOpenSidebar, isChecked }) {
   const dataReady = useDataReady()
   const [reorderStatus, setReorderStatus] = useState('')
   const [mode, setMode] = useState('queue')
@@ -199,17 +200,14 @@ export default function QueuePage({ queue, removeFromQueue, moveUp, moveDown, on
                     : <span className="queue-idx">{idx + 1}</span>
                   }
                 </div>
-                <a
+                <ArticleLink
+                  article={article}
                   className="queue-link"
-                  href={article.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => onArticleOpen?.(article, { source: 'queue', position: idx })}
                 >
                   <span className="sr-only">{read ? '読了: ' : '未読: '}</span>
                   <span className="queue-designation">{article.designation}</span>
                   {article.title && <span className="queue-title">{article.title}</span>}
-                </a>
+                </ArticleLink>
                 <div className="queue-actions">
                   <button
                     className="queue-move-btn"
@@ -272,12 +270,9 @@ export default function QueuePage({ queue, removeFromQueue, moveUp, moveDown, on
                       aria-posinset={idx + 1}
                       aria-setsize={randomItems.length}
                     >
-                      <a
+                      <ArticleLink
+                        article={article}
                         className="article-link-zone"
-                        href={article.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => onArticleOpen?.(article, { source: 'random', position: idx })}
                       >
                         <div className="article-td col-num">
                           <span className="scp-num-cell">
@@ -291,7 +286,7 @@ export default function QueuePage({ queue, removeFromQueue, moveUp, moveDown, on
                         <div className="article-td col-badges">
                           {read && <span className="badge badge-read">読了</span>}
                         </div>
-                      </a>
+                      </ArticleLink>
                       <span className="random-open-mark" aria-hidden="true"><Icon name="external" size={16} /></span>
                     </div>
                   </div>

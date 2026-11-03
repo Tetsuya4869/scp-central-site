@@ -17,12 +17,21 @@ function saveFavorites(set) {
   } catch {}
 }
 
+export function withFavoriteValue(previous, rawId, value) {
+  const id = typeof rawId === 'string' ? rawId.trim() : ''
+  if (!id || typeof value !== 'boolean' || previous.has(id) === value) return previous
+  const next = new Set(previous)
+  if (value) next.add(id)
+  else next.delete(id)
+  return next
+}
+
 export function useFavorites() {
-  const [favorites, setFavorites] = useState(() => loadFavorites())
+  const [favorites, setFavoritesState] = useState(() => loadFavorites())
 
   useEffect(() => {
     const sync = event => {
-      if (event.key === STORAGE_KEY) setFavorites(loadFavorites())
+      if (event.key === STORAGE_KEY || event.key === null) setFavoritesState(loadFavorites())
     }
     window.addEventListener('storage', sync)
     return () => window.removeEventListener('storage', sync)
@@ -32,12 +41,24 @@ export function useFavorites() {
     const normalizedId = typeof id === 'string' ? id.trim() : ''
     if (!normalizedId) return
     const next = loadFavorites()
-    next.has(normalizedId) ? next.delete(normalizedId) : next.add(normalizedId)
+    const isNowFavorite = !next.has(normalizedId)
+    if (isNowFavorite) next.add(normalizedId)
+    else next.delete(normalizedId)
     saveFavorites(next)
-    setFavorites(next)
+    setFavoritesState(next)
+    return isNowFavorite
+  }, [])
+
+  const setFavorite = useCallback((id, value) => {
+    const normalizedId = typeof id === 'string' ? id.trim() : ''
+    if (!normalizedId || typeof value !== 'boolean') return
+    const next = withFavoriteValue(loadFavorites(), normalizedId, value)
+    saveFavorites(next)
+    setFavoritesState(next)
+    return next.has(normalizedId)
   }, [])
 
   const isFavorite = useCallback((id) => favorites.has(id), [favorites])
 
-  return { favorites, toggleFavorite, isFavorite }
+  return { favorites, toggleFavorite, setFavorite, isFavorite }
 }
