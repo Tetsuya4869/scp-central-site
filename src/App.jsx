@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef, lazy, Suspense } from 'react'
 import { BRANCHES } from './data/branches.js'
 import { retryDataLoad, useDataStatus } from './data/dataStore.js'
 import { parseHash, buildHash } from './utils/routing.js'
@@ -18,6 +18,9 @@ import MemoSearchPage from './components/MemoSearchPage.jsx'
 import HubPage from './components/HubPage.jsx'
 import { ToastProvider, useToast } from './components/Toast.jsx'
 import Icon from './components/Icon.jsx'
+import DemoBoundary from './components/DemoBoundary.jsx'
+
+const InteractionDemoPage = lazy(() => import('./components/InteractionDemoPage.jsx'))
 
 const FIRST_LIST = { branchCode: 'JP', view: 'series', seriesId: 1, targetId: null }
 
@@ -85,7 +88,9 @@ function ChecklistApp() {
     if (moreRef.current) moreRef.current.open = false
     const hash = buildHash(next)
     if (window.location.hash !== hash) window.location.hash = hash
-    try { localStorage.setItem('scp-last-view', JSON.stringify({ ...next, targetId: null })) } catch {}
+    if (next.view !== 'demo') {
+      try { localStorage.setItem('scp-last-view', JSON.stringify({ ...next, targetId: null })) } catch {}
+    }
   }, [])
 
   useEffect(() => {
@@ -95,7 +100,9 @@ function ChecklistApp() {
       setSelected(current => buildHash(current) === buildHash(next) ? current : next)
       if (next.view === 'series') setLastList(next)
       if (moreRef.current) moreRef.current.open = false
-      try { localStorage.setItem('scp-last-view', JSON.stringify({ ...next, targetId: null })) } catch {}
+      if (next.view !== 'demo') {
+        try { localStorage.setItem('scp-last-view', JSON.stringify({ ...next, targetId: null })) } catch {}
+      }
     }
     window.addEventListener('hashchange', syncRoute)
     return () => window.removeEventListener('hashchange', syncRoute)
@@ -118,7 +125,7 @@ function ChecklistApp() {
   const browseBranch = currentBranch ?? BRANCHES.find(branch => branch.code === lastList.branchCode)
   const pageLabel = selected.view === 'series'
     ? `${currentBranch.code} ${seriesLabel(currentSeries)}`
-    : ({ favorites: 'お気に入り', stats: '進捗', search: '総合検索', queue: '後で読む', memos: 'メモ', hubs: 'ハブ・特殊ページ' }[selected.view] ?? 'SCP一覧')
+    : ({ favorites: 'お気に入り', stats: '進捗', search: '総合検索', demo: '画面操作イメージ', queue: '後で読む', memos: 'メモ', hubs: 'ハブ・特殊ページ' }[selected.view] ?? 'SCP一覧')
   const routeKey = `${buildHash(selected)}:${selected.targetId ?? ''}`
 
   useEffect(() => {
@@ -139,6 +146,13 @@ function ChecklistApp() {
   }
 
   function renderPage() {
+    if (selected.view === 'demo') return (
+      <DemoBoundary onExit={() => handleSelect(lastList)}>
+        <Suspense fallback={<p className="tracker-empty" role="status">操作イメージを読み込み中…</p>}>
+          <InteractionDemoPage onNavigate={handleSelect} />
+        </Suspense>
+      </DemoBoundary>
+    )
     if (selected.view === 'favorites') return <FavoritesPage favorites={favorites} toggleFavorite={toggleFavorite} isChecked={isChecked} toggle={toggleRead} />
     if (selected.view === 'stats') return <ProgressPage totalChecked={totalChecked} grandTotal={CATALOG_SIZE} countChecked={countChecked} onNavigate={handleSelect} />
     if (selected.view === 'search') return <SearchPage onNavigate={handleSelect} isChecked={isChecked} isFavorite={isFavorite} toggle={toggleRead} toggleFavorite={toggleFavorite} />
@@ -167,12 +181,12 @@ function ChecklistApp() {
           </button>
         </div>
       </header>
-      <div className="tracker-overall" aria-label={`全体の読了 ${totalChecked} / ${CATALOG_SIZE}件、${progressText}`}>
+      {selected.view !== 'demo' && <div className="tracker-overall" aria-label={`全体の読了 ${totalChecked} / ${CATALOG_SIZE}件、${progressText}`}>
         <span>全体の読了</span>
         <strong>{totalChecked.toLocaleString()} <small>/ {CATALOG_SIZE.toLocaleString()} 件</small></strong>
         <progress max={CATALOG_SIZE} value={totalChecked} aria-label="全体の読了進捗" />
         <span>{progressText}</span>
-      </div>
+      </div>}
       <nav className="tracker-nav" aria-label="メインメニュー">
         {[
           { view: 'series', label: 'SCP一覧' },
@@ -185,6 +199,7 @@ function ChecklistApp() {
           <summary>その他</summary>
           <div className="tracker-more-panel">
             <button onClick={() => selectGlobal('search')}>総合検索</button>
+            <button onClick={() => selectGlobal('demo')}>画面操作イメージ</button>
             <button onClick={() => selectGlobal('queue')}>後で読む ({queue.length})</button>
             <button onClick={() => selectGlobal('memos')}>メモ ({memos.size})</button>
             <button onClick={() => handleSelect({ branchCode: browseBranch.code, view: 'hubs' })}>ハブ・特殊ページ</button>
@@ -192,7 +207,7 @@ function ChecklistApp() {
           </div>
         </details>
       </nav>
-      {dataStatus.error && <div className="tracker-data-error" role="alert">
+      {selected.view !== 'demo' && dataStatus.error && <div className="tracker-data-error" role="alert">
         <span>記事の詳細を読み込めませんでした。読了・お気に入りは引き続き記録できます。</span>
         <button disabled={dataStatus.loading} onClick={() => retryDataLoad()}>{dataStatus.loading ? '読込中…' : '再読み込み'}</button>
       </div>}
@@ -207,7 +222,7 @@ function ChecklistApp() {
         </div>}
         {renderPage()}
       </main>
-      <footer className="tracker-footer">記録はこのブラウザに保存されます。「その他」からバックアップできます。</footer>
+      <footer className="tracker-footer">{selected.view === 'demo' ? 'このページの操作はサンプル内だけに反映されます。' : '記録はこのブラウザに保存されます。「その他」からバックアップできます。'}</footer>
     </div>
   )
 }

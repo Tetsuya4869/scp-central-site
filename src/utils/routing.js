@@ -13,6 +13,7 @@ export function parseHash(hash) {
   if (parts[0] === 'favorites') return { ...DEFAULT_SELECTED, view: 'favorites' }
   if (parts[0] === 'queue')     return { ...DEFAULT_SELECTED, view: 'queue' }
   if (parts[0] === 'memos')     return { ...DEFAULT_SELECTED, view: 'memos' }
+  if (parts[0] === 'demo')      return { ...DEFAULT_SELECTED, view: 'demo' }
 
   // branch-specific: <CODE>/hubs or <CODE>/series/<id>
   const branchCode = parts[0]?.toUpperCase()
@@ -54,6 +55,7 @@ export function buildHash(selected) {
   if (view === 'favorites') return '#/favorites'
   if (view === 'queue')     return '#/queue'
   if (view === 'memos')     return '#/memos'
+  if (view === 'demo')      return '#/demo'
   if (branchCode && view === 'hubs')   return `#/${branchCode}/hubs`
   if (branchCode && view === 'series') return `#/${branchCode}/series/${seriesId == null ? '' : encodeURIComponent(String(seriesId))}`
   return '#/'

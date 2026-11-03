@@ -12,6 +12,7 @@ describe('parseHash', () => {
     expect(parseHash('#/favorites').view).toBe('favorites')
     expect(parseHash('#/queue').view).toBe('queue')
     expect(parseHash('#/memos').view).toBe('memos')
+    expect(parseHash('#/demo').view).toBe('demo')
   })
   it('支部シリーズ', () => {
     expect(parseHash('#/EN/series/1')).toEqual({
@@ -48,6 +49,7 @@ describe('buildHash', () => {
   it('各ビュー', () => {
     expect(buildHash({ view: 'stats' })).toBe('#/stats')
     expect(buildHash({ view: 'favorites' })).toBe('#/favorites')
+    expect(buildHash({ view: 'demo' })).toBe('#/demo')
     expect(buildHash({ branchCode: 'EN', view: 'hubs' })).toBe('#/EN/hubs')
     expect(buildHash({ branchCode: 'EN', view: 'series', seriesId: 1 })).toBe('#/EN/series/1')
   })
@@ -59,6 +61,7 @@ describe('buildHash', () => {
 describe('parseHash / buildHash 往復', () => {
   for (const sel of [
     { branchCode: null, view: 'stats', seriesId: null, targetId: null },
+    { branchCode: null, view: 'demo', seriesId: null, targetId: null },
     { branchCode: null, view: 'favorites', seriesId: null, targetId: null },
     { branchCode: 'EN', view: 'hubs', seriesId: null, targetId: null },
     { branchCode: 'EN', view: 'series', seriesId: 1, targetId: null },
